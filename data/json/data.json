@@ -1,0 +1,49 @@
+{
+    "General": {
+        "is_first_startup": true,
+        "startup_times": "",
+        "data_reset_times": "",
+        "template_file": "basic.j2"
+    },
+    "Weather": {
+        "city_name": "",
+        "city_id": ""
+    },
+    "Data": {
+        "date": {
+            "date": "",
+            "lunar_date": "",
+            "weekday": "",
+            "week_num": "",
+            "day_num": "",
+            "year_progress": "",
+            "year_remain": "",
+            "holiday": "",
+            "solar_term": ""
+        },
+        "weather": {
+            "get_time": "",
+            "city_name": "",
+            "weather": "",
+            "temperature": "",
+            "feels_like": "",
+            "humidity": "",
+            "wind_direction": "",
+            "wind_speed": "",
+            "air_quality": "",
+            "weather_emoji": ""
+        },
+        "other": {
+            "get_date": "",
+            "historical_date": "",
+            "historical_event": "",
+            "every_day_words_zh": "",
+            "every_day_words_en": ""
+        }
+    },
+    "Easter_egg": {
+        "name": "你被骗了",
+        "is_get": false,
+        "get_date": ""
+    }
+}

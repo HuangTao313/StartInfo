@@ -1,0 +1,26 @@
+{
+  "restapi.amap.com": {
+    "url": "https://restapi.amap.com/v3/ip",
+    "api_key": "TFPEqlR2lhumlquNMmjegj+tFjGwErgmpogvuHPAb5haWBIq1fNUOjXta4ukywsMaIRWrkaA/VpoqdPqi+m8Zw=="
+  },
+  "qweather.com": {
+    "url_city_id": "https://geoapi.qweather.com/v2/city/lookup",
+    "url_weather": "https://ne3qqm4n8w.re.qweatherapi.com/v7/weather/now",
+    "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now",
+    "api_key": "UJqs6hD9P/+8QnBk4PV7ADjG4ukABhVPRgwcBnaSK3PgBmAdC+8beDSJhv+GUUBeOm2kGBtXCe0CS7MRfQo+RQ=="
+  },
+  "www.mxnzp.com": {
+    "today_in_history": {
+      "url": "https://www.mxnzp.com/api/history/today",
+      "app_id": "inlJr5b/NoFqLQ1own3mMpywzCKeeA04aEbGBrYqM4dcPkIft433M7kfjOgLEW5T",
+      "app_secret": "/JP9qIyMCz8QulhW07LXnF+PJoBQdnY8DI7XkRN5aQRg/p0GdVHoGSrgPj5+dN5xgYel/A8v+Xa+dr50h7Ij+w=="
+    },
+    "holiday_solar_term": {
+      "url": "https://www.mxnzp.com/api/holiday/single",
+      "app_id": "hwopTGKqUdvvbUxkch1sFU1tjaHkett3LaM2L1+eAX83wIKuWNBTUWPHGVgGL44g",
+      "app_secret": "ahROFC0MQA6zbndfGekLrI4PBkEEA0s0YElEtczdBz9Ce+gt95We7iE2BmakfVrwuTjXQfYjWUPPJL1cUV2gVg=="
+    }
+  },
+  "open.iciba.com": "https://open.iciba.com/dsapi/",
+  "check_update_url": "RwHuOTos+0Na1QsAxpLHYTkZv8I9aCZwhma5Q+hdywGoCRpZRi0KXYY7azdOip1XH0ghhiWH5V5WWKx7XatXAnT3voLKzKv69Wh2/63Ii2g="
+}
