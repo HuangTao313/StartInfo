@@ -4,12 +4,8 @@ import zhdate
 import asyncio
 import aiohttp
 import json
-import lib
+from . import ht_lib as lib
 
-# 初始化日志记录器
-log = lib.log
-# 初始化文件读取
-file = lib.file
 # 获取api信息
 api = lib.read_json(lib.API_PATH)
 # 获取emoji
@@ -82,7 +78,7 @@ def get_date() -> dict[str, str] | bool:
         return data
 
     except Exception as e:
-        log.error(f'获取时间信息失败：{str(e)}')
+        lib.log.error(f'获取时间信息失败：{str(e)}')
         return False
 
 # 获取时间信息
@@ -99,34 +95,42 @@ def get_time() -> dict[str, str] | bool:
         return data
     except Exception as e:
         error_msg = f'获取时间信息失败：{str(e)}'
-        log.error(error_msg)
+        lib.log.error(error_msg)
         return False
 
 # 获取天气和空气质量
 # 获取天气emoji
 def get_weather_emoji(weather_type) -> str:
-    weather_type = str(weather_type)
-    # 尝试寻找相匹配的天气emoji
-    emoji = weather_emoji.get(str(weather_type))
-    if emoji == None:
-    # 未找到，使用通用emoji
-        if '雨' in weather_type:
-            emoji = weather_emoji['雨']
-        elif '雪' in weather_type:
-            emoji = weather_emoji['雪']
-        # 不匹配
-        else:
-            emoji = None
-    # 输出emoji
-    return emoji
+    weather_type = str(weather_type).strip()
 
+    # 1. 精确匹配
+    emoji = weather_emoji.get(weather_type)
+    if emoji is not None:
+        return emoji
+
+    # 2. 关键词回退：优先级可调整
+    if '雨' in weather_type:
+        # 优先使用“小雨”的 emoji 作为通用雨
+        return weather_emoji.get('小雨', '🌧️')
+    elif '雪' in weather_type:
+        # 优先使用“小雪”的 emoji 作为通用雪
+        return weather_emoji.get('小雪', '❄️')
+    elif '雷' in weather_type or '电' in weather_type:
+        return weather_emoji.get('雷阵雨', '⛈️')
+    elif '雾' in weather_type or '霾' in weather_type:
+        return weather_emoji.get('雾', '🌫️')
+    elif '沙尘' in weather_type or '扬沙' in weather_type:
+        return weather_emoji.get('沙尘暴', '💨')
+
+    # 3. 完全未知类型：返回默认天气（阴天）
+    return '☁️'
 # 获取天气和空气质量信息
 async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
     if lib.is_internet():
         if api != None:
-            city_name = file.read('Weather', 'city_name')
+            city_name = lib.file.read('Weather', 'city_name')
             api_key = lib.decrypt(api['qweather.com']['api_key'])
-            city_id = file.read('Weather', 'city_id')
+            city_id = lib.file.read('Weather', 'city_id')
             try:
                 # 1. 创建异步HTTP客户端
                 async with aiohttp.ClientSession() as session:
@@ -182,17 +186,17 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
                         return data
 
                     else:
-                        log.error('天气：获取失败')
+                        lib.log.error('天气：获取失败')
                         return False
 
             except Exception as e:
-                log.error(f'获取天气信息失败：{str(e)}')
+                lib.log.error(f'获取天气信息失败：{str(e)}')
                 return False
         else:
-            log.error('天气：获取api_key失败')
+            lib.log.error('天气：获取api_key失败')
             return False
     else:
-        log.warning('天气：请联网后获取')
+        lib.log.warning('天气：请联网后获取')
         return False
 
 # 获取历史上的今天信息
@@ -225,20 +229,20 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
                                 }
                                 return data
                             else:
-                                log.error('历史上的今天：没有找到历史上的今天的信息')
+                                lib.log.error('历史上的今天：没有找到历史上的今天的信息')
                                 return False
                         else:
-                            log.error('历史上的今天：请求失败')
+                            lib.log.error('历史上的今天：请求失败')
                             return False
 
             except aiohttp.ClientError as e:
-                log.error(f'历史上的今天：请求异常 - {str(e)}')
+                lib.log.error(f'历史上的今天：请求异常 - {str(e)}')
                 return False
         else:
-            log.error('历史上的今天：获取api_key失败')
+            lib.log.error('历史上的今天：获取api_key失败')
             return False
     else:
-        log.warning('历史上的今天：请联网后获取')
+        lib.log.warning('历史上的今天：请联网后获取')
         return False
 
 # 查询节假日和24节气信息
@@ -273,17 +277,17 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
                             return {'holiday': holiday, 'solar_term': solar_term}
 
                         else:
-                            log.error('节假日和24节气信息：请求失败')
+                            lib.log.error('节假日和24节气信息：请求失败')
                             return False
 
             except aiohttp.ClientError as e:  # 修正2：使用aiohttp异常类型
-                log.error(f'节假日和24节气信息：请求异常 - {str(e)}')
+                lib.log.error(f'节假日和24节气信息：请求异常 - {str(e)}')
                 return False
         else:
-            log.error('节假日和24节气信息：获取api_key失败')
+            lib.log.error('节假日和24节气信息：获取api_key失败')
             return False
     else:
-        log.warning('节假日和24节气信息：请联网后获取')
+        lib.log.warning('节假日和24节气信息：请联网后获取')
         return False
 
 # 获取金山词霸每日一言
@@ -306,10 +310,10 @@ async def get_every_day_words() -> dict[str, str] | bool:
                     }
 
         except Exception as e:
-            log.error(f'金山词霸每日一言：获取失败：{e}')
+            lib.log.error(f'金山词霸每日一言：获取失败：{e}')
             return False
     else:
-        log.warning('金山词霸每日一言：请联网后获取')
+        lib.log.warning('金山词霸每日一言：请联网后获取')
         return False
 
 # 获取问候语
@@ -334,14 +338,14 @@ async def get_all_data() -> list[dict[str,str]] | bool:
 
     # 处理异常
     except Exception as e:
-        log.error(f'获取所有信息：获取失败：{e}')
+        lib.log.error(f'获取所有信息：获取失败：{e}')
         return False
 
 # 格式化数据
 # 将原始数据转化为缓存格式
 def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
     if len(data) != 5:
-        log.error('缓存格式转换失败：数据长度不合法')
+        lib.log.error('缓存格式转换失败：数据长度不合法')
         return False
 
     try:
@@ -357,13 +361,13 @@ def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
             }
         }
     except Exception as e:
-        log.error(f'缓存格式转换出错: {e}')
+        lib.log.error(f'缓存格式转换出错: {e}')
         return False
 
 # 将原始数据转化为展示格式
 def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
     if len(data) != 5:
-        log.error('展示格式转换失败：数据长度不合法')
+        lib.log.error('展示格式转换失败：数据长度不合法')
         return False
 
     try:
@@ -391,13 +395,24 @@ def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
         return info
 
     except Exception as e:
-        log.error(f'展示格式转换出错: {e}')
+        lib.log.error(f'展示格式转换出错: {e}')
         return False
 
-# 将json数据转化为jinjia2格式
 def format_json_to_jinja2(json_data: dict) -> dict | bool:
     """从 data.json 的嵌套结构转换为 Jinja2 单层字典"""
     try:
+        # 检查输入是否为有效字典
+        if not isinstance(json_data, dict):
+            lib.log.warning(f'format_json_to_jinja2: 输入数据类型错误: {type(json_data)}')
+            # 返回一个基本的字典而不是 False
+            return {key: '获取失败' for key in [
+                'greeting', 'date', 'lunar_date', 'time', 'time_emoji', 'weekday',
+                'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
+                'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
+                'humidity', 'wind_direction', 'wind_speed', 'air_quality',
+                'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+            ]}
+
         date = json_data.get('date', {})
         weather = json_data.get('weather', {})
         other = json_data.get('other', {})
@@ -414,15 +429,22 @@ def format_json_to_jinja2(json_data: dict) -> dict | bool:
         if (time_info := get_time()):
             info.update(time_info)
 
-        # 从嵌套结构提取字段
-        info.update(date)
-        info.update(weather)
-        info.update(other)
+        # 安全合并各部分数据（仅当它们是字典时才合并）
+        for data_part in [date, weather, other]:
+            if isinstance(data_part, dict):
+                info.update(data_part)
 
         info.pop('get_time', None)      # 隐藏时间戳
         info.pop('get_date', None)      # 隐藏存储用日期
         return info
 
     except Exception as e:
-        log.error(f'JSON 转展示格式出错: {e}')
-        return False
+        lib.log.error(f'JSON 转展示格式出错: {e}')
+        # 返回一个基本的字典而不是 False
+        return {key: '获取失败' for key in [
+            'greeting', 'date', 'lunar_date', 'time', 'time_emoji', 'weekday',
+            'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
+            'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
+            'humidity', 'wind_direction', 'wind_speed', 'air_quality',
+            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+        ]}

@@ -5,20 +5,20 @@ import sys
 import time
 import random
 import asyncio
-import subprocess
-import zipfile
-import aiohttp
 from pathlib import Path
 import shutil
-import lib
-import init_app
-import get_data
-import ui
+import core.ht_lib as lib
+import core.init_app as init_app
+import core.get_data as get_data
+import core.ui as ui
 
 # 初始化日志管理器
 log = lib.log
 # 初始化文件读写
 file = lib.file
+# 更新器路径
+UPDATER_PATH = lib.MAIN_PATH / 'updater.exe'
+
 # 当前日期
 date = int(time.strftime("%Y%m%d", time.localtime()))
 if file.read('Data', 'other', 'get_date') != date:
@@ -50,66 +50,9 @@ def start_main() -> None:
         error_text = f'启动主程序失败：{str(e)}'
         log.error(error_text)
         ui.error_dialog(error_text)
+    sys.exit()
 
-# async def check_update() -> bool:
-#     """
-#     异步下载 JSON 文件并保存到指定路径
-#
-#     :param url: JSON 文件的 URL
-#     :param save_path: 保存的本地路径 (Path 对象)
-#     :return: 是否成功
-#     """
-#     # 确保父目录存在
-#     VERSION_PATH = lib.MAIN_PATH / 'data'
-#     VERSION_FILE_PATH = VERSION_PATH / 'version.json'
-#
-#     try:
-#         # 双重解密URL - 添加错误处理
-#         api_data = lib.read_json(lib.API_PATH)
-#         if 'check_update_url' not in api_data:
-#             log.error("API配置中缺少check_update_url字段")
-#             return False
-#
-#         url = lib.decrypt(lib.read_json(lib.API_PATH)['check_update_url'])
-#     except Exception as e:
-#         log.error(f"解密更新URL失败: {e}")
-#         return False
-#
-#     # 创建目录
-#     try:
-#         VERSION_PATH.mkdir(parents=True, exist_ok=True)
-#     except Exception as e:
-#         log.error(f"创建版本目录失败: {e}")
-#         return False
-#
-#     try:
-#         async with aiohttp.ClientSession() as session:
-#             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
-#                 response.raise_for_status()
-#
-#                 # 直接以二进制模式写入（保留原始内容）
-#                 with open(VERSION_FILE_PATH, 'wb') as f:
-#                     async for chunk in response.content.iter_chunked(8192):
-#                         f.write(chunk)
-#
-#         log.info(f"JSON 已保存到: {VERSION_FILE_PATH}")
-#         return True
-#
-#     except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-#         error_msg = f"检查更新失败: {e}"
-#         log.error(error_msg)
-#         print(error_msg)
-#         return False
-#     except IOError as e:
-#         error_msg = f"文件写入失败: {e}"
-#         log.error(error_msg)
-#         print(error_msg)
-#         return False
-#     except Exception as e:
-#         error_msg = f"检查更新过程中发生未知错误: {e}"
-#         log.error(error_msg)
-#         print(error_msg)
-#         return False
+
 
 
 # 主程序
@@ -125,14 +68,11 @@ def main():
             state = '已添加到开机启动项'
             a = '删除从开机启动项'
         message = \
-            f'''    {lib.TITLE}
-    
-        当前状态:{state}
-    
-        (∩^o^)⊃━☆ﾟ.*･｡
-    
-        主程序路径:
-        {lib.EXE_PATH}'''
+f'''{lib.TITLE}
+
+当前状态:{state}
+
+(∩^o^)⊃━☆ﾟ.*･｡'''
         choices = [a, '打开开机启动项文件夹', '启动主程序', '导入模版', '模板列表', '重新定位并更新天气数据',
                  '关于', '卸载', '关闭']
         # 彩蛋设置 你被骗了
@@ -167,7 +107,7 @@ def main():
                 start_main()
 
             case '导入模版':
-                file_path = ui.file_dialog("选择模版文件", "", "jinja2模板文件 (*.j2);;文本文件(兼容) (*.txt)")
+                file_path = ui.file_dialog("选择模版文件", "", "jinja2模板文件 (*.j2)")
                 if file_path != None:
                     template_path = Path(file_path)
                     # 检查模板文件是否存在
@@ -224,10 +164,10 @@ def main():
                     times = 6
 
                 if times <= 5:
-                    city_name = asyncio.run(init_app.init_app())
-                    if city_name and True in city_name:
+                    city_name : list = asyncio.run(init_app.init_app())
+                    if True in city_name:
                         weather_air = asyncio.run(get_data.get_weather_air_quality())
-                        if weather_air:
+                        if isinstance(weather_air, dict):
                             file.update('Data', 'weather', update_dict=weather_air)
                             log.info(f'设置-已重新定位到：{city_name[1]}并更新天气数据')
                             yn = ui.dialog(lib.TITLE,f'已重新进行IP定位：{city_name[1]}\n是否立即重启主程序？\n(｡・ω・｡)',['是','否'])
@@ -250,15 +190,29 @@ def main():
                     log.error(f'写入重置次数数据失败: {e}')
 
             case '关于':
-                text = lib.CHANGELOG_PATH.read_text(encoding='utf-8')
-                yn = ui.dialog(lib.TITLE, text, ['确认', '检查更新(开发中)'])
+                text = lib.CURRENT_VERSION_JSON.get('changelog','更新日志获取失败')
+                yn = ui.dialog(lib.TITLE, text, ['确认', '检查更新'])
                 if not yn:
-                    pass
+                    # 检查更新器是否存在
+                    if UPDATER_PATH.exists():
+                        try:
+                            os.startfile(UPDATER_PATH)
+
+                        except Exception as e:
+                            log.error(f'打开更新程序失败: {e}')
+                            ui.error_dialog(str(e))
+
+                    else:
+                        log.error('设置-未找到更新程序')
+                        ui.error_dialog('未找到更新程序')
+
+
 
             case '卸载':
                 if lib.UNINS_PATH.exists():
                     log.info('设置-已打开卸载程序')
                     os.startfile(lib.UNINS_PATH)
+                    sys.exit()
                 else:
                     log.error('设置-未找到卸载程序')
                     ui.error_dialog('未找到卸载程序')
@@ -288,85 +242,15 @@ def main():
                 ui.app_manager.quit()
                 sys.exit()
 
-# 下载文件
-# def download_file(url: str, file_name: str) -> bool:
-#     """使用aria2下载文件（带断点续传）"""
-#     # 检测下载缓存文件夹是否存在
-#     if not lib.DOWNLOAD_PATH.exists():
-#         lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
-#     # 检测Aria2可执行文件是否存在
-#     if not lib.ARIA2_PATH.exists():
-#         log.error(f"Aria2可执行文件不存在: {lib.ARIA2_PATH}")
-#         return False
-#
-#     max_connections = '4'
-#     cmd = [
-#         str(lib.ARIA2_PATH),
-#         '-d', str(lib.DOWNLOAD_PATH),
-#         '-o', file_name,
-#         '-x', max_connections,
-#         '-s', max_connections,
-#         '-k', '1M',
-#         url
-#     ]
-#
-#     try:
-#         log.info(f'下载器-开始下载: {url} -> {file_name}')
-#         subprocess.run(cmd, check=True, text=True, capture_output=True)
-#         log.info(f'下载器-下载完成: {file_name}')
-#         return True
-#     except subprocess.CalledProcessError as e:
-#         log.error(f'下载失败 (退出码 {e.returncode}): {e.stderr.strip() or e.stdout.strip()}')
-#         return False
-#     except Exception as e:
-#         log.error(f'下载过程中发生异常: {str(e)}')
-#         return False
-#
-#
-# def unzip_file(zip_path: str, extract_to: str) -> bool:
-#     """解压ZIP文件到指定目录（支持中文文件名 - 关键修复！）"""
-#     os.makedirs(extract_to, exist_ok=True)
-#     try:
-#         # 重要：移除 encoding 参数！
-#         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#             # 遍历文件列表并修复中文文件名
-#             for file in zip_ref.namelist():
-#                 # 关键修复：处理中文文件名
-#                 try:
-#                     # 将文件名从CP437编码转换为GBK（Windows系统默认编码）
-#                     fixed_name = file.encode('cp437').decode('gbk', errors='replace')
-#                 except Exception as e:
-#                     # 备用方案：尝试UTF-8
-#                     try:
-#                         fixed_name = file.encode('cp437').decode('utf-8', errors='replace')
-#                     except:
-#                         fixed_name = file  # 无法转换则保留原始名称
-#
-#                 # 构建目标路径
-#                 target_path = os.path.join(extract_to, fixed_name)
-#                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
-#
-#                 # 跳过目录条目（以'/'结尾）
-#                 if file.endswith('/'):
-#                     continue
-#
-#                 # 解压文件
-#                 with zip_ref.open(file) as source, open(target_path, 'wb') as target:
-#                     target.write(source.read())
-#
-#             log.info(f" 解压成功! 共 {len(zip_ref.namelist())} 个文件解压到: {extract_to}")
-#             return True
-#     except Exception as e:
-#         log.error(f"解压失败: {str(e)}")
-#         return False
-
 if __name__ == "__main__":
     try:
         # 初始化UI
-        app = ui.app_manager.init_app()
+        ui.app_manager.init_app()
         # 弹出主窗口
         main()
+        app.quit()
         ui.app_manager.quit()
+
     except Exception as e:
         log.error(str(e))
         ui.error_dialog(str(e))

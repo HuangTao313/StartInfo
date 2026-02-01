@@ -2,14 +2,10 @@ from typing import Any
 import aiohttp
 import asyncio
 from win32com.client import Dispatch
-import lib
+from . import ht_lib as lib
 
 # 获取api信息
 api = lib.read_json(lib.API_PATH)
-# 初始化日志记录器
-log = lib.log
-# 初始化文件读写
-file = lib.file
 
 # IP定位
 async def get_ip_location() -> tuple[Any] | bool | dict[str, bool | str]:
@@ -44,8 +40,8 @@ async def init_app():
             # 使用IP定位并缓存
             city_name = await get_ip_location()  # 假设这是你上面写的异步IP定位函数
             if city_name != False:
-                log.info(f'程序初始化，已定位到城市：{city_name}')
-                file.write('Weather', 'city_name', value=city_name)
+                lib.log.info(f'程序初始化，已定位到城市：{city_name}')
+                lib.file.write('Weather', 'city_name', value=city_name)
 
                 # 获取city_id并缓存
                 api_key = lib.decrypt(api['qweather.com']['api_key'])
@@ -64,19 +60,19 @@ async def init_app():
 
                 # 提取 city_id
                 city_id = city_data.get('location', [{}])[0].get('id', '')
-                file.write('Weather', 'city_id', value=city_id)
-                log.info(f'已获取城市ID：{city_id}')
+                lib.file.write('Weather', 'city_id', value=city_id)
+                lib.log.info(f'已获取城市ID：{city_id}')
                 return [True,city_name]
 
             else:
-                log.error('程序初始化失败：无法获取位置信息')
+                lib.log.error('程序初始化失败：无法获取位置信息')
                 return False
 
         except Exception as e:
-            log.error(f'程序初始化失败：{str(e)}')
+            lib.log.error(f'程序初始化失败：{str(e)}')
             return False
     else:
-        log.warning('程序初始化失败：请检查网络连接')
+        lib.log.warning('程序初始化失败：请检查网络连接')
         return False
 
 # 初始化/修复缓存文件
@@ -134,10 +130,10 @@ def create_shortcut() -> bool:
         shortcut.Arguments = '--startup'
         shortcut.WorkingDirectory = str(lib.MAIN_PATH)  # 设置工作目录
         shortcut.save()
-        log.info(f'快捷方式已创建并移动到启动文件夹: {lib.SHORTCUT_PATH}')
+        lib.log.info(f'快捷方式已创建并移动到启动文件夹: {lib.SHORTCUT_PATH}')
         return True
     except Exception as e:
-        log.error(f'创建快捷方式失败: {str(e)}')
+        lib.log.error(f'创建快捷方式失败: {str(e)}')
         return False
 
 
@@ -155,14 +151,14 @@ def is_shortcut_exist() -> bool:
         # 检查快捷方式的目标路径是否与指定的目标路径一致
         shell = Dispatch('WScript.Shell')
         shortcut = shell.CreateShortCut(str(lib.SHORTCUT_PATH))
-        if shortcut.Targetpath == lib.EXE_PATH:
-            log.info(f'快捷方式已存在，且目标路径正确: {lib.SHORTCUT_PATH}')
+        if shortcut.Targetpath == str(lib.EXE_PATH):
+            lib.log.info(f'快捷方式已存在，且目标路径正确: {lib.SHORTCUT_PATH}')
             return True
         else:
-            log.info(f'快捷方式已存在，但目标路径不匹配: {lib.SHORTCUT_PATH}')
+            lib.log.info(f'快捷方式已存在，但目标路径不匹配: {lib.SHORTCUT_PATH}')
             return False
     else:
-        log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+        lib.log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
         return False
 
 # 删除开机启动项
@@ -175,10 +171,10 @@ def remove_shortcut() -> bool:
     try:
         if lib.SHORTCUT_PATH.exists():
             lib.SHORTCUT_PATH.unlink(missing_ok = True)
-            log.info(f'快捷方式已删除: {lib.SHORTCUT_PATH}')
+            lib.log.info(f'快捷方式已删除: {lib.SHORTCUT_PATH}')
         else:
-            log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+            lib.log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
         return True
     except Exception as e:
-        log.error(f'删除快捷方式时出错: {e}')
+        lib.log.error(f'删除快捷方式时出错: {e}')
         return False

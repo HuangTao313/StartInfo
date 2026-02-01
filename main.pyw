@@ -3,10 +3,10 @@ import time
 import sys
 import asyncio
 from jinja2 import Environment, FileSystemLoader
-import lib
-import init_app
-import get_data
-import ui
+import core.ht_lib as lib
+import core.init_app as init_app
+import core.get_data as get_data
+import core.ui as ui
 
 # 获取启动参数
 args = sys.argv
@@ -75,6 +75,7 @@ def main():
     date = int(time.strftime("%Y%m%d",time.localtime()))
     general_data_get_date = file.read('Data', 'other', 'get_date')
     weather_data_get_time = file.read('Data', 'weather', 'get_time')
+    weather_data_get_time = 0 if weather_data_get_time == None else weather_data_get_time
     # 如果一般数据已过期
     if general_data_get_date != date:
         # 次数重置
@@ -90,10 +91,19 @@ def main():
             jinja2_data['startup_times'] = lib.times('read')
             json_data = get_data.format_data_to_json(data)
             # 缓存数据
-            file.update('Data',update_dict=json_data)
-            # 加载模版
-            text = load_template(jinja2_data)
-            log.info('(启动模式：更新所有数据并缓存)')
+            if isinstance(json_data, dict):
+                file.update('Data',update_dict=json_data)
+                # 加载模版
+                text = load_template(jinja2_data)
+                log.info('(启动模式：更新所有数据并缓存)')
+
+            else:
+                start_mode = f'获取数据失败：\n{json_data}'
+                log.error(start_mode)
+                ui.error_dialog(start_mode)
+                app.quit()
+                sys.exit()
+
         # 如果未联网
         else:
             startup_times = lib.times('read')
@@ -120,8 +130,16 @@ def main():
             # 获取天气数据
             weather_data = asyncio.run(get_data.get_weather_air_quality())
             # 缓存数据
-            file.update('Data', 'weather', update_dict=weather_data)
-            start_mode = '(启动模式：更新天气数据并读取其他缓存数据)'
+            if isinstance(weather_data, dict):
+                file.update('Data', 'weather', update_dict=weather_data)
+                start_mode = '(启动模式：更新天气数据并读取其他缓存数据)'
+
+            else:
+                start_mode = f'天气数据获取失败：{weather_data}'
+                log.error(start_mode)
+                ui.error_dialog(f'天气数据获取失败：\n{weather_data}')
+                app.quit()
+                sys.exit()
 
         else:
             start_mode = '(启动模式：读取缓存数据)'
@@ -131,13 +149,22 @@ def main():
         # 格式化数据
         jinja2_data = get_data.format_json_to_jinja2(data)
         # 添加时间信息
-        jinja2_data | get_data.get_time()
-        # 添加开机次数信息
-        jinja2_data['startup_times'] = lib.times('read')
-        # 加载模版
-        text = load_template(jinja2_data)
-        log.info(start_mode)
-        # 检查是否为开机启动
+        if isinstance(jinja2_data, dict):
+            jinja2_data | get_data.get_time()
+            # 添加开机次数信息
+            jinja2_data['startup_times'] = lib.times('read')
+            # 加载模版
+            text = load_template(jinja2_data)
+            log.info(start_mode)
+            # 检查是否为开机启动
+
+        else:
+            start_mode = f'缓存数据读取失败：\n{jinja2_data}'
+            log.error(start_mode)
+            ui.error_dialog(start_mode)
+            app.quit()
+            sys.exit()
+
         is_auto_start = "--startup" in args
         if is_auto_start:
             # 次数自增
@@ -145,7 +172,7 @@ def main():
             log.info(f'启动次数已自增为{lib.times('read')}次')
 
     # 弹窗
-    box = ui.dialog(lib.TITLE,f'{text}',['确定','打开设置'])
+    box = ui.dialog(lib.TITLE,text,['确定','打开设置'])
     if not box:
         os.startfile(lib.SETTINGS_PATH)
         log.info('用户打开了设置，程序正常结束')
@@ -166,14 +193,16 @@ if __name__ == '__main__':
             ui.app_manager.quit()
             log.warning('检测到多开，请勿重复启动')
             sys.exit()
+
         # 正常启动
         else:
-            # 如果是安装后第一次启动
-            if file.read('General', 'is_first_startup'):
-                init()
             # 如果是更新后第一次启动
-            elif args == '--updated':
-                ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)')
+            if '--update' in args:
+                ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CHANGELOG_PATH.read_text(encoding="utf-8")}')
+
+            # 如果是安装后第一次启动
+            elif file.read('General', 'is_first_startup'):
+                init()
             main()
 
     except Exception as e:

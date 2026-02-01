@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 from qfluentwidgets import Dialog, Theme, setTheme
 import platform
 from typing import List
-from lib import LOG_PATH, TITLE ,log
+from . import ht_lib as lib
 
 class AppManager:
     """单例管理 QApplication 和主题"""
@@ -118,15 +118,15 @@ def error_dialog(text: str) -> None:
     yn = dialog("程序运行时发生错误╥﹏╥...", text, ['确定', '打开日志文件'])
     if not yn:
         try:
-            if LOG_PATH.exists():
-                os.startfile(LOG_PATH.parent)
-                os.startfile(LOG_PATH)
-                log.info(f'已打开日志文件: {LOG_PATH}')
+            if lib.LOG_PATH.exists():
+                os.startfile(lib.LOG_PATH.parent)
+                os.startfile(lib.LOG_PATH)
+                lib.log.info(f'已打开日志文件: {lib.LOG_PATH}')
 
             else:
-                log.error(f'打开日志文件失败-日志文件不存在: {LOG_PATH}')
-                dialog("打开日志文件失败╥﹏╥...", f"日志文件不存在: {LOG_PATH}")
+                lib.log.error(f'打开日志文件失败-日志文件不存在: {lib.LOG_PATH}')
+                dialog("打开日志文件失败╥﹏╥...", f"日志文件不存在: {lib.LOG_PATH}")
 
         except Exception as e:
-            log.error(f'打开日志文件失败: {e}')
+            lib.log.error(f'打开日志文件失败: {e}')
             dialog("打开日志文件失败╥﹏╥...", f"{e}")

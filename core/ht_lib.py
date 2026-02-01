@@ -1,3 +1,6 @@
+# =============================================================================
+# 导入区
+# =============================================================================
 import socket
 import sys
 import json
@@ -11,43 +14,103 @@ from pathlib import Path
 from loguru import logger
 from typing import Any, Dict
 
-# 获取文件路径
-MAIN_PATH = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 
-# === 数据文件路径 ===
-JSON_PATH = MAIN_PATH / 'data' / 'json' / 'data.json'            # data.json的路径
-API_PATH = MAIN_PATH / 'data' / 'json' / 'api.json'              # api_key.json的路径
-EMOJI_PATH = MAIN_PATH / 'data' / 'json' / 'emoji.json'          # emoji文件路径
-TEMPLATE_FOLDER_PATH = MAIN_PATH / 'data' / 'template'           # 模板文件夹路径
-CHANGELOG_PATH = MAIN_PATH / 'data' / 'changelog.txt'            # 更新日志路径
-# DOWNLOAD_PATH = MAIN_PATH / 'data' / 'download'                  # 下载文件夹
+# =============================================================================
+# 防重复导入保护（Nuitka 兼容）
+# =============================================================================
+if "core" in sys.modules and hasattr(sys.modules["core"], "lib"):
+    # 防止重复导入导致状态混乱
+    sys.modules[__name__] = sys.modules["core.lib"]
 
-# === 日志文件路径 ===
-LOG_PATH = MAIN_PATH / 'data' / 'log' / 'log.log'       # log.log的路径
+# =============================================================================
+# 路径与初始化函数
+# =============================================================================
+def get_main_path() -> Path:
+    """智能判断主程序目录"""
+    if getattr(sys, 'frozen', False):
+        # 打包后：exe 所在目录就是主目录
+        path = Path(sys.executable).parent
+    else:
+        # 开发时：可能是 ht_lib.py 所在目录（core/），也可能是主脚本目录
+        path = Path(__file__).parent.resolve()
 
-# === 可执行文件路径 ===
-EXE_PATH = MAIN_PATH / 'main.exe'                       # main.exe的路径
-SETTINGS_PATH = MAIN_PATH / 'settings.exe'              # settings.exe的路径
-# ARIA2_PATH = MAIN_PATH / 'data' / 'aria2' / 'aria2c.exe'
-UNINS_PATH = MAIN_PATH / 'unins000.exe'                 # 卸载程序的路径
+    # 如果路径以 'core' 结尾，说明我们在 core/ 里，要退回上一级
+    if path.name == "core":
+        path = path.parent
 
-# === 应用配置 ===
-VERSION = 'V20260124-Beta'                                   # 版本号
-TITLE = f'开机速览({VERSION})'                          # 全局标题
-SHORTCUT_NAME = '开机速览2.1.5'                         # 开机启动项名称
-# RELEASE_TIME = 1769247459                               # 发布时间(时间戳)
-WEATHER_DATA_EXPIRE_TIME = 1800                         # 天气数据过期时间(单位：秒)
+    return path
 
-# === 系统路径 ===
-STARTUP_PATH = Path.home() / 'AppData' / 'Roaming' / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup'  # 获取当前用户的启动文件夹路径
-SHORTCUT_PATH = STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'   # 开机启动项路径
+MAIN_PATH: Path = get_main_path()
 
-# === 安全配置 ===
-KEY = "387856766_2174509658_Ht."                        # 密钥
-
-# 初始化日志管理器
+# =============================================================================
+# 日志系统初始化
+# =============================================================================
+LOG_PATH: Path = MAIN_PATH / 'data' / 'log' / 'log.log'  # log.log 的路径
 logger.add(LOG_PATH, rotation='1 day', retention='3 days', encoding='utf-8')
 log = logger
+
+# =============================================================================
+# 工具函数
+# =============================================================================
+def read_json(file_path) -> dict:
+    """安全读取 JSON 文件"""
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            log.error(f"文件不存在: {file_path}")
+            return {}
+
+        content = path.read_text(encoding='utf-8')
+        return json.loads(content)
+
+    except json.JSONDecodeError as e:
+        log.error(f"JSON 格式错误: {e}")
+        return {}
+    except FileNotFoundError:
+        log.error(f"文件未找到: {file_path}")
+        return {}
+    except UnicodeDecodeError:
+        log.error(f"文件编码错误: {file_path}")
+        return {}
+
+# =============================================================================
+# 数据文件路径
+# =============================================================================
+JSON_PATH: Path = MAIN_PATH / 'data' / 'json' / 'data.json'              # data.json 的路径
+API_PATH: Path = MAIN_PATH / 'data' / 'json' / 'api.json'                # api_key.json 的路径
+EMOJI_PATH: Path = MAIN_PATH / 'data' / 'json' / 'emoji.json'            # emoji 文件路径
+TEMPLATE_FOLDER_PATH: Path = MAIN_PATH / 'data' / 'template'             # 模板文件夹路径
+CURRENT_VERSION_PATH: Path = MAIN_PATH / 'data' / 'json' / 'current_version.json'  # 本地版本文件路径
+CURRENT_VERSION_JSON: dict = read_json(CURRENT_VERSION_PATH)
+
+# =============================================================================
+# 可执行文件路径
+# =============================================================================
+EXE_PATH: Path = MAIN_PATH / 'main.exe'          # main.exe 的路径
+SETTINGS_PATH: Path = MAIN_PATH / 'settings.exe' # settings.exe 的路径
+UNINS_PATH: Path = MAIN_PATH / 'unins000.exe'    # 卸载程序的路径
+
+# =============================================================================
+# 应用配置
+# =============================================================================
+VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败')  # 版本号
+TITLE: str = f'开机速览({VERSION})'                                 # 全局标题
+SHORTCUT_NAME: str = f'开机速览{VERSION}'                            # 开机启动项名称
+WEATHER_DATA_EXPIRE_TIME: int = 1800                                # 天气数据过期时间(单位：秒)
+
+# =============================================================================
+# 系统路径
+# =============================================================================
+STARTUP_PATH: Path = (
+    Path.home() / 'AppData' / 'Roaming' / 'Microsoft' / 'Windows' /
+    'Start Menu' / 'Programs' / 'Startup'
+)  # 获取当前用户的启动文件夹路径
+SHORTCUT_PATH: Path = STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'  # 开机启动项路径
+
+# =============================================================================
+# 安全配置
+# =============================================================================
+KEY: str = "387856766_2174509658_Ht."  # 密钥
 
 # 检查网络连接情况
 # 模块级缓存变量（所有导入此模块的文件共享同一个缓存）
@@ -136,10 +199,33 @@ class JsonHandler:
         :param update_dict: 要合并的字典
         """
         current = self.data
-        for key in keys:
-            current = current.setdefault(key, {})
-        current.update(update_dict)
+        for key in keys[:-1]:  # 处理除最后一个键外的所有键
+            # 检查当前层级的值是否为字典类型，如果不是则重置为空字典
+            if not isinstance(current, dict):
+                current = {}
+            # 确保当前路径下的值是字典类型
+            if key not in current or not isinstance(current[key], dict):
+                current[key] = {}
+            current = current[key]
+
+        # 处理最后一个键
+        final_key = keys[-1]
+        if not isinstance(current, dict):
+            current = {}
+
+        # 检查update_dict是否为字典类型
+        if not isinstance(update_dict, dict):
+            log.warning(f"update_dict should be a dict, got {type(update_dict)}")
+            update_dict = {}
+
+        # 确保目标位置是字典类型，然后更新
+        if final_key not in current or not isinstance(current[final_key], dict):
+            current[final_key] = {}
+
+        current[final_key].update(update_dict)
         self._save()
+
+
 
     def _save(self):
         """保存数据到文件（自动创建目录）"""
@@ -172,48 +258,6 @@ class JsonHandler:
                 self.handler.data = self.original_data  # 回滚
             else:
                 self.handler._save()  # 保存
-
-# 读取单个json文件
-def read_json(file_path) -> dict:
-    """安全读取 JSON 文件"""
-    try:
-        path = Path(file_path)
-        if not path.exists():
-            log.error(f"文件不存在: {file_path}")
-            return {}
-
-        content = path.read_text(encoding='utf-8')
-        return json.loads(content)
-
-    except json.JSONDecodeError as e:
-        log.error(f"JSON 格式错误: {e}")
-        return {}
-    except FileNotFoundError:
-        log.error(f"文件未找到: {file_path}")
-        return {}
-    except UnicodeDecodeError:
-        log.error(f"文件编码错误: {file_path}")
-        return {}
-
-# def read(section, option):
-#     path = CACHE_PATH
-#     if not path.exists():
-#         return None
-#     conf = configparser.ConfigParser(interpolation=None)
-#     conf.read(path, encoding='utf-8')
-#     return conf[section][option] if conf.has_section(section) and conf.has_option(section, option) else None
-#
-# def write(section, option, value=''):
-#     path = CACHE_PATH
-#     path.parent.mkdir(parents=True, exist_ok=True)
-#     conf = configparser.ConfigParser(interpolation=None)
-#     if path.exists():
-#         conf.read(path, encoding='utf-8')
-#     if not conf.has_section(section):
-#         conf.add_section(section)
-#     conf[section][option] = value
-#     with open(path, 'w', encoding='utf-8') as f:
-#         conf.write(f)
 
 # 初始化data.json读写
 file = JsonHandler()
