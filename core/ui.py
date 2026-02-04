@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 from qfluentwidgets import Dialog, Theme, setTheme
 import platform
 from typing import List
+from pathlib import Path
 from . import ht_lib as lib
 
 class AppManager:
@@ -40,7 +41,7 @@ class AppManager:
             winreg.CloseKey(key)
             return Theme.LIGHT if value == 1 else Theme.DARK
         except Exception as e:
-            print(f"获取系统主题失败: {e}")
+            lib.log.error(f"获取系统主题失败: {e}")
             return Theme.DARK
 
     def get_app(self) -> QApplication:
@@ -91,7 +92,9 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     result = dialog.exec()
     return result
 
-def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") -> str | None:
+from pathlib import Path
+
+def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") -> Path | None:
     """
     文件选择对话框 - 使用单例 QApplication
 
@@ -102,15 +105,21 @@ def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") 
     """
     app_manager.get_app()
 
-    file_path, _ = QFileDialog.getOpenFileName(
+    # 解包 QFileDialog.getOpenFileName 的返回值
+    file_path_str, _ = QFileDialog.getOpenFileName(
         parent=None,  # 使用无父窗口
         caption=title,
         dir=directory,
         filter=filter
     )
 
-    # 如果用户未选择文件（取消操作），返回None
-    return file_path if file_path else None
+    # 如果用户未选择文件（取消操作），返回 None
+    if not file_path_str:
+        return None
+
+    # 将字符串转换为 Path 对象并返回
+    return Path(file_path_str)
+
 
 
 # 报错弹窗

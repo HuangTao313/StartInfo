@@ -127,7 +127,7 @@ def get_weather_emoji(weather_type) -> str:
 # 获取天气和空气质量信息
 async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
     if lib.is_internet():
-        if api != None:
+        if api is not None:
             city_name = lib.file.read('Weather', 'city_name')
             api_key = lib.decrypt(api['qweather.com']['api_key'])
             city_id = lib.file.read('Weather', 'city_id')
@@ -202,7 +202,7 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
 # 获取历史上的今天信息
 async def get_today_in_history() -> dict[str, str | Any] | bool:
     if lib.is_internet():
-        if api != None:
+        if api is not None:
             url = api['www.mxnzp.com']['today_in_history']['url']
             params = {
                 "args": 1,
@@ -248,7 +248,7 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
 # 查询节假日和24节气信息
 async def get_holiday_solar_term() ->  dict[str, str] | bool:
     if lib.is_internet():
-        if api != None:
+        if api is not None:
             current_time = time.localtime()
             formatted_time = time.strftime("%Y%m%d", current_time)
             solarTerms_params = {

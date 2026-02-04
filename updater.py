@@ -12,10 +12,12 @@ from pathlib import Path
 import core.ht_lib as lib
 import core.ui as ui
 
+# 显示导入
+import deps
+
 # ==================== 路径定义 ====================
 VERSION_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'version.json'  # 远程版本缓存
 CURRENT_VERSION_PATH: Path = lib.CURRENT_VERSION_PATH  # 本地已安装版本记录
-DOWNLOAD_PATH: Path = lib.MAIN_PATH / 'data' / 'download'
 log = lib.log
 
 
@@ -74,7 +76,7 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
     【注意】大文件分块计算，避免内存溢出
     """
     if not file_path.exists():
-        log.error(f"文件不存在: {file_path}")
+        log.error(f"更新器-文件不存在: {file_path}")
         return False
     sha256 = hashlib.sha256()
     try:
@@ -83,13 +85,13 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
                 sha256.update(chunk)
         actual = sha256.hexdigest().lower()
         if actual == expected_sha256.lower():
-            log.info(f"SHA256校验通过: {file_path.name}")
+            log.info(f"更新器-SHA256校验通过: {file_path.name}")
             return True
         else:
-            log.error(f"SHA256校验失败! 期望: {expected_sha256}, 实际: {actual}")
+            log.error(f"更新器-SHA256校验失败! 期望: {expected_sha256}, 实际: {actual}")
             return False
     except Exception as e:
-        log.error(f"SHA256校验异常: {e}")
+        log.error(f"更新器-SHA256校验异常: {e}")
         return False
 
 
@@ -103,13 +105,13 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
         show_progress: bool - 是否显示控制台进度条（默认True）
     【输出】Path | None - 成功返回完整路径，失败返回None
     【注意】
-      - 自动创建 DOWNLOAD_PATH
+      - 自动创建 lib.DOWNLOAD_PATH
       - 使用 aiohttp 流式下载（内存友好）
       - 支持实时控制台进度条
       - 返回 Path 对象便于后续操作
     """
-    DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
-    output_path = DOWNLOAD_PATH / filename
+    lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+    output_path = lib.DOWNLOAD_PATH / filename
 
     # 请求超时设置
     timeout = aiohttp.ClientTimeout(
@@ -119,7 +121,7 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
 
     try:
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url) as resp:
+            async with session.get(lib.decrypt(url)) as resp:
                 resp.raise_for_status()
 
                 # 获取文件总大小（用于进度计算）
@@ -140,15 +142,15 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
                 if show_progress:
                     print()  # 换行
 
-                log.info(f'下载器-下载完成: {filename} ({downloaded} bytes)')
+                log.info(f'更新器-下载完成: {filename} ({downloaded} bytes)')
                 return output_path
 
     except asyncio.TimeoutError:
-        log.error(f"下载超时 (300秒): {filename}")
+        log.error(f"更新器-下载超时 (300秒): {filename}")
     except aiohttp.ClientError as e:
-        log.error(f"HTTP下载错误: {e}")
+        log.error(f"更新器-HTTP下载错误: {e}")
     except Exception as e:
-        log.error(f"下载异常: {str(e)}")
+        log.error(f"更新器-下载异常: {str(e)}")
 
     # 下载失败，清理残缺文件
     if output_path.exists():
@@ -203,7 +205,7 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
       - 跳过复制 delete.json 本身
       - 严格保留目录结构
     """
-    temp_dir = DOWNLOAD_PATH / "update_temp"
+    temp_dir = lib.DOWNLOAD_PATH / "update_temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -228,10 +230,10 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
                             deleted_count += 1
                         except Exception as e:
                             log.warning(f"删除失败 {rel_path}: {e}")
-                log.info(f"根据 {delete_list_filename} 删除 {deleted_count} 项")
+                log.info(f"更新器-根据 {delete_list_filename} 删除 {deleted_count} 项")
                 delete_file.unlink()  # 立即清理，避免被复制
             except Exception as e:
-                log.error(f"处理删除列表失败: {e}")
+                log.error(f"更新器-处理删除列表失败: {e}")
                 return False
 
         # === 步骤3: 覆盖主程序目录（跳过 delete.json）===
@@ -256,25 +258,25 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
                 # 文件被占用（如 update.exe 正在运行）→ 标记待重启生效
                 pending_path = dest_path.with_suffix(dest_path.suffix + '.pending')
                 shutil.copy2(src_item, pending_path)
-                log.warning(f"文件被占用，标记待重启生效: {dest_path.name}")
+                log.warning(f"更新器-文件被占用，标记待重启生效: {dest_path.name}")
             except Exception as e:
-                log.error(f"覆盖文件失败 {rel_path}: {e}")
+                log.error(f"更新器-覆盖文件失败 {rel_path}: {e}")
                 return False
 
-        log.info(f"增量更新完成: 覆盖 {copied_count} 个文件")
+        log.info(f"更新器-增量更新完成: 覆盖 {copied_count} 个文件")
 
         return True
 
     except Exception as e:
-        log.error(f"应用增量更新异常: {e}")
+        log.error(f"更新器-应用增量更新异常: {e}")
         return False
     finally:
         # 清理临时目录
         if temp_dir.exists():
             try:
-                shutil.rmtree(DOWNLOAD_PATH)
+                shutil.rmtree(lib.DOWNLOAD_PATH)
             except Exception as e:
-                log.warning(f"清理临时目录失败: {e}")
+                log.warning(f"更新器-清理临时目录失败: {e}")
 
 
 def unzip_to_temp(zip_path: Path, extract_to: Path) -> bool:
@@ -310,10 +312,10 @@ def unzip_to_temp(zip_path: Path, extract_to: Path) -> bool:
 
                 with zip_ref.open(file) as source, open(target_path, 'wb') as target:
                     shutil.copyfileobj(source, target)
-        log.info(f"解压成功: {len(zip_ref.namelist())} 项 → {extract_to}")
+        log.info(f"更新器-解压成功: {len(zip_ref.namelist())} 项 → {extract_to}")
         return True
     except Exception as e:
-        log.error(f"解压失败: {e}")
+        log.error(f"更新器-解压失败: {e}")
         return False
 
 
@@ -333,16 +335,16 @@ def apply_full_update(installer_path: Path) -> None:
       - 确保 installer_path 是有效 Inno Setup 安装包
     """
     if not installer_path.exists():
-        log.critical(f"安装程序不存在: {installer_path}")
+        log.critical(f"更新器-安装程序不存在: {installer_path}")
         sys.exit(1)
 
-    log.info(f"启动完整安装程序: {installer_path.name}")
+    log.info(f"更新器-启动完整安装程序: {installer_path.name}")
     try:
         subprocess.Popen(['start', '', str(installer_path)], shell=True)
-        log.info("安装程序已启动，更新器即将退出")
+        log.info("更新器-安装程序已启动，更新器即将退出")
         sys.exit(0)  # ⚠️ 关键：立即释放文件锁
     except Exception as e:
-        log.critical(f"启动安装程序失败: {e}")
+        log.critical(f"更新器-启动安装程序失败: {e}")
         sys.exit(1)
 
 
@@ -360,7 +362,7 @@ def check_update() -> tuple[bool, dict]:
 
     # 读取远程版本
     if not VERSION_PATH.exists():
-        log.error("远程版本文件不存在，请先调用 get_version_file()")
+        log.error("更新器-远程版本文件不存在，请先调用 get_version_file()")
         return False, {}
 
     try:
@@ -368,15 +370,15 @@ def check_update() -> tuple[bool, dict]:
         remote_ts = remote.get('release_timestamp', 0)
         remote_ver = remote.get('version', '')
     except Exception as e:
-        log.error(f"解析远程版本文件失败: {e}")
+        log.error(f"更新器-解析远程版本文件失败: {e}")
         return False, {}
 
     # 版本比较
     if remote_ts <= current_ts:
-        log.info(f"已是最新版 (当前: {current_ver}, 远程: {remote_ver})")
+        log.info(f"更新器-已是最新版本(当前: {current_ver}, 远程: {remote_ver})")
         return False, {}
 
-    log.info(f"发现新版本! 当前: {current_ver} → 远程: {remote_ver}")
+    log.info(f"更新器-发现新版本! 当前: {current_ver} → 远程: {remote_ver}")
 
     # 决策分支
     if remote.get('force_full_update', False):
@@ -414,7 +416,7 @@ async def perform_update(update_info: dict) -> None:
     file_name = 'update_package.zip' if update_type_en == 'incremental' else 'StartInfo.exe'
 
     # 下载
-    log.info(f'准备{"增量" if update_type_en == "incremental" else "完整"}更新，正在下载...')
+    log.info(f'更新器-准备{"增量" if update_type_en == "incremental" else "完整"}更新，正在下载...')
     update_file_path = await download_file(update_info['url'], filename=file_name)
     if not update_file_path:
         ui.dialog('更新失败', '下载更新包时出错，请稍后重试。')
@@ -438,6 +440,16 @@ async def perform_update(update_info: dict) -> None:
     else:
         apply_full_update(update_file_path)  # 此函数会直接退出进程
 
+# 尝试回到设置
+def return_to_settings() -> None:
+    try:
+        subprocess.Popen(['start', '', str(lib.SETTINGS_PATH)], shell=True)
+
+    except Exception as e:
+        error_text = f'尝试回到设置主界面时出错\n{str(e)}'
+        log.error(f'更新器-{error_text}')
+        ui.error_dialog(error_text)
+
 if __name__ == '__main__':
     try:
         # 初始化UI
@@ -446,8 +458,8 @@ if __name__ == '__main__':
         if not VERSION_PATH.exists():
             if not asyncio.run(get_version_file()):
                 error_text = '无法获取远程版本信息，请检查网络连接'
-                log.error(error_text)
-                ui.dialog('获取版本信息失败', error_text)
+                log.error(f'更新器-{error_text}')
+                ui.error_dialog(f'获取版本信息失败{error_text}')
 
         else:
             # 存在，检查版本文件是否过期(过期时间：1小时)
@@ -455,8 +467,12 @@ if __name__ == '__main__':
             if int(time.time()) - version_data.get('get_time', 0) >= 3600:
                 if not asyncio.run(get_version_file()):
                     error_text = '无法获取远程版本信息，请检查网络连接'
-                    log.error(error_text)
-                    ui.dialog('获取版本信息失败', error_text)
+                    log.error(f'更新器-{error_text}')
+                    ui.error_dialog(f'获取版本信息失败{error_text}')
+                    # 尝试返回设置主界面
+                    return_to_settings()
+                    ui.app_manager.quit()
+                    sys.exit()
 
         # 检查联网状态
         if lib.is_internet():
@@ -470,17 +486,28 @@ if __name__ == '__main__':
 {update_info.get("changelog", "暂无更新日志")}'''
 
                 if not ui.dialog('更新器', text, ['立即更新', '取消更新']):
-                    log.info('用户取消更新')
+                    log.info('更新器-用户取消更新')
+                    # 尝试返回设置主界面
+                    return_to_settings()
                     ui.app_manager.quit()
                     sys.exit()
 
                 # 执行更新（逻辑已抽离）
                 asyncio.run(perform_update(update_info))
 
+            else:
+                log.info('更新器-已是最新版本')
+                ui.dialog(lib.TITLE, '更新器-已是最新版本')
+                # 尝试返回设置主界面
+                return_to_settings()
+                ui.app_manager.quit()
+                sys.exit()
 
 
     except Exception as e:
-        log.error(str(e))
+        log.error(f'更新器-{str(e)}')
         ui.error_dialog(str(e))
+        # 尝试返回设置主界面
+        return_to_settings()
         ui.app_manager.quit()
         sys.exit()

@@ -1,6 +1,5 @@
 from typing import Any
 import aiohttp
-import asyncio
 from win32com.client import Dispatch
 from . import ht_lib as lib
 
@@ -8,29 +7,30 @@ from . import ht_lib as lib
 api = lib.read_json(lib.API_PATH)
 
 # IP定位
-async def get_ip_location() -> tuple[Any] | bool | dict[str, bool | str]:
-    '''
-    使用高德地图 API 自动定位当前公网 IP 所在地
-
-    :param amap_key: 高德地图 Web 服务 API Key
-    '''
+async def get_ip_location() -> str | bool:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     'https://restapi.amap.com/v3/ip',
-                    params={'key': lib.decrypt(api['restapi.amap.com']['api_key']), 'output': 'json'}
+                    params={
+                        'key': lib.decrypt(api['restapi.amap.com']['api_key']),
+                        'output': 'json'
+                    }
             ) as resp:
                 data = await resp.json()
 
+                # ✅ 重要修改：记录高德返回的错误信息
                 if data.get('status') == '1':
-                    # 返回城市名称
                     city_name = data.get('city', '未知')
                     return city_name
-
                 else:
+                    # ✅ 关键：记录高德API返回的错误详情
+                    error_msg = data.get('info', '未知错误')
+                    lib.log.error(f"高德IP定位失败: {error_msg}")
                     return False
 
     except Exception as e:
+        lib.log.error(f"IP定位请求异常: {str(e)}")
         return False
 
 # 程序初始化

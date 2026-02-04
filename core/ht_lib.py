@@ -7,13 +7,13 @@ import json
 import ctypes
 import atexit
 import base64
+import shutil
 from ctypes.wintypes import HANDLE, DWORD, BOOL
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from pathlib import Path
 from loguru import logger
 from typing import Any, Dict
-
 
 # =============================================================================
 # 防重复导入保护（Nuitka 兼容）
@@ -106,6 +106,7 @@ STARTUP_PATH: Path = (
     'Start Menu' / 'Programs' / 'Startup'
 )  # 获取当前用户的启动文件夹路径
 SHORTCUT_PATH: Path = STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'  # 开机启动项路径
+DOWNLOAD_PATH: Path = MAIN_PATH / 'data' / 'download'    # 下载缓存路径
 
 # =============================================================================
 # 安全配置
@@ -164,7 +165,7 @@ class JsonHandler:
                 with open(self.file_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"加载JSON失败: {e}")
+                log.error(f"加载JSON失败: {e}")
         return {}
 
     def read(self, *keys: str) -> Any:
@@ -264,78 +265,6 @@ file = JsonHandler()
 # 当前模板文件路径
 TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / file.read('General', 'template_file')
 
-# 加密
-def encrypt(plaintext) -> str:
-    """加密字符串"""
-    cipher = AES.new(KEY.encode(), AES.MODE_CBC)
-    ciphertext = cipher.encrypt(pad(plaintext.encode(), AES.block_size))
-    return base64.b64encode(cipher.iv + ciphertext).decode('utf-8')
-
-# 解密
-def decrypt(ciphertext) -> str:
-    try:
-        if not ciphertext:
-            return ""
-
-        data = base64.b64decode(ciphertext)
-        if len(data) < AES.block_size:
-            raise ValueError("加密数据长度不足")
-
-        iv = data[:AES.block_size]
-        cipher = AES.new(KEY.encode(), AES.MODE_CBC, iv)
-        plaintext = unpad(cipher.decrypt(data[AES.block_size:]), AES.block_size)
-        return plaintext.decode('utf-8')
-
-    except Exception as e:
-        log.error(f"解密失败: {e}, 数据: {ciphertext}")
-        return ""  # 返回默认值而不是抛出异常
-
-
-# 次数自增函数
-def times(mode: str) -> int | None:
-    try:
-        if mode == 'reset':
-            file.write('General', 'startup_times', value = 1)
-
-        elif mode == 'read':
-            return file.read('General', 'startup_times')
-
-        elif mode == 'add':
-            new_times = file.read('General', 'startup_times')
-            file.write('General', 'startup_times', value = new_times + 1)
-
-    except Exception as e:
-        log.error(f"次数自增函数错误: {e}")
-
-# # 检查缓存文件
-# def check_cache() -> bool:
-#     # 只检查cache.ini是否存在（不再检查holidays.json）
-#     if cache_path.exists:
-#         # 检查cache.ini文件的完整性（原逻辑完全保留）
-#         i, i_2 = 0, 0
-#         options_states, holidays_states = [], []
-#         # Options
-#         while i < 6:
-#             if read('Options', Options[i]) != None:
-#                 options_states.append(True)
-#             else:
-#                 options_states.append(False)
-#             i += 1
-#         # Data
-#         while i_2 < 3:
-#             if read('Data', Data[i_2]) != None:
-#                 holidays_states.append(True)
-#             else:
-#                 holidays_states.append(False)
-#             i_2 += 1
-#         # 检查
-#         if False in options_states or False in holidays_states:
-#             return False
-#         else:
-#             return True
-#     else:
-#         return False
-
 # 禁止多开
 class SingleInstance:
     def __init__(self, name="Local\\MyAppMutex_12345678"):
@@ -364,19 +293,117 @@ class SingleInstance:
         """返回检测结果：True表示已有实例运行"""
         return not self.is_first
 
+# 加密
+def encrypt(plaintext) -> str:
+    """加密字符串"""
+    cipher = AES.new(KEY.encode(), AES.MODE_CBC)
+    ciphertext = cipher.encrypt(pad(plaintext.encode(), AES.block_size))
+    return base64.b64encode(cipher.iv + ciphertext).decode('utf-8')
 
-# if __name__ == '__main__':
-    # # 使用示例
-    # KEY = "387856766_2174509658_Ht."  # 您自己的密钥（建议至少16字节）
-    # text = "8aa148f399f3fc0a87166becddb0b3b4"
-    #
-    # encrypted = encrypt(text)
-    # decrypted = decrypt(encrypted)
-    #
-    # print("原始文本:", text)
-    # print("加密后:", encrypted)
-    # print("解密后:", decrypted)
-    # print(EXE_PATH)
-    #
-    # print(read_json(API_PATH))
-    # print(is_internet())
+# 解密
+def decrypt(ciphertext) -> str:
+    try:
+        if not ciphertext:
+            return ""
+
+        data = base64.b64decode(ciphertext)
+        if len(data) < AES.block_size:
+            raise ValueError("加密数据长度不足")
+
+        iv = data[:AES.block_size]
+        cipher = AES.new(KEY.encode(), AES.MODE_CBC, iv)
+        plaintext = unpad(cipher.decrypt(data[AES.block_size:]), AES.block_size)
+        return plaintext.decode('utf-8')
+
+    except Exception as e:
+        log.error(f"解密失败: {str(e)}, 数据: {ciphertext}")
+        return ""  # 返回默认值而不是抛出异常
+
+
+# 次数自增函数
+def times(mode: str) -> int | None:
+    try:
+        if mode == 'reset':
+            file.write('General', 'startup_times', value = 1)
+
+        elif mode == 'read':
+            return file.read('General', 'startup_times')
+
+        elif mode == 'add':
+            new_times = file.read('General', 'startup_times')
+            file.write('General', 'startup_times', value = new_times + 1)
+
+    except Exception as e:
+        log.error(f"次数自增函数错误: {str(e)}")
+
+# 导入模板
+def import_template(template_file_path: Path) -> tuple[bool, str]:
+    """
+    导入模板文件
+
+    :param template_file_path: 模板文件路径
+    :return: (是否成功, 提示信息)
+    """
+    # 检查传入的模板文件是否存在
+    if not template_file_path.exists():
+        error_text = f'模版文件{template_file_path.name}不存在'
+        log.error(error_text)
+        return False, error_text
+
+    # 自动创建模版文件夹(如果不存在)
+    TEMPLATE_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
+    new_template_file_path = TEMPLATE_FOLDER_PATH / template_file_path.name
+
+    # 如果模板已经导入，则提示用户
+    if new_template_file_path.exists():
+        warning_text = f'模版文件{template_file_path.name}已存在，请勿重复导入'
+        log.warning(warning_text)
+        return False, warning_text
+
+    # 导入模板
+    try:
+        shutil.copy(template_file_path, new_template_file_path)
+        info_text = f'模版文件已导入：{new_template_file_path.name}'
+        log.info(info_text)
+        return True, info_text
+    except Exception as e:
+        error_text = f'导入模版文件失败：{str(e)}'
+        log.error(error_text)
+        return False, error_text
+
+# 启用模板
+def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
+    """
+    启用模板文件
+
+    :param template_file_path: 模板文件路径（支持字符串或Path对象）
+    :return: (是否成功, 提示信息)
+    """
+    # 参数校验
+    if not template_file_path or not str(template_file_path).strip():
+        error_text = "模板文件路径不能为空"
+        log.error(error_text)
+        return False, error_text
+
+    # 统一转换为Path对象
+    if isinstance(template_file_path, str):
+        template_file_path = Path(template_file_path)
+        if not template_file_path.is_absolute():
+            template_file_path = TEMPLATE_FOLDER_PATH / template_file_path
+
+    # 检查文件是否存在
+    if not template_file_path.exists():
+        error_text = f'模版文件{template_file_path.name}不存在'
+        log.error(error_text)
+        return False, error_text
+
+    # 写入配置并启用模板
+    try:
+        file.write('General', 'template_file', value=template_file_path.name)
+        info_text = f'已启用模版文件{template_file_path.name}'
+        log.info(info_text)
+        return True, info_text
+    except Exception as e:
+        error_text = f'启用模版文件失败：{str(e)}'
+        log.error(error_text)
+        return False, error_text

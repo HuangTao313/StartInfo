@@ -12,7 +12,11 @@ import core.init_app as init_app
 import core.get_data as get_data
 import core.ui as ui
 
+# 显示导入
+import deps
+
 # 初始化日志管理器
+
 log = lib.log
 # 初始化文件读写
 file = lib.file
@@ -48,7 +52,7 @@ def start_main() -> None:
 
     except Exception as e:
         error_text = f'启动主程序失败：{str(e)}'
-        log.error(error_text)
+        log.error(f'设置{error_text}')
         ui.error_dialog(error_text)
     sys.exit()
 
@@ -73,8 +77,8 @@ f'''{lib.TITLE}
 当前状态:{state}
 
 (∩^o^)⊃━☆ﾟ.*･｡'''
-        choices = [a, '打开开机启动项文件夹', '启动主程序', '导入模版', '模板列表', '重新定位并更新天气数据',
-                 '关于', '卸载', '关闭']
+        choices = [a, '打开开机启动项文件夹', '启动主程序', '导入模版', '模板列表', '打开模板文件夹', '打开模板自定义文档', '重新定位并更新天气数据',
+                 '删除下载缓存', '关于', '卸载', '关闭']
         # 彩蛋设置 你被骗了
         if not file.read('Easter_egg', 'is_get'):
             # 如果成功触发
@@ -91,7 +95,7 @@ f'''{lib.TITLE}
             case '添加到开机启动项':
                 init_app.create_shortcut()
                 log.info('设置-已添加开机启动项')
-                ui.dialog(lib.TITLE, '已添加到开机启动项(・ω・)')
+                ui.dialog(lib.TITLE,  '已添加到开机启动项(・ω・)')
 
             case '打开开机启动项文件夹':
                 os.startfile(lib.STARTUP_PATH)
@@ -107,49 +111,59 @@ f'''{lib.TITLE}
                 start_main()
 
             case '导入模版':
-                file_path = ui.file_dialog("选择模版文件", "", "jinja2模板文件 (*.j2)")
-                if file_path != None:
-                    template_path = Path(file_path)
-                    # 检查模板文件是否存在
-                    if template_path.exists():
-                        # 自动创建模版文件夹(如果不存在) - 使用 parents=True 和 exist_ok=True 确保创建所有必要目录
-                        lib.TEMPLATE_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
+                template_file_path: Path = ui.file_dialog("选择模版文件", "", "jinja2模板文件 (*.j2)")
+                # 如果文件路径不为空
+                if template_file_path is not None:
+                    # 尝试导入模板
+                    is_success, text = lib.import_template(template_file_path)
+                    # 如果导入成功
+                    if is_success:
+                        # 询问用户是否立即激活模版
+                        if ui.dialog(lib.TITLE, f'已成功导入模板：{template_file_path.name}，是否立即启用？', ['是', '否']):
+                            is_activate_success, text = lib.activate_template(template_file_path)
+                            # 判断是否激活成功
+                            if is_activate_success:
+                                ui.dialog(lib.TITLE, text)
+                            else:
+                                ui.error_dialog(text)
 
-                        # 将用户选择的模板文件复制到模板文件夹
-                        new_template_path = lib.TEMPLATE_FOLDER_PATH / template_path.name
-                        # 如果模板已经导入，则提示用户
-                        if new_template_path.exists():
-                            warning_text = f'模版文件{template_path.name}已存在，请勿重复导入'
-                            ui.dialog(lib.TITLE, warning_text)
-                            log.warning(warning_text)
-
-                        else:
-                            # 导入模板
-                            try:
-                                shutil.copy(template_path, new_template_path)
-                                log.info(f'模版文件已导入：{new_template_path}')
-                                # 询问用户是否立即启用模版
-                                if ui.dialog(lib.TITLE, f'已导入模板{template_path.name}，是否立即启用？', ['是', '否']):
-                                    file.write('General', 'template_file', value=template_path.name)
-                                    # 尝试启动主程序
-                                    start_main()
-
-                            except Exception as e:
-                                log.error(f'导入模版文件失败：{e}')
-                                ui.dialog(lib.TITLE, f'导入模板失败：{str(e)}')
+                # 如果文件路径为空
                 else:
-                    log.info('用户取消了文件选择或选择的文件不存在')
+                    log.info('设置-用户取消了文件选择或选择的文件不存在')
                     ui.dialog(lib.TITLE, '请选择jinja2模板文件(*.j2)')
 
             case '模板列表':
                 template_files = [p.name for p in lib.TEMPLATE_FOLDER_PATH.glob("*.j2") if p.is_file()]
                 template_now = file.read('General', 'template_file')
                 choice = box.choicebox(f'请选择模板文件：\n当前模板文件：{template_now}', template_files)
-                if choice != None and choice != template_now:
-                    file.write('General', 'template_file', value=choice)
-                    log.info(f'设置-已切换模版文件：{choice}')
-                    if ui.dialog(lib.TITLE, f'已选择切换文件：{choice}\n是否立即启动主程序？', ['是','否']):
-                       start_main()
+                if choice is not None and choice != template_now:
+                    is_success, text = lib.activate_template(choice)
+                    # 如果成功启用
+                    if is_success:
+                        # 询问用户是否立即启动主程序
+                        if ui.dialog(lib.TITLE, f'{text}\n是否立即启动主程序？', ['是','否']):
+                           start_main()
+
+                    else:
+                        ui.error_dialog(text)
+
+            case '打开模板文件夹':
+                try:
+                    os.startfile(lib.TEMPLATE_FOLDER_PATH)
+
+                except Exception as e:
+                    error_text = f'打开模板文件夹失败：{str(e)}'
+                    log.error(f'设置{error_text}')
+                    ui.error_dialog(error_text)
+
+            case '打开模板自定义文档':
+                try:
+                    os.startfile(str(lib.TEMPLATE_FOLDER_PATH / '自定义模板文档.md'))
+
+                except Exception as e:
+                    error_text = f'打开模板自定义文档失败：{str(e)}'
+                    log.error(f'设置{error_text}')
+                    ui.error_dialog(error_text)
 
             case '重新定位并更新天气数据':
                 # 安全读取次数，处理可能的解密失败
@@ -160,7 +174,7 @@ f'''{lib.TITLE}
                     else:
                         times = 0  # 默认值
                 except (ValueError, TypeError):
-                    log.warning('解密次数数据失败，使用默认值6')
+                    log.warning('设置-解密次数数据失败，使用默认值6')
                     times = 6
 
                 if times <= 5:
@@ -187,26 +201,43 @@ f'''{lib.TITLE}
                 try:
                     file.write('General', 'data_reset_times', value=lib.encrypt(str(times + 1)))
                 except Exception as e:
-                    log.error(f'写入重置次数数据失败: {e}')
+                    log.error(f'设置-写入重置次数数据失败: {e}')
+
+            case '删除下载缓存':
+                # 检查下载缓存文件夹是否存在
+                if lib.DOWNLOAD_PATH.exists():
+                    # 尝试删除
+                    try:
+                        shutil.rmtree(lib.DOWNLOAD_PATH)
+                        ui.dialog(lib.TITLE, '已删除下载缓存')
+
+                    except Exception as e:
+                        error_text = f'删除下载缓存失败: {str(e)}'
+                        log.error(f'设置{error_text}')
+                        ui.error_dialog(error_text)
+
+                else:
+                    log.info('设置-未发现下载缓存')
+                    ui.dialog(lib.TITLE, '未发现下载缓存')
 
             case '关于':
-                text = lib.CURRENT_VERSION_JSON.get('changelog','更新日志获取失败')
+                text = f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date','获取发布日期失败')}\n{lib.CURRENT_VERSION_JSON.get('changelog','更新日志获取失败')}'
                 yn = ui.dialog(lib.TITLE, text, ['确认', '检查更新'])
                 if not yn:
                     # 检查更新器是否存在
                     if UPDATER_PATH.exists():
                         try:
                             os.startfile(UPDATER_PATH)
+                            ui.app_manager.quit()
+                            sys.exit()
 
                         except Exception as e:
-                            log.error(f'打开更新程序失败: {e}')
+                            log.error(f'设置-打开更新程序失败: {e}')
                             ui.error_dialog(str(e))
 
                     else:
                         log.error('设置-未找到更新程序')
                         ui.error_dialog('未找到更新程序')
-
-
 
             case '卸载':
                 if lib.UNINS_PATH.exists():
@@ -252,7 +283,7 @@ if __name__ == "__main__":
         ui.app_manager.quit()
 
     except Exception as e:
-        log.error(str(e))
+        log.error(f'设置-{str(e)}')
         ui.error_dialog(str(e))
         ui.app_manager.quit()
         sys.exit()
