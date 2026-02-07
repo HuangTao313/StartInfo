@@ -1,11 +1,9 @@
-# coding:utf-8
 import sys
 import os
 from PySide6.QtWidgets import QApplication, QFileDialog
 from qfluentwidgets import Dialog, Theme, setTheme
 import platform
 from typing import List
-from pathlib import Path
 from . import ht_lib as lib
 
 class AppManager:

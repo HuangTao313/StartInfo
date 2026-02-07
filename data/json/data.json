@@ -2,12 +2,12 @@
     "General": {
         "is_first_startup": true,
         "startup_times": "",
-        "data_reset_times": "",
-        "template_file": "basic.j2"
+        "data_reset_times": 0,
+        "template_file": "default.j2"
     },
     "Weather": {
-        "city_name": "黄石市",
-        "city_id": "101200601"
+        "city_name": "",
+        "city_id": ""
     },
     "Data": {
         "date": {

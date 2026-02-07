@@ -12,8 +12,6 @@ api = lib.read_json(lib.API_PATH)
 emoji = lib.read_json(lib.EMOJI_PATH)
 time_emoji = emoji['time']
 weather_emoji = emoji['weather']
-# 联网检测
-
 
 # 获取当前时间emoji
 def get_time_emoji(current_time) -> str:

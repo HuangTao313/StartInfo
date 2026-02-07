@@ -1,4 +1,3 @@
-from typing import Any
 import aiohttp
 from win32com.client import Dispatch
 from . import ht_lib as lib
@@ -8,6 +7,13 @@ api = lib.read_json(lib.API_PATH)
 
 # IP定位
 async def get_ip_location() -> str | bool:
+    """
+    使用高德地图 API 自动定位当前公网 IP 所在地
+
+    Returns:
+        str: 成功时返回城市名称（如"黄石市"、"恩施土家族苗族自治州"）
+        bool: 失败时返回 False
+    """
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -19,104 +25,110 @@ async def get_ip_location() -> str | bool:
             ) as resp:
                 data = await resp.json()
 
-                # ✅ 重要修改：记录高德返回的错误信息
                 if data.get('status') == '1':
-                    city_name = data.get('city', '未知')
-                    return city_name
+                    # 🔥 修复：处理高德返回空数组 [] 的情况
+                    raw_city = data.get('city', '')
+
+                    # 高德可能返回 []（空数组）或 ""（空字符串）或正常字符串
+                    if isinstance(raw_city, list):
+                        # 如果是数组，取第一个元素或设为空字符串
+                        city_name = raw_city[0].strip() if raw_city else ''
+                    elif isinstance(raw_city, str):
+                        # 如果是字符串，正常处理
+                        city_name = raw_city.strip()
+                    else:
+                        # 其他类型（理论上不应该出现）设为空字符串
+                        city_name = ''
+
+                    # 检查城市名是否有效
+                    if city_name and city_name != '未知':
+                        lib.log.info(f"程序初始化-高德IP定位成功: {city_name}")
+                        return city_name
+                    else:
+                        lib.warning(f"程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}")
+                        return False
                 else:
-                    # ✅ 关键：记录高德API返回的错误详情
+                    # API请求失败，记录详细错误信息
                     error_msg = data.get('info', '未知错误')
-                    lib.log.error(f"高德IP定位失败: {error_msg}")
+                    error_code = data.get('infocode', '无错误码')
+                    lib.log.error(f"程序初始化-高德IP定位失败: {error_msg} (错误码: {error_code})")
                     return False
 
     except Exception as e:
-        lib.log.error(f"IP定位请求异常: {str(e)}")
+        lib.log.error(f"程序初始化-IP定位请求异常: {str(e)}")
+        return False
+
+# 获取城市ID
+async def get_city_info_by_location() -> tuple[str, str] | bool:
+    """
+    通过IP定位获取实际城市名和city_id
+
+    Returns:
+        tuple[str, str]: (实际城市名, city_id)
+        bool: False 失败时返回
+    """
+    # 获取IP定位结果
+    initial_city = await get_ip_location()
+    if not initial_city:
+        return False
+
+    # 使用定位结果查询和风天气，获取实际城市名和ID
+    api_key = lib.decrypt(api['qweather.com']['api_key'])
+    city_url = api['qweather.com']['url_city_id']
+
+    params = {'key': api_key, 'location': initial_city, 'lang': 'zh'}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(city_url, params=params) as resp:
+                city_data = await resp.json()
+
+        location_list = city_data.get('location', [])
+        if not location_list:
+            lib.log.warning(f"和风天气未找到匹配的城市: {initial_city}")
+            return False
+
+        # 优先选择排名最高的城市
+        sorted_locations = sorted(location_list, key=lambda x: int(x.get('rank', '999')))
+        best_match = sorted_locations[0]
+        actual_city_name = best_match.get('name', initial_city)
+        city_id = best_match.get('id', '')
+
+        if city_id:
+            return (actual_city_name, city_id)
+        else:
+            return False
+
+    except Exception as e:
+        lib.log.error(f"获取城市信息时异常: {str(e)}")
         return False
 
 # 程序初始化
 async def init_app():
     if lib.is_internet():
         try:
-            # 使用IP定位并缓存
-            city_name = await get_ip_location()  # 假设这是你上面写的异步IP定位函数
-            if city_name != False:
-                lib.log.info(f'程序初始化，已定位到城市：{city_name}')
-                lib.file.write('Weather', 'city_name', value=city_name)
-
-                # 获取city_id并缓存
-                api_key = lib.decrypt(api['qweather.com']['api_key'])
-                city_url = api['qweather.com']['url_city_id']
-
-                # 使用 params 参数（自动处理 URL 编码）
-                params = {
-                    'key': api_key,
-                    'location': city_name,
-                    'lang': 'zh'
-                }
-
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(city_url, params=params) as resp:
-                        city_data = await resp.json()
-
-                # 提取 city_id
-                city_id = city_data.get('location', [{}])[0].get('id', '')
+            result = await get_city_info_by_location()
+            if result:
+                actual_city_name, city_id = result
+                lib.log.info(f'程序初始化，已定位到城市：{actual_city_name}')
+                lib.file.write('Weather', 'city_name', value=actual_city_name)
                 lib.file.write('Weather', 'city_id', value=city_id)
-                lib.log.info(f'已获取城市ID：{city_id}')
-                return [True,city_name]
+                lib.log.info(f'程序初始化-已获取城市ID：{city_id}')
+                return [True, actual_city_name]
 
             else:
-                lib.log.error('程序初始化失败：无法获取位置信息')
+                lib.log.error('程序初始化失败：无法获取位置信息或城市ID')
                 return False
 
         except Exception as e:
             lib.log.error(f'程序初始化失败：{str(e)}')
             return False
+
     else:
         lib.log.warning('程序初始化失败：请检查网络连接')
         return False
 
-# 初始化/修复缓存文件
-# Options = ['first_open', 'reset_times', 'reset_times_date', 'city_name', 'city_id', 'date']
-# Data = ['times','holiday_solar','text']
-# def repair_cache(args = None) -> None:
-#     # 初始化Options
-#     Options = ['first_open', 'reset_times', 'reset_times_date', 'city_name', 'city_id', 'date']
-#     # 初始化Options
-#     i = 0
-#     while i < 6:
-#         lib.write('Options', Options[i])
-#         i += 1
-#     # 初始化Data
-#     Data = ['times','holiday_solar','text']
-#     i_2 = 0
-#     while i_2 < 3:
-#         lib.write('Data', Data[i_2])
-#         i_2 += 1
-#     # 如果是初始化模式
-#     if args == 'new':
-#         easter_num = 1
-#         data = ['name', 'is_get', 'get_date', 'get_way']
-#         easter_name = ['你被骗了', '不听劝', '我全都要']
-#
-#         while easter_num <= 3:  # 外层循环控制 3 个彩蛋
-#             section_name = f'Easter_egg{easter_num}'  # 当前彩蛋的 section 名称
-#             name_index = easter_num - 1  # 当前彩蛋名称的索引
-#
-#             for key in data:  # 内层循环控制每个彩蛋的 4 个字段
-#                 if key == 'name':
-#                     text = easter_name[name_index]  # 获取对应的彩蛋名称
-#                 elif key == 'is_get':
-#                     text = 'False'
-#                 elif key == 'get_date':
-#                     text = '未获得'
-#                 elif key == 'get_way':
-#                     text = '？？？'
-#                 else:
-#                     text = ''  # 对于 get_date 和 get_way，写入空字符串
-#                 lib.write(section_name, key, text)  # 调用 write 函数写入配置
-#
-#             easter_num += 1  # 外层循环计数加 1
-
+# 创建快捷方式
 def create_shortcut() -> bool:
     '''
     创建快捷方式并移动到启动文件夹

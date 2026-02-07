@@ -66,6 +66,64 @@ async def get_version_file() -> bool:
 
 
 # ==================== 核心工具函数 ====================
+def _create_replace_script(pending_files: list, exe_path: Path) -> None:
+    """
+    【内部函数】创建临时替换脚本（.bat）
+    【输入】
+        pending_files: list - 待替换的 .pending 文件列表
+        exe_path: Path - 主程序路径（替换完成后启动）
+    【输出】无（创建脚本到 DOWNLOAD_PATH/replace_pending_files.bat）
+    【原理】
+      - 创建 Windows 批处理脚本（无需 Python 环境）
+      - 等待主进程退出 → 替换文件 → 启动主程序 → 自删除
+    【注意】
+      - 使用 .bat 而非 .py，兼容 Nuitka 打包后的环境
+    """
+    replace_script_path = lib.DOWNLOAD_PATH / 'replace_pending_files.bat'
+    lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)  # 确保目录存在
+
+    # 构建替换任务（bat 语法）
+    replace_tasks = []
+    for pending_file in pending_files:
+        target_file = pending_file.with_suffix('')  # 去掉 .pending 后缀
+        replace_tasks.append(f"""
+echo [替换中] {target_file.name}...
+if exist "{target_file}" del /f /q "{target_file}"
+move /y "{pending_file}" "{target_file}"
+echo [成功] {target_file.name} 已替换
+""")
+
+    script_content = f"""@echo off
+chcp 65001 > nul
+echo ====================================================
+echo 等待主程序退出...
+timeout /t 2 /nobreak > nul
+echo 开始替换文件...
+echo ====================================================
+
+{''.join(replace_tasks)}
+
+echo ====================================================
+echo 所有文件替换完成，正在启动主程序...
+echo ====================================================
+
+start "" "{exe_path}"
+echo [启动] 主程序已启动
+
+echo [清理] 替换脚本已删除
+del /f /q "%~f0"
+
+timeout /t 1 /nobreak > nul
+exit
+"""
+
+    with open(replace_script_path, 'w', encoding='gbk') as f:
+        f.write(script_content)
+
+    log.info(f"更新器-已创建替换脚本: {replace_script_path}")
+
+
+
 def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
     """
     【使用场景】下载文件后校验完整性
@@ -188,13 +246,13 @@ def _print_progress_bar(percent: int, downloaded: int, total: int):
     print(f"\r[{bar}] {percent:3d}% ({format_bytes(downloaded)} / {format_bytes(total)})", end='', flush=True)
 
 # ==================== 增量更新模块 ====================
-def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete.json") -> bool:
+def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete.json") -> tuple[bool, list[Path]]:
     """
     【使用场景】应用增量更新包（解压→删旧文件→覆盖→清理）
     【输入】
         zip_path: Path - 增量包路径
         delete_list_filename: str - 包内删除列表文件名（默认"delete.json"）
-    【输出】bool - True=更新成功
+    【输出】tuple[bool, list[Path]] - (是否成功, 待重启替换的文件列表)
     【流程】
       1. 解压到临时目录（自动处理中文路径）
       2. 读取 delete.json → 删除 MAIN_PATH 下对应文件/目录
@@ -207,6 +265,7 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
     """
     temp_dir = lib.DOWNLOAD_PATH / "update_temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
+    pending_files: list[Path] = []  # 记录待重启替换的文件
 
     try:
         # === 步骤1: 解压到临时目录（复用你的中文修复逻辑）===
@@ -255,21 +314,24 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
                 shutil.copy2(src_item, dest_path)
                 copied_count += 1
             except PermissionError:
-                # 文件被占用（如 update.exe 正在运行）→ 标记待重启生效
+                # 文件被占用（如 core.pyd 正在运行）→ 标记待重启生效
                 pending_path = dest_path.with_suffix(dest_path.suffix + '.pending')
                 shutil.copy2(src_item, pending_path)
+                pending_files.append(pending_path)  # 记录待替换文件
                 log.warning(f"更新器-文件被占用，标记待重启生效: {dest_path.name}")
             except Exception as e:
                 log.error(f"更新器-覆盖文件失败 {rel_path}: {e}")
                 return False
 
         log.info(f"更新器-增量更新完成: 覆盖 {copied_count} 个文件")
+        if pending_files:
+            log.info(f"更新器-待重启替换的文件: {[f.name for f in pending_files]}")
 
-        return True
+        return True, pending_files
 
     except Exception as e:
         log.error(f"更新器-应用增量更新异常: {e}")
-        return False
+        return False, []
     finally:
         # 清理临时目录
         if temp_dir.exists():
@@ -429,9 +491,19 @@ async def perform_update(update_info: dict) -> None:
 
     # 应用
     if update_type_en == 'incremental':
-        if apply_incremental_update(update_file_path):
-            ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get('version','版本号获取失败')}')
-            subprocess.Popen([lib.EXE_PATH, "--update"])
+        success, pending_files = apply_incremental_update(update_file_path)
+        if success:
+            if pending_files:
+                # 启动临时脚本处理待替换文件
+                _create_replace_script(pending_files, lib.EXE_PATH)
+                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version","版本号获取失败")}\n将在后台完成更新后自动重启...')
+
+                # 启动替换脚本并退出当前进程（释放文件锁）
+                replace_script = lib.DOWNLOAD_PATH / 'replace_pending_files.bat'
+                subprocess.Popen([str(replace_script)], shell=True)
+            else:
+                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version","版本号获取失败")}')
+                subprocess.Popen([lib.EXE_PATH, "--update"])
 
             ui.app_manager.quit()
             sys.exit()

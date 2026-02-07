@@ -10,7 +10,7 @@ import core.init_app as init_app
 import core.get_data as get_data
 import core.ui as ui
 
-# 显示导入
+# 显式导入
 import deps
 
 # 获取启动参数
@@ -24,7 +24,7 @@ file = lib.file
 def load_template(data: dict[str, str]) -> str | None:
     """加载并渲染模板（支持默认模板回退）"""
     env = Environment(loader=FileSystemLoader(str(lib.TEMPLATE_FOLDER_PATH)))
-    templates_to_try = [lib.TEMPLATE_PATH.name, 'basic.j2']
+    templates_to_try = [lib.TEMPLATE_PATH.name, 'default.j2']
 
     for template_name in templates_to_try:
         try:
@@ -44,13 +44,13 @@ def load_template(data: dict[str, str]) -> str | None:
                     ['加载默认模板', '打开模板文件夹']
                 )
                 if yn:
-                    lib.activate_template('basic.j2')
+                    lib.activate_template('default.j2')
                 if not yn:
                     os.startfile(lib.TEMPLATE_FOLDER_PATH)
                     app.quit()
                     sys.exit()
             # 如果是默认模板也加载失败，弹窗报错并记录日志
-            elif template_name == 'basic.j2':
+            elif template_name == 'default.j2':
                 error_text = f'默认模板加载失败：{str(e)}'
                 log.error(f'主程序-{error_text}')
                 ui.error_dialog(error_text)

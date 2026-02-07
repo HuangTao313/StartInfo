@@ -40,6 +40,7 @@ def get_main_path() -> Path:
 
     return path
 
+# 主目录
 MAIN_PATH: Path = get_main_path()
 
 # =============================================================================
