@@ -268,7 +268,7 @@ TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / file.read('General', 'template_file')
 
 # 禁止多开
 class SingleInstance:
-    def __init__(self, name="Local\\MyAppMutex_12345678"):
+    def __init__(self, name="Local\\StartInfo"):
         # 定义Windows API
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
         self._create_mutex = kernel32.CreateMutexW
@@ -283,11 +283,19 @@ class SingleInstance:
 
         # 创建互斥体
         self.handle = self._create_mutex(None, False, name)
+        # 如果 GetLastError 返回 183 (ERROR_ALREADY_EXISTS)，说明互斥体已存在
         self.is_first = not (self.handle is None or self._get_error() == 183)
 
-        # 自动清理
-        if self.is_first:
-            atexit.register(self._close_handle, self.handle)
+        # 自动清理 - 无论如何都注册清理，确保句柄被正确释放
+        atexit.register(self._close_handle, self.handle)
+
+    def __del__(self):
+        """析构函数，确保互斥体被释放"""
+        try:
+            if hasattr(self, 'handle') and self.handle:
+                self._close_handle(self.handle)
+        except:
+            pass
 
     @property
     def is_running(self):

@@ -1,9 +1,10 @@
 import sys
 import os
+import platform
 from PySide6.QtWidgets import QApplication, QFileDialog
 from qfluentwidgets import Dialog, Theme, setTheme
-import platform
 from typing import List
+from pathlib import Path
 from . import ht_lib as lib
 
 class AppManager:
@@ -21,10 +22,50 @@ class AppManager:
         """初始化 QApplication (只调用一次)"""
         if self._app is None:
             self._app = QApplication(sys.argv)
-            # 获取系统主题
-            self._system_theme = self._get_system_theme()
-            setTheme(self._system_theme)
+            # 应用用户选择的主题
+            self._apply_theme()
         return self._app
+
+    def _apply_theme(self):
+        """应用用户选择的主题"""
+        theme_mode = lib.file.read('General', 'theme') or 'dynamic'
+
+        if theme_mode == 'light':
+            setTheme(Theme.LIGHT)
+        elif theme_mode == 'dark':
+            setTheme(Theme.DARK)
+        else:  # 'dynamic' 或其他值，跟随系统
+            setTheme(self._get_system_theme())
+
+    @staticmethod
+    def refresh_theme(theme_mode: str = None):
+        """
+        刷新主题
+
+        :param theme_mode: 主题模式 ('light'/'dark'/'dynamic')，不传则从数据文件读取
+        """
+        if theme_mode is None:
+            theme_mode = lib.file.read('General', 'theme') or 'dynamic'
+
+        if theme_mode == 'light':
+            setTheme(Theme.LIGHT)
+        elif theme_mode == 'dark':
+            setTheme(Theme.DARK)
+        else:  # 'dynamic' 或其他值，跟随系统
+            # 获取系统主题
+            if platform.system() != "Windows":
+                setTheme(Theme.LIGHT)  # 非 Windows 系统默认浅色
+            else:
+                try:
+                    import winreg
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                         r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+                    value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                    winreg.CloseKey(key)
+                    setTheme(Theme.LIGHT if value == 1 else Theme.DARK)
+                except Exception as e:
+                    lib.log.error(f"获取系统主题失败: {e}")
+                    setTheme(Theme.DARK)
 
     def _get_system_theme(self) -> Theme:
         """获取系统主题 (深色/浅色)"""
@@ -58,7 +99,6 @@ class AppManager:
 # 全局 AppManager 实例
 app_manager = AppManager()
 
-
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """
     安全的消息框函数 - 使用单例 QApplication
@@ -90,8 +130,7 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     result = dialog.exec()
     return result
 
-from pathlib import Path
-
+# 文件选择对话框
 def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") -> Path | None:
     """
     文件选择对话框 - 使用单例 QApplication
@@ -117,8 +156,6 @@ def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") 
 
     # 将字符串转换为 Path 对象并返回
     return Path(file_path_str)
-
-
 
 # 报错弹窗
 def error_dialog(text: str) -> None:

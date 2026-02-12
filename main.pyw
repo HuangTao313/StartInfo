@@ -12,7 +12,6 @@ import core.ui as ui
 
 # 显式导入
 import deps
-
 # 获取启动参数
 args = sys.argv
 # 初始化日志管理器
@@ -47,14 +46,12 @@ def load_template(data: dict[str, str]) -> str | None:
                     lib.activate_template('default.j2')
                 if not yn:
                     os.startfile(lib.TEMPLATE_FOLDER_PATH)
-                    app.quit()
                     sys.exit()
             # 如果是默认模板也加载失败，弹窗报错并记录日志
             elif template_name == 'default.j2':
                 error_text = f'默认模板加载失败：{str(e)}'
                 log.error(f'主程序-{error_text}')
                 ui.error_dialog(error_text)
-                app.quit()
                 sys.exit()
 
     return f'模板加载失败：找不到可用模板'
@@ -175,7 +172,6 @@ def main():
                 start_mode = f'获取数据失败：\n{json_data}'
                 log.error(f'主程序{start_mode}')
                 ui.error_dialog(start_mode)
-                app.quit()
                 sys.exit()
 
         # 如果未联网
@@ -212,7 +208,6 @@ def main():
                 start_mode = f'天气数据获取失败：{weather_data}'
                 log.error(f'主程序-{start_mode}')
                 ui.error_dialog(f'天气数据获取失败：\n{weather_data}')
-                app.quit()
                 sys.exit()
 
         else:
@@ -236,7 +231,6 @@ def main():
             start_mode = f'缓存数据读取失败：\n{jinja2_data}'
             log.error(f'主程序-{start_mode}' )
             ui.error_dialog(start_mode)
-            app.quit()
             sys.exit()
 
         is_auto_start = "--startup" in args
@@ -246,7 +240,7 @@ def main():
             log.info(f'主程序-启动次数已自增为{lib.times('read')}次')
 
     # 弹窗
-    box = ui.dialog(lib.TITLE,text,['确定','打开设置'])
+    box = ui.dialog(lib.TITLE, text, ['确定', '打开设置'])
     if not box:
         os.startfile(lib.SETTINGS_PATH)
         log.info('主程序-用户打开了设置，程序正常结束')
@@ -258,40 +252,36 @@ def main():
 if __name__ == '__main__':
     try:
         # 初始化
-        app = ui.app_manager.init_app()
+        ui.app_manager.init_app()
         # 禁止多开
-        checker = lib.SingleInstance()
+        checker = lib.SingleInstance(name='Local\\StartInfo-main')
         if checker.is_running:
             # 显示提示
             ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
-            ui.app_manager.quit()
             log.warning('主程序-检测到多开，请勿重复启动')
             sys.exit()
 
-        # 正常启动
+        # 如果是更新后第一次启动
+        if '--update' in args:
+            ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}')
+
+        # 如果是安装后第一次启动
+        elif file.read('General', 'is_first_startup'):
+            init()
+
+        # 如果是从jinja2模板文件启动
         else:
-            # 如果是更新后第一次启动
-            if '--update' in args:
-                ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog','更新日志获取失败')}')
+            j2_file_path: Path = next(
+                (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
+                None
+            )
+            if j2_file_path:
+                handle_j2_template(j2_file_path)  # 处理模板文件
 
-            # 如果是安装后第一次启动
-            elif file.read('General', 'is_first_startup'):
-                init()
-
-            # 如果是从jinja2模板文件启动
-            else:
-                j2_file_path: Path = next(
-                    (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
-                    None
-                )
-                if j2_file_path:
-                    handle_j2_template(j2_file_path)  # 处理模板文件
-
-            # 启动主函数
-            main()
+        # 启动主函数
+        main()
 
     except Exception as e:
             log.error(f'主程序-程序运行时发生错误：{str(e)}')
             ui.error_dialog(str(e))
-            ui.app_manager.quit()
             sys.exit()

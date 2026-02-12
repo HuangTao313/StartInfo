@@ -14,7 +14,6 @@ import core.ui as ui
 
 # 显示导入
 import deps
-
 # ==================== 路径定义 ====================
 VERSION_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'version.json'  # 远程版本缓存
 CURRENT_VERSION_PATH: Path = lib.CURRENT_VERSION_PATH  # 本地已安装版本记录
@@ -496,17 +495,16 @@ async def perform_update(update_info: dict) -> None:
             if pending_files:
                 # 启动临时脚本处理待替换文件
                 _create_replace_script(pending_files, lib.EXE_PATH)
-                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version","版本号获取失败")}\n将在后台完成更新后自动重启...')
+                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version", "版本号获取失败")}\n将在后台完成更新后自动重启...')
 
                 # 启动替换脚本并退出当前进程（释放文件锁）
                 replace_script = lib.DOWNLOAD_PATH / 'replace_pending_files.bat'
                 subprocess.Popen([str(replace_script)], shell=True)
             else:
-                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version","版本号获取失败")}')
+                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version", "版本号获取失败")}')
                 subprocess.Popen([lib.EXE_PATH, "--update"])
-
-            ui.app_manager.quit()
             sys.exit()
+
         else:
             ui.dialog('更新失败', '增量更新过程中出现错误。')
     else:
@@ -526,6 +524,14 @@ if __name__ == '__main__':
     try:
         # 初始化UI
         ui.app_manager.init_app()
+        # 禁止多开
+        checker = lib.SingleInstance(name='Local\\StartInfo-updater')
+        if checker.is_running:
+            # 显示提示
+            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
+            log.warning('更新器-检测到多开，请勿重复启动')
+            sys.exit()
+
         # 检查version.json是否存在
         if not VERSION_PATH.exists():
             if not asyncio.run(get_version_file()):
@@ -543,7 +549,6 @@ if __name__ == '__main__':
                     ui.error_dialog(f'获取版本信息失败{error_text}')
                     # 尝试返回设置主界面
                     return_to_settings()
-                    ui.app_manager.quit()
                     sys.exit()
 
         # 检查联网状态
@@ -561,7 +566,6 @@ if __name__ == '__main__':
                     log.info('更新器-用户取消更新')
                     # 尝试返回设置主界面
                     return_to_settings()
-                    ui.app_manager.quit()
                     sys.exit()
 
                 # 执行更新（逻辑已抽离）
@@ -572,7 +576,6 @@ if __name__ == '__main__':
                 ui.dialog(lib.TITLE, '更新器-已是最新版本')
                 # 尝试返回设置主界面
                 return_to_settings()
-                ui.app_manager.quit()
                 sys.exit()
 
 
@@ -581,5 +584,4 @@ if __name__ == '__main__':
         ui.error_dialog(str(e))
         # 尝试返回设置主界面
         return_to_settings()
-        ui.app_manager.quit()
         sys.exit()

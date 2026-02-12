@@ -3,7 +3,8 @@
         "is_first_startup": true,
         "startup_times": "",
         "data_reset_times": 0,
-        "template_file": "default.j2"
+        "template_file": "default.j2",
+        "theme": "dynamic"
     },
     "Weather": {
         "city_name": "",
