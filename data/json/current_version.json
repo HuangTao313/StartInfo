@@ -1,6 +1,6 @@
 {
-  "version": "V2.2.2",
-  "release_date": "2026年2月12日",
-  "release_timestamp": 1770878920,
-  "changelog": "1.优化设置代码，提高运行效率。\n2.设置增加切换主题功能，支持选择浅色主题、深色主题、跟随系统。\n\n版权声明：\n本程序所有可执行文件的图标来自icons8.com"
+  "version": "V2.2.2.1",
+  "release_date": "2026年2月16日",
+  "release_timestamp": 1771218218,
+  "changelog": "1.修复因zhdate库版本过旧，导致农历日期无法获取的问题。\n2.修复[设置-菜单列表]无法打开的bug。\n\n最后，祝大家新年快乐！\n\n=====版权声明=====\n\n本程序所有可执行文件的图标来自icons8.com"
 }

@@ -141,7 +141,7 @@ def start_template_folder() -> None:
 # 打开模板自定义文档
 def start_template_custom_doc() -> None:
     try:
-        os.startfile(str(lib.TEMPLATE_FOLDER_PATH / '自定义模板文档.md'))
+        os.startfile(str(lib.TEMPLATE_FOLDER_PATH / '模板自定义文档.md'))
 
     except Exception as e:
         error_text = f'打开模板自定义文档失败：{str(e)}'
@@ -331,7 +331,7 @@ def main():
 
         # 只要有1个彩蛋被触发过，就启用成就系统
         else:
-            choices.insert(-1, '彩蛋列表')
+            choices.insert(-2, '彩蛋列表')
 
         # 等待用户选择功能
         meum: str = box.choicebox(TEXT, choices)
@@ -348,6 +348,7 @@ def main():
             '主题': set_theme,
             '删除下载缓存': delete_download_cache,
             '关于': start_about,
+            '彩蛋列表': start_easter_egg_list,
             '卸载': uninstall_program,
             '诶，这是什么？': start_easter_egg
         }
@@ -362,7 +363,7 @@ if __name__ == "__main__":
         ui.app_manager.init_app()
         # 禁止多开
         checker = lib.SingleInstance(name='Local\\StartInfo-settings')
-        if checker.is_running:
+        if not checker.is_first:
             # 显示提示
             ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
             log.warning('设置-检测到多开，请勿重复启动')
