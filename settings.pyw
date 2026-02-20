@@ -163,7 +163,7 @@ def relocate_weather() -> None:
 
     if times <= 5:
         city_name: list = asyncio.run(init_app.init_app())
-        if True in city_name:
+        if isinstance(city_name, list) and True in city_name:
             weather_air = asyncio.run(get_data.get_weather_air_quality())
             if isinstance(weather_air, dict):
                 file.update('Data', 'weather', update_dict=weather_air)
