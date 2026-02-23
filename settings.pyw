@@ -1,12 +1,25 @@
 import datetime
 import os
-import ybc_box as box
 import sys
 import time
 import random
 import asyncio
 from pathlib import Path
 import shutil
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt, Signal
+from qfluentwidgets import (
+    FramelessWindow, 
+    ListWidget, 
+    PushButton, 
+    SubtitleLabel,
+    setTheme, 
+    Theme,
+    FluentIcon,
+    InfoBar,
+    InfoBarPosition
+)
+
 import core.ht_lib as lib
 import core.init_app as init_app
 import core.get_data as get_data
@@ -14,12 +27,15 @@ import core.ui as ui
 
 # 显示导入
 import deps
+
 # 初始化日志管理器
 log = lib.log
 # 初始化文件读写
 file = lib.file
 # 更新器路径
 UPDATER_PATH = lib.MAIN_PATH / 'updater.exe'
+# 模板自定义文档路径
+TEMPLATE_CUSTOM_DOC_PATH = lib.TEMPLATE_FOLDER_PATH / '模板自定义文档.md'
 # 主界面文案
 TEXT = f'{lib.TITLE}-设置'
 # 当前日期
@@ -27,6 +43,98 @@ date = int(time.strftime("%Y%m%d", time.localtime()))
 if file.read('Data', 'other', 'get_date') != date:
     # 次数重置
     file.write('General', 'data_reset_times', value=0)
+
+
+class SettingsWindow(FramelessWindow):
+    """无边框设置窗口"""
+    
+    # 自定义信号：选中项发生变化时发出
+    item_selected = Signal()
+    
+    def __init__(self, title: str, choices: list, parent=None):
+        super().__init__(parent)
+        self.title = title
+        self.choices = choices
+        self.selected_choice = None
+        self._setup_ui()
+        self._connect_signals()
+        
+    def _setup_ui(self):
+        """设置UI界面"""
+        # 设置窗口属性
+        self.setTitleBarVisible(True)
+        self.resize(400, 500)
+        self.setWindowTitle(self.title)
+        
+        # 创建主容器widget
+        from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+        
+        self.widget = QWidget()
+        self.layout = QVBoxLayout(self.widget)
+        self.layout.setSpacing(15)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        
+        # 顶部标题标签
+        self.title_label = SubtitleLabel(self.title)
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.layout.addWidget(self.title_label)
+        
+        # 功能列表控件
+        self.list_widget = ListWidget()
+        self.list_widget.addItems(self.choices)
+        self.list_widget.setAlternatingRowColors(True)  # 交替行颜色
+        self.list_widget.setSelectionMode(ListWidget.SelectionMode.SingleSelection)
+        self.list_widget.itemDoubleClicked.connect(self._on_item_double_clicked)
+        self.list_widget.itemSelectionChanged.connect(self._on_selection_changed)
+        self.layout.addWidget(self.list_widget)
+        
+        # 按钮布局
+        self.button_layout = QHBoxLayout()
+        self.button_layout.setSpacing(10)
+        
+        # 确定按钮
+        self.confirm_button = PushButton("确定", self, FluentIcon.ACCEPT)
+        self.confirm_button.clicked.connect(self._on_confirm)
+        self.button_layout.addWidget(self.confirm_button)
+        
+        # 退出按钮
+        self.exit_button = PushButton("退出", self, FluentIcon.CLOSE)
+        self.exit_button.clicked.connect(self.close)
+        self.button_layout.addWidget(self.exit_button)
+        
+        self.layout.addLayout(self.button_layout)
+        
+        # 将widget设置为窗口的中心widget
+        self.hBoxLayout.addWidget(self.widget)
+        self.hBoxLayout.addStretch(1)
+        
+        # 禁用确定按钮（直到选中项）
+        self.confirm_button.setEnabled(False)
+        
+    def _connect_signals(self):
+        """连接信号槽"""
+        pass
+    
+    def _on_selection_changed(self):
+        """选中项变化时的处理"""
+        self.confirm_button.setEnabled(True)
+        
+    def _on_item_double_clicked(self, item):
+        """双击列表项时直接确认"""
+        self.selected_choice = item.text()
+        self.close()
+        
+    def _on_confirm(self):
+        """确认按钮点击事件"""
+        current_item = self.list_widget.currentItem()
+        if current_item:
+            self.selected_choice = current_item.text()
+            self.close()
+            
+    def get_choice(self) -> str | None:
+        """获取用户选择的项"""
+        return self.selected_choice
+
 
 # 彩蛋设置 你被骗了
 def easter_egg(type) -> bool | None:
@@ -116,7 +224,12 @@ def import_template() -> None:
 def set_template() -> None:
     template_files = [p.name for p in lib.TEMPLATE_FOLDER_PATH.glob("*.j2") if p.is_file()]
     template_now = file.read('General', 'template_file')
-    choice = box.choicebox(f'请选择模板文件：\n当前模板文件：{template_now}', template_files)
+    
+    # 使用新的SettingsWindow替代box.choicebox
+    window = SettingsWindow(f'请选择模板文件：\n当前模板文件：{template_now}', template_files)
+    window.exec()
+    choice = window.get_choice()
+    
     if choice is not None and choice != template_now:
         is_success, text = lib.activate_template(choice)
         # 如果成功启用
@@ -141,7 +254,13 @@ def start_template_folder() -> None:
 # 打开模板自定义文档
 def start_template_custom_doc() -> None:
     try:
-        os.startfile(str(lib.TEMPLATE_FOLDER_PATH / '模板自定义文档.md'))
+        if TEMPLATE_CUSTOM_DOC_PATH.exists():
+            os.startfile(TEMPLATE_CUSTOM_DOC_PATH)
+            log.info('设置-已打开模板自定义文档')
+
+        else:
+            log.error('设置-模板自定义文档不存在')
+            ui.dialog(lib.TITLE, '模板自定义文档不存在')
 
     except Exception as e:
         error_text = f'打开模板自定义文档失败：{str(e)}'
@@ -218,7 +337,11 @@ def set_theme() -> None:
     # 获取中文显示的主题名称
     theme_display = theme_name_map.get(theme_now, '跟随系统')
 
-    choice = box.choicebox(f'请选择主题：\n当前主题：{theme_display}', ['跟随系统', '浅色主题', '深色主题'])
+    # 使用新的SettingsWindow替代box.choicebox
+    window = SettingsWindow(f'请选择主题：\n当前主题：{theme_display}', ['跟随系统', '浅色主题', '深色主题'])
+    window.exec()
+    choice = window.get_choice()
+    
     theme_list: dict = {
         '跟随系统': 'dynamic',
         '浅色主题': 'light',
@@ -232,7 +355,7 @@ def set_theme() -> None:
 
 # 打开关于页面
 def start_about() -> None:
-    text = f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date', '获取发布日期失败')}\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}'
+    text = f'发布日期：{lib.CURRENT_VERSION_JSON.get(\'release_date\', \'获取发布日期失败\')}\n{lib.CURRENT_VERSION_JSON.get(\'changelog\', \'更新日志获取失败\')}'
     yn = ui.dialog(lib.TITLE, text, ['确认', '检查更新'])
     if not yn:
         # 检查更新器是否存在
@@ -254,13 +377,19 @@ def start_about() -> None:
 def start_easter_egg() -> None:
     # 检测联网状态
     if lib.is_internet():
-        os.startfile(
-            'https://www.bilibili.com/video/BV1GJ411x7h7/?share_source=copy_web&vd_source=38def69ab42f952f952de6d2c41c54bd')
-        time.sleep(2)
-        easter_egg('cache')
-        log.info('设置-用户已触发彩蛋')
-        ui.dialog(lib.TITLE, f'达成成就：你被骗了\n(成功触发《Never Gonna Give You Up》彩蛋)\n⁽⁽٩(๑˃̶͈̀ ᗨ ˂̶͈́)۶⁾⁾',
-                  ['我真厉害'])
+        try:
+            os.startfile(
+                'https://www.bilibili.com/video/BV1GJ411x7h7/?share_source=copy_web&vd_source=38def69ab42f952f952de6d2c41c54bd')
+            time.sleep(2)
+            easter_egg('cache')
+            log.info('设置-用户已触发彩蛋')
+            ui.dialog(lib.TITLE, f'达成成就：你被骗了\n(成功触发《Never Gonna Give You Up》彩蛋)\n⁽⁽٩(๑˃̶͈̀ ᗨ ˂̶͈́)۶⁾⁾',
+                      ['我真厉害'])
+
+        except Exception as e:
+            log.error(f'设置-彩蛋-打开网页失败: {e}')
+            ui.error_dialog(str(e))
+
     else:
         log.warning('设置-彩蛋-未联网')
         ui.dialog(lib.TITLE, '这里什么都没有\n⁽⁽٩(๑˃̶͈̀ ᗨ ˂̶͈́)۶⁾', ['真的什么都没有吗？'])
@@ -268,8 +397,8 @@ def start_easter_egg() -> None:
 # 打开彩蛋列表
 def start_easter_egg_list() -> None:
     easters_text = \
-        f'''彩蛋：{file.read('Easter_egg', 'name')}
-        获取日期：{file.read('Easter_egg', 'get_date')}'''
+        f\'\'\'彩蛋：{file.read(\'Easter_egg\', \'name\')}
+        获取日期：{file.read(\'Easter_egg\', \'get_date\')}\'\'\''
     log.info('设置-已打开彩蛋列表')
     ui.dialog(lib.TITLE, easters_text)
 
@@ -297,10 +426,10 @@ def exit_app() -> None:
 
 # 检查开机启动项
 def check_startup() -> str:
-    '''检测是否已经添加到开机启动项
+    \'''检测是否已经添加到开机启动项
     如果不存在，则创建快捷方式
-    如果存在，可以选择删除'''
-    return '添加到开机启动项' if not init_app.is_shortcut_exist() else '删除从开机启动项'
+    如果存在，可以选择删除\'''
+    return '添加到开机启动项' if not init_app.is_shortcut_exist() else '删除开机启动项'
 
 # 主程序
 def main():
@@ -333,11 +462,17 @@ def main():
         else:
             choices.insert(-2, '彩蛋列表')
 
-        # 等待用户选择功能
-        meum: str = box.choicebox(TEXT, choices)
+        # 使用新的SettingsWindow替代box.choicebox
+        window = SettingsWindow(TEXT, choices)
+        window.exec()
+        meum = window.get_choice()
+        
+        if meum is None:
+            continue
+            
         functions: dict = {
             '添加到开机启动项': add_to_startup,
-            '删除从开机启动项': delete_startup,
+            '删除开机启动项': delete_startup,
             '打开开机启动项文件夹': start_startup_folder,
             '启动主程序': start_main_program,
             '模板': set_template,
