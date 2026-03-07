@@ -240,7 +240,8 @@ def main():
             log.info(f'主程序-启动次数已自增为{lib.times('read')}次')
 
     # 弹窗
-    box = ui.dialog(lib.TITLE, text, ['确定', '打开设置'])
+    box = ui.main_window(text)
+
     if not box:
         os.startfile(lib.SETTINGS_PATH)
         log.info('主程序-用户打开了设置，程序正常结束')

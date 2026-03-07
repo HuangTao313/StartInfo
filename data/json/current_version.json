@@ -1,6 +1,6 @@
 {
-  "version": "V2.2.2.1",
-  "release_date": "2026年2月16日",
-  "release_timestamp": 1771218218,
-  "changelog": "1.修复因zhdate库版本过旧，导致农历日期无法获取的问题。\n2.修复[设置-菜单列表]无法打开的bug。\n\n最后，祝大家新年快乐！\n\n=====版权声明=====\n\n本程序所有可执行文件的图标来自icons8.com"
+  "version": "V2.2.3",
+  "release_date": "2026年3月7日",
+  "release_timestamp": 1772864997,
+  "changelog": "新增功能：\n1.新增HTML样式模板，信息显示更清晰，可在设置中自行启用。\n2.时间信息自动刷新。\n3.主程序窗口在打开1分钟后自动关闭。\n4.设置UI换新，基于qfluentwidgets。\n\n优化：\n1.使用upx压缩工具压缩所有*.exe、*.dll、*.pyd文件，减少体积。\n2.去除Tkinter和ybc_box依赖，减少体积。\n\n后续更新方向：\n1.合并所有可执行文件，只保留main.exe。\n2.新增城市选择功能。\n3.重构更新器和设置的UI（远期目标）。\n\n=====版权声明=====\n本程序所有可执行文件的图标来自icons8.com"
 }

@@ -26,6 +26,9 @@ async def get_ip_location() -> str | bool:
                 data = await resp.json()
 
                 if data.get('status') == '1':
+                    # 记录完整的API响应数据
+                    lib.log.info(f"程序初始化-高德IP定位API返回数据: {data}")
+
                     # 🔥 修复：处理高德返回空数组 [] 的情况
                     raw_city = data.get('city', '')
 
@@ -45,7 +48,7 @@ async def get_ip_location() -> str | bool:
                         lib.log.info(f"程序初始化-高德IP定位成功: {city_name}")
                         return city_name
                     else:
-                        lib.warning(f"程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}")
+                        lib.log.warning(f"程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}")
                         return False
                 else:
                     # API请求失败，记录详细错误信息
