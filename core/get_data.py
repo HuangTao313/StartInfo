@@ -5,6 +5,7 @@ import asyncio
 import aiohttp
 import json
 from . import ht_lib as lib
+from .config import cfg
 
 # 获取api信息
 api = lib.read_json(lib.API_PATH)
@@ -142,13 +143,21 @@ def get_weather_emoji(weather_type) -> str:
 
     # 3. 完全未知类型：返回默认天气（阴天）
     return '☁️'
+
 # 获取天气和空气质量信息
+@lib.async_retry_on_value(False)
 async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
     if lib.is_internet():
         if api is not None:
-            city_name = lib.file.read('Weather', 'city_name')
+            # 添加安全检查，确保配置项是 ConfigItem 对象
+            try:
+                city_name = cfg.city_name.value if hasattr(cfg.city_name, 'value') else str(cfg.city_name)
+                city_id = cfg.city_id.value if hasattr(cfg.city_id, 'value') else str(cfg.city_id)
+            except Exception as e:
+                lib.log.error(f'天气：获取城市配置失败 - {str(e)}')
+                return False
+
             api_key = lib.decrypt(api['qweather.com']['api_key'])
-            city_id = lib.file.read('Weather', 'city_id')
             try:
                 # 1. 创建异步HTTP客户端
                 async with aiohttp.ClientSession() as session:
@@ -214,10 +223,11 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
             lib.log.error('天气：获取api_key失败')
             return False
     else:
-        lib.log.warning('天气：请联网后获取')
+        lib.log.warning('天气：获取失败，请联网后获取')
         return False
 
 # 获取历史上的今天信息
+@lib.async_retry_on_value(False)
 async def get_today_in_history() -> dict[str, str | Any] | bool:
     if lib.is_internet():
         if api is not None:
@@ -264,6 +274,7 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
         return False
 
 # 查询节假日和24节气信息
+@lib.async_retry_on_value(False)
 async def get_holiday_solar_term() ->  dict[str, str] | bool:
     if lib.is_internet():
         if api is not None:
@@ -309,6 +320,7 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
         return False
 
 # 获取金山词霸每日一言
+@lib.async_retry_on_value(False)
 async def get_every_day_words() -> dict[str, str] | bool:
     if lib.is_internet():
         url = api['open.iciba.com']
@@ -333,6 +345,72 @@ async def get_every_day_words() -> dict[str, str] | bool:
     else:
         lib.log.warning('金山词霸每日一言：请联网后获取')
         return False
+
+# 生日祝福检测
+def check_birthday() -> bool | dict[str, int | Any]:
+    """
+    检测今天是否有人生日
+    :return: 如果有人生日，返回 {'birthday_star': '寿星名称', 'age': 年龄, 'life_days': '今天是xx来到这个世界上的第x天'}；否则返回 False
+    """
+    # 检查是否启用了生日祝福功能
+    try:
+        birthday_wishes_enabled = cfg.birthday_wishes.value if hasattr(cfg.birthday_wishes, 'value') else cfg.birthday_wishes
+        if not birthday_wishes_enabled:
+            return False
+    except Exception as e:
+        lib.log.error(f'生日：获取生日配置失败 - {str(e)}')
+        return False
+
+    # 获取生日列表
+    try:
+        birthday_dict = cfg.birthday_dict.value if hasattr(cfg.birthday_dict, 'value') else cfg.birthday_dict
+    except Exception as e:
+        lib.log.error(f'生日：获取生日列表失败 - {str(e)}')
+        return False
+
+    # 如果生日列表为空，返回 False
+    if not birthday_dict:
+        return False
+
+    # 获取今天的月和日
+    today_month_day = time.strftime("%m%d", time.localtime())
+    current_year = time.localtime().tm_year
+
+    # 遍历生日列表，检查是否有人今天生日
+    for name, birthday_str in birthday_dict.items():
+        # 检查生日格式是否正确（YYYYMMDD）
+        if not isinstance(birthday_str, str) or len(birthday_str) != 8:
+            lib.log.warning(f'生日格式错误：{name} - {birthday_str}')
+            continue
+
+        # 提取出生年月日
+        try:
+            birth_year = int(birthday_str[:4])
+            birth_month_day = birthday_str[4:8]
+        except ValueError:
+            lib.log.warning(f'生日格式错误：{name} - {birthday_str}')
+            continue
+
+        # 检查是否是今天生日
+        if birth_month_day == today_month_day:
+            # 计算年龄
+            age = current_year - birth_year
+
+            # 计算来到这个世界上的总天数
+            from datetime import datetime
+            birth_date = datetime(birth_year, int(birthday_str[4:6]), int(birthday_str[6:8]))
+            today_date = datetime.now()
+            life_days = (today_date - birth_date).days
+
+            lib.log.info(f'检测到生日：{name} 今天满 {age} 岁')
+            return {
+                'birthday_star': name,
+                'age': age,
+                'life_days': life_days
+            }
+
+    # 没有人今天生日
+    return False
 
 # 获取问候语
 def get_greeting():
@@ -362,6 +440,10 @@ async def get_all_data() -> list[dict[str,str]] | bool:
 # 格式化数据
 # 将原始数据转化为缓存格式
 def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
+    # 检查数据是否有效
+    if not data or data is False:
+        lib.log.error('缓存格式转换失败：数据无效')
+        return False
     if len(data) != 5:
         lib.log.error('缓存格式转换失败：数据长度不合法')
         return False
@@ -395,6 +477,10 @@ def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
 
 # 将原始数据转化为展示格式
 def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
+    # 检查数据是否有效
+    if not data or data is False:
+        lib.log.error('展示格式转换失败：数据无效')
+        return False
     if len(data) != 5:
         lib.log.error('展示格式转换失败：数据长度不合法')
         return False

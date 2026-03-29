@@ -6,10 +6,13 @@ import random
 import asyncio
 from pathlib import Path
 import shutil
+from new_settings import start_new_settings
+from updater import start_updater
 import core.ht_lib as lib
 import core.init_app as init_app
 import core.get_data as get_data
 import core.ui as ui
+from core.config import cfg, qconfig
 
 # 显示导入
 import deps
@@ -47,10 +50,12 @@ def check_startup() -> str:
     '''检测是否已经添加到开机启动项
     如果不存在，则创建快捷方式
     如果存在，可以选择删除'''
-    return '添加到开机启动项' if not init_app.is_shortcut_exist() else '删除从开机启动项'
+    return '添加到开机启动项' if not init_app.is_shortcut_exist() else '删除开机启动项'
 
 # 定义功能字典
-functions = {}
+functions = {'启动新版设置(开发中)': start_new_settings,
+             '启动主程序': lib.restart_program
+             }
 
 def register(name):
     def decorator(func):
@@ -95,18 +100,19 @@ def delete_startup() -> None:
         log.error('设置-删除开机启动项失败')
         ui.error_dialog('删除开机启动项失败')
 
-# 启动主程序main.exe
-@register('启动主程序')
-def start_main_program() -> None:
-    try:
-        os.startfile(lib.EXE_PATH)
-        log.info('设置-已启动主程序')
-
-    except Exception as e:
-        error_text = f'启动主程序失败：{str(e)}'
-        log.error(f'设置{error_text}')
-        ui.error_dialog(error_text)
-    sys.exit()
+# # 启动主程序main.exe
+# @register('启动主程序')
+# def start_main_program() -> None:
+#     try:
+#         os.startfile(lib.EXE_PATH)
+#         log.info('设置-已启动主程序')
+#
+#     except Exception as e:
+#         error_text = f'启动主程序失败：{str(e)}'
+#         log.error(f'设置{error_text}')
+#         ui.error_dialog(error_text)
+#
+#     sys.exit()
 
 # 导入模板
 @register('导入模板')
@@ -136,7 +142,7 @@ def import_template() -> None:
 @register('模板')
 def set_template() -> None:
     template_files = [p.name for p in lib.TEMPLATE_FOLDER_PATH.glob("*.j2") if p.is_file()]
-    template_now = file.read('General', 'template_file')
+    template_now = cfg.template_file.value
     choice = ui.combobox(lib.TITLE, f'请选择模板文件：\n当前模板文件：{template_now}', template_files)
     if choice is not None and choice != template_now:
         is_success, text = lib.activate_template(choice)
@@ -144,7 +150,7 @@ def set_template() -> None:
         if is_success:
             # 询问用户是否立即启动主程序
             if ui.dialog(lib.TITLE, f'{text}\n是否立即启动主程序？', ['是', '否']):
-                start_main_program()
+                lib.restart_program()
 
         else:
             ui.error_dialog(text)
@@ -195,7 +201,7 @@ def relocate_weather() -> None:
                 yn = ui.dialog(lib.TITLE, f'已重新进行IP定位：{city_name[1]}\n是否立即重启主程序？\n(｡・ω・｡)',
                                ['是', '否'])
                 if yn:
-                    os.startfile(lib.EXE_PATH)
+                    lib.restart_program()
             else:
                 log.error('设置-获取天气数据失败')
                 ui.dialog(lib.TITLE, '天气数据获取失败╥﹏╥...\n请检查网络连接')
@@ -234,7 +240,7 @@ def delete_download_cache() -> None:
 # 更改主题
 @register('主题')
 def set_theme() -> None:
-    theme_now = file.read('General', 'theme')
+    theme_now = cfg.theme.value
     # 英文到中文的映射
     theme_name_map: dict = {
         'dynamic': '跟随系统',
@@ -251,7 +257,7 @@ def set_theme() -> None:
         '深色主题': 'dark'
     }
     if choice in theme_list:
-        file.write('General', 'theme', value=theme_list[choice])
+        qconfig.set(cfg.theme, theme_list[choice], save=True)
         log.info(f'设置-已更改主题：{choice}')
         # 刷新主题
         ui.app_manager.refresh_theme(theme_list[choice])
@@ -262,20 +268,22 @@ def start_about() -> None:
     text = f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date', '获取发布日期失败')}\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}'
     yn = ui.dialog(lib.TITLE, text, ['确认', '检查更新'])
     if not yn:
+        # 启动更新器
+        start_updater()
+
         # 检查更新器是否存在
-        if UPDATER_PATH.exists():
-            try:
-                os.startfile(UPDATER_PATH)
-                ui.app_manager.quit()
-                sys.exit()
-
-            except Exception as e:
-                log.error(f'设置-打开更新程序失败: {e}')
-                ui.error_dialog(str(e))
-
-        else:
-            log.error('设置-未找到更新程序')
-            ui.error_dialog('未找到更新程序')
+        # if UPDATER_PATH.exists():
+        #     try:
+        #         os.startfile(UPDATER_PATH)
+        #         sys.exit()
+        #
+        #     except Exception as e:
+        #         log.error(f'设置-打开更新程序失败: {e}')
+        #         ui.error_dialog(str(e))
+        #
+        # else:
+        #     log.error('设置-未找到更新程序')
+        #     ui.error_dialog('未找到更新程序')
 
 # 彩蛋页面
 @register('诶，这是什么？')
@@ -322,16 +330,14 @@ def uninstall_program() -> None:
 # 关闭程序
 def exit_app() -> None:
     log.info('设置-已关闭程序')
-    ui.app_manager.quit()
     sys.exit()
-
-
 
 # 主程序
 def main():
     while True:
         startup = check_startup()
         choices = [
+            '启动新版设置(开发中)',
             startup,
             '打开开机启动项文件夹',
             '启动主程序',
@@ -365,18 +371,9 @@ def main():
         final = functions.get(meum, exit_app)
         final()
 
-if __name__ == "__main__":
+# 入口
+def start_settings() -> None:
     try:
-        # 初始化UI
-        ui.app_manager.init_app()
-        # 禁止多开
-        checker = lib.SingleInstance(name='Local\\StartInfo-settings')
-        if not checker.is_first:
-            # 显示提示
-            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
-            log.warning('设置-检测到多开，请勿重复启动')
-            sys.exit()
-
         # 弹出主窗口
         main()
         sys.exit()
@@ -385,3 +382,8 @@ if __name__ == "__main__":
         log.error(f'设置-{str(e)}')
         ui.error_dialog(str(e))
         sys.exit()
+
+if __name__ == "__main__":
+    # 初始化UI
+    ui.app_manager.init_app()
+    start_settings()

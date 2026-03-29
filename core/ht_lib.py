@@ -8,12 +8,16 @@ import ctypes
 import atexit
 import base64
 import shutil
+import subprocess
+import os
+import asyncio
 from ctypes.wintypes import HANDLE, DWORD, BOOL
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from pathlib import Path
 from loguru import logger
 from typing import Any, Dict
+from functools import wraps
 
 # =============================================================================
 # 防重复导入保护（Nuitka 兼容）
@@ -75,11 +79,13 @@ def read_json(file_path) -> dict:
 # =============================================================================
 # 数据文件路径
 # =============================================================================
-JSON_PATH: Path = MAIN_PATH / 'data' / 'json' / 'data.json'              # data.json 的路径
-API_PATH: Path = MAIN_PATH / 'data' / 'json' / 'api.json'                # api_key.json 的路径
-EMOJI_PATH: Path = MAIN_PATH / 'data' / 'json' / 'emoji.json'            # emoji 文件路径
+JSON_PATH: Path = MAIN_PATH / 'data' / 'json'
+DATA_PATH: Path = JSON_PATH / 'data.json'              # data.json 的路径
+CONFIG_FILE_PATH = JSON_PATH / 'config.json'       # 配置文件路径
+API_PATH: Path = JSON_PATH / 'api.json'                # api_key.json 的路径
+EMOJI_PATH: Path = JSON_PATH / 'emoji.json'            # emoji 文件路径
 TEMPLATE_FOLDER_PATH: Path = MAIN_PATH / 'data' / 'template'             # 模板文件夹路径
-CURRENT_VERSION_PATH: Path = MAIN_PATH / 'data' / 'json' / 'current_version.json'  # 本地版本文件路径
+CURRENT_VERSION_PATH: Path = JSON_PATH / 'current_version.json'  # 本地版本文件路径
 CURRENT_VERSION_JSON: dict = read_json(CURRENT_VERSION_PATH)
 
 # =============================================================================
@@ -154,7 +160,7 @@ class JsonHandler:
 
     def __init__(self):
         """初始化处理器，使用预定义的JSON_PATH路径"""
-        self.file_path = JSON_PATH  # 保持Path对象类型
+        self.file_path = DATA_PATH  # 保持Path对象类型
         self.data = self._load_data()
 
     def _load_data(self) -> Dict:
@@ -165,6 +171,31 @@ class JsonHandler:
                     return json.load(f)
             except Exception as e:
                 log.error(f"加载JSON失败: {e}")
+                # 备份损坏的文件
+                backup_path = self.file_path.with_suffix('.json.backup')
+                try:
+                    shutil.copy2(self.file_path, backup_path)
+                    log.warning(f"已备份损坏的JSON文件到: {backup_path}")
+                except Exception as backup_error:
+                    log.error(f"备份失败: {backup_error}")
+                # 返回默认结构而不是空字典
+                return {
+                    "General": {
+                        "is_first_startup": True,
+                        "data_reset_times": 0,
+                        "startup_times": 1,
+                    },
+                    "Data": {
+                        "date": {},
+                        "weather": {},
+                        "other": {}
+                    },
+                    "Easter_egg": {
+                        "name": "",
+                        "is_get": False,
+                        "get_date": ""
+                    }
+                }
         return {}
 
     def read(self, *keys: str) -> Any:
@@ -229,6 +260,19 @@ class JsonHandler:
 
     def _save(self):
         """保存数据到文件（自动创建目录）"""
+        # 检查数据完整性，避免保存不完整的数据
+        required_keys = ['General', 'Data', 'Easter_egg']
+        if not all(key in self.data for key in required_keys):
+            missing_keys = [key for key in required_keys if key not in self.data]
+            log.error(f"数据不完整，缺少必要的键: {missing_keys}，拒绝保存以避免覆盖原有数据")
+            # 如果原文件存在，不要覆盖它
+            if self.file_path.exists():
+                log.warning("保留原有文件，不进行保存")
+                return
+            else:
+                # 如果文件不存在但数据不完整，仍然保存（初始化场景）
+                log.warning("文件不存在但数据不完整，仍然保存用于初始化")
+
         # 使用pathlib创建目录
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.file_path, 'w', encoding='utf-8') as f:
@@ -262,7 +306,8 @@ class JsonHandler:
 # 初始化data.json读写
 file = JsonHandler()
 # 当前模板文件路径
-TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / file.read('General', 'template_file')
+from .config import cfg
+TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
 
 # 禁止多开
 class SingleInstance:
@@ -324,7 +369,7 @@ def decrypt(ciphertext) -> str:
 
     except Exception as e:
         log.error(f"解密失败: {str(e)}, 数据: {ciphertext}")
-        return ""  # 返回默认值而不是抛出异常
+        return ciphertext  # 返回默认值而不是抛出异常
 
 
 # 次数自增函数
@@ -406,7 +451,9 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
 
     # 写入配置并启用模板
     try:
-        file.write('General', 'template_file', value=template_file_path.name)
+        # 使用 qconfig.set() 方法正确设置并保存配置项
+        from .config import qconfig, cfg
+        qconfig.set(cfg.template_file, template_file_path.name, save=True)
         info_text = f'已启用模版文件{template_file_path.name}'
         log.info(info_text)
         return True, info_text
@@ -414,3 +461,60 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
         error_text = f'启用模版文件失败：{str(e)}'
         log.error(error_text)
         return False, error_text
+
+# 重启
+def restart_program():
+    """兼容互斥锁的强制重启"""
+    # 1. 获取当前程序路径
+    # 如果你是用 Nuitka 编译的，sys.executable 就是那个 main.exe
+
+    # 2. 构造一个简单的 CMD 命令：
+    # taskkill /f /pid {当前PID}  <-- 强制杀掉自己（确保锁释放）
+    # timeout /t 1 /nobreak      <-- 等待1秒（给锁释放留出物理时间）
+    # start "" "{path}"          <-- 重新启动
+    current_pid = os.getpid()
+
+    # 构造一行流命令
+    cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"'
+
+    # 3. 以后台静默方式启动这个命令
+    subprocess.Popen(cmd, shell=True)
+    # 4. 当前程序立即退出
+    sys.exit()
+
+# 重试装饰器
+def async_retry_on_value(fail_value="获取失败"):
+    """
+    专门适配 aiohttp 异步函数的重试装饰器
+    """
+    retries = 3
+    delay = 1
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            attempt = 0
+            # 这里的 result 初始值可以设为你预期的失败值
+            result = fail_value
+
+            while attempt < retries:
+                # 执行异步网络请求
+                result = await func(*args, **kwargs)
+
+                # 判断逻辑：如果是字典且包含数据，或者不是失败字符串
+                if result != fail_value:
+                    return result
+
+                attempt += 1
+                log.warning(f"⚠️ {func.__name__} 请求异常，正在进行第 {attempt} 次异步重试...")
+
+                if attempt < retries:
+                    # 使用异步等待，确保 UI 不卡顿
+                    await asyncio.sleep(delay)
+
+            log.error(f"❌ {func.__name__} 在 {retries} 次重试后最终失败。")
+            return result
+
+        return wrapper
+
+    return decorator

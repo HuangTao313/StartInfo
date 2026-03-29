@@ -2,13 +2,7 @@
     "General": {
         "is_first_startup": true,
         "startup_times": "",
-        "data_reset_times": 0,
-        "template_file": "html_style.j2",
-        "theme": "dynamic"
-    },
-    "Weather": {
-        "city_name": "",
-        "city_id": ""
+        "data_reset_times": ""
     },
     "Data": {
         "date": {

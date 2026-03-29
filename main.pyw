@@ -5,6 +5,7 @@ import asyncio
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
+from settings import start_settings
 import core.ht_lib as lib
 import core.init_app as init_app
 import core.get_data as get_data
@@ -19,11 +20,22 @@ log = lib.log
 # 初始化文件读写
 file = lib.file
 
+# 检查生日信息
+birthday_info = get_data.check_birthday()
+
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
     """加载并渲染模板（支持默认模板回退）"""
+    # FileSystemLoader 需要目录路径，而不是文件路径
     env = Environment(loader=FileSystemLoader(str(lib.TEMPLATE_FOLDER_PATH)))
-    templates_to_try = [lib.TEMPLATE_PATH.name, 'default.j2']
+
+    # 根据是否有生日信息确定尝试加载的模板顺序
+    if birthday_info:
+        # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
+        templates_to_try = ['birthday_wishes.j2', lib.TEMPLATE_PATH.name, 'default.j2']
+    else:
+        # 无生日信息：尝试当前激活的模板，然后是默认模板
+        templates_to_try = [lib.TEMPLATE_PATH.name, 'default.j2']
 
     for template_name in templates_to_try:
         try:
@@ -34,7 +46,7 @@ def load_template(data: dict[str, str]) -> str | None:
             return result
 
         except Exception as e:
-            # 如果是主模板加载失败，显示错误对话框
+            # 如果是当前激活的模板加载失败，显示错误对话框
             if template_name == lib.TEMPLATE_PATH.name:
                 yn = ui.dialog(
                     f'程序运行时发生错误╥﹏╥...',
@@ -47,6 +59,9 @@ def load_template(data: dict[str, str]) -> str | None:
                 if not yn:
                     os.startfile(lib.TEMPLATE_FOLDER_PATH)
                     sys.exit()
+            # 如果是生日模板加载失败，记录日志并继续尝试下一个模板
+            elif template_name == 'birthday_wishes.j2':
+                log.warning(f'主程序-生日模板加载失败：{str(e)}，尝试使用其他模板')
             # 如果是默认模板也加载失败，弹窗报错并记录日志
             elif template_name == 'default.j2':
                 error_text = f'默认模板加载失败：{str(e)}'
@@ -58,18 +73,23 @@ def load_template(data: dict[str, str]) -> str | None:
 
 # 程序初始化
 def init():
+    # 询问用户是否添加开机启动项
+    # 检查开机启动项是否存在
+    if not init_app.is_shortcut_exist():
+        if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
+            init_app.create_shortcut()
+            log.info('主程序-用户已添加开机启动项')
+
     # 检查网络连接情况
     if lib.is_internet():
+        # 开始初始化流程
         log.info('主程序-检测到第一次启动，开始执行程序初始化')
+
+        # IP定位并获取city_id
         if asyncio.run(init_app.init_app()):
             file.write('General', 'is_first_startup', value=False)
             log.info('主程序-程序初始化完成')
 
-        # 检查开机启动项是否存在
-        if not init_app.is_shortcut_exist():
-            if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
-                init_app.create_shortcut()
-                log.info('主程序-用户已添加开机启动项')
     else:
         ui.dialog(lib.TITLE, '未检测到网络连接，请检查网络连接并重新启动程序！\n╥﹏╥...')
         log.warning('主程序-程序初始化失败：当前未联网')
@@ -158,8 +178,19 @@ def main():
             data = asyncio.run(get_data.get_all_data())
             # 格式化数据
             jinja2_data = get_data.format_data_to_jinja2(data)
+
+            # 检查数据格式化是否成功
+            if isinstance(jinja2_data, bool):
+                start_mode = f'数据格式化失败：数据无效'
+                log.error(f'主程序-{start_mode}')
+                ui.error_dialog(start_mode)
+                sys.exit()
+
             # 添加开机次数信息
             jinja2_data['startup_times'] = lib.times('read')
+            # 添加生日信息
+            if birthday_info is not False:
+                jinja2_data.update(birthday_info)
             json_data = get_data.format_data_to_json(data)
             # 缓存数据
             if isinstance(json_data, dict):
@@ -182,7 +213,9 @@ def main():
             # 格式化数据
             jinja2_data = get_data.format_json_to_jinja2(data)
             # 添加时间信息
-            jinja2_data | get_data.get_time()
+            time_info = get_data.get_time()
+            if isinstance(time_info, dict):
+                jinja2_data.update(time_info)
             # 添加开机次数信息
             jinja2_data['startup_times'] = startup_times
             # 加载模版
@@ -216,12 +249,18 @@ def main():
         # 读取缓存数据
         data = file.read('Data')
         # 格式化数据
-        jinja2_data = get_data.format_json_to_jinja2(data)
+        jinja2_data: dict = get_data.format_json_to_jinja2(data)
         # 添加时间信息
         if isinstance(jinja2_data, dict):
-            jinja2_data | get_data.get_time()
+            time_info = get_data.get_time()
+            if isinstance(time_info, dict):
+                jinja2_data.update(time_info)
             # 添加开机次数信息
             jinja2_data['startup_times'] = lib.times('read')
+            # 添加生日信息
+            if birthday_info is not False:
+                jinja2_data.update(birthday_info)
+
             # 加载模版
             text = load_template(jinja2_data)
             log.info(f'主程序-{start_mode}')
@@ -242,10 +281,10 @@ def main():
     # 弹窗
     box = ui.main_window(text)
 
-    if not box:
-        os.startfile(lib.SETTINGS_PATH)
-        log.info('主程序-用户打开了设置，程序正常结束')
-        sys.exit(0)
+    if box == False:
+        log.info('主程序-用户打开了设置')
+        start_settings()
+
     else:
         log.info('主程序-用户点击了确定，程序正常结束')
         sys.exit()
@@ -265,10 +304,24 @@ if __name__ == '__main__':
         # 如果是更新后第一次启动
         if '--update' in args:
             ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}')
+            from settings import delete_download_cache
+            # 删除下载缓存
+            delete_download_cache()
 
         # 如果是安装后第一次启动
         elif file.read('General', 'is_first_startup'):
             init()
+
+        # 如果是以--settings参数启动
+        elif '--settings' in args:
+            # 启动设置
+            start_settings()
+
+        # 如果是以--updater参数启动
+        elif '--updater' in args:
+            from updater import start_updater
+            # 启动更新器
+            start_updater()
 
         # 如果是从jinja2模板文件启动
         else:

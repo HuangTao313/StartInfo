@@ -4,7 +4,6 @@
     "api_key": "TFPEqlR2lhumlquNMmjegj+tFjGwErgmpogvuHPAb5haWBIq1fNUOjXta4ukywsMaIRWrkaA/VpoqdPqi+m8Zw=="
   },
   "qweather.com": {
-    "url_city_id": "https://geoapi.qweather.com/v2/city/lookup",
     "url_weather": "https://ne3qqm4n8w.re.qweatherapi.com/v7/weather/now",
     "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now",
     "api_key": "UJqs6hD9P/+8QnBk4PV7ADjG4ukABhVPRgwcBnaSK3PgBmAdC+8beDSJhv+GUUBeOm2kGBtXCe0CS7MRfQo+RQ=="

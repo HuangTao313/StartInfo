@@ -1,0 +1,27 @@
+{
+    "Weather": {
+        "city_id": "",
+        "city_name": ""
+    },
+    "General": {
+        "countdown": false,
+        "startup": false,
+        "template_file": "html_style.j2",
+        "theme": "dynamic"
+    },
+    "BirthdayWishes": {
+        "birthday_wishes": true,
+        "birthday_dict": {
+            "黄桃": "20100403"
+        }
+    },
+    "QFluentWidgets": {
+        "FontFamilies": [
+            "Segoe UI",
+            "Microsoft YaHei",
+            "PingFang SC"
+        ],
+        "ThemeColor": "#ff009faa",
+        "ThemeMode": "Auto"
+    }
+}

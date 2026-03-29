@@ -1,14 +1,14 @@
 import sys
 import os
-import platform
 from PySide6.QtWidgets import QApplication, QFileDialog, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton
 from typing import List
 from pathlib import Path
 from . import ht_lib as lib
+from .config import cfg
+
 
 class AppManager:
-    """单例管理 QApplication 和主题"""
     _instance = None
     _app = None
 
@@ -19,82 +19,34 @@ class AppManager:
         return cls._instance
 
     def init_app(self):
-        """初始化 QApplication (只调用一次)"""
         if self._app is None:
             self._app = QApplication(sys.argv)
-            # 应用用户选择的主题
             self._apply_theme()
         return self._app
 
     def _apply_theme(self):
-        """应用用户选择的主题"""
-        theme_mode = lib.file.read('General', 'theme') or 'dynamic'
-
-        if theme_mode == 'light':
-            setTheme(Theme.LIGHT)
-        elif theme_mode == 'dark':
-            setTheme(Theme.DARK)
-        else:  # 'dynamic' 或其他值，跟随系统
-            setTheme(self._get_system_theme())
+        """根据 cfg 的值初始化主题"""
+        # 直接读取你 config.py 里的当前值
+        theme_mode = cfg.theme.value
+        self.refresh_theme(theme_mode)
 
     @staticmethod
-    def refresh_theme(theme_mode: str = None):
+    def refresh_theme(theme_mode: str):
         """
-        刷新主题
-
-        :param theme_mode: 主题模式 ('light'/'dark'/'dynamic')，不传则从数据文件读取
+        刷新全局主题
         """
-        if theme_mode is None:
-            theme_mode = lib.file.read('General', 'theme') or 'dynamic'
-
         if theme_mode == 'light':
             setTheme(Theme.LIGHT)
         elif theme_mode == 'dark':
             setTheme(Theme.DARK)
-        else:  # 'dynamic' 或其他值，跟随系统
-            # 获取系统主题
-            if platform.system() != "Windows":
-                setTheme(Theme.LIGHT)  # 非 Windows 系统默认浅色
-            else:
-                try:
-                    import winreg
-                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                         r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
-                    value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-                    winreg.CloseKey(key)
-                    setTheme(Theme.LIGHT if value == 1 else Theme.DARK)
-                except Exception as e:
-                    lib.log.error(f"获取系统主题失败：{e}")
-                    setTheme(Theme.DARK)
-
-    def _get_system_theme(self) -> Theme:
-        """获取系统主题 (深色/浅色)"""
-        if platform.system() != "Windows":
-            return Theme.LIGHT  # 非 Windows 系统默认浅色
-
-        try:
-            import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
-            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-            winreg.CloseKey(key)
-            return Theme.LIGHT if value == 1 else Theme.DARK
-        except Exception as e:
-            lib.log.error(f"获取系统主题失败：{e}")
-            return Theme.DARK
+        else:
+            # QFluentWidgets 完美支持 Theme.AUTO，它会自动看系统设置
+            setTheme(Theme.AUTO)
 
     def get_app(self) -> QApplication:
-        """获取 QApplication 实例 (确保已初始化)"""
         if self._app is None:
             self.init_app()
         return self._app
-
-    def quit(self):
-        """退出应用程序 (由主程序调用)"""
-        if self._app:
-            self._app.quit()
-            self._app = None
-
 
 # 全局 AppManager 实例
 app_manager = AppManager()
@@ -159,8 +111,13 @@ def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") 
 
 # 报错弹窗
 def error_dialog(text: str) -> None:
-    yn = dialog("程序运行时发生错误╥﹏╥...", text, ['确定', '打开日志文件'])
-    if not yn:
+    yn = dialog("程序运行时发生错误╥﹏╥...", text, ['重启', '打开日志文件'])
+    if yn:
+        # 重启
+        lib.restart_program()
+
+    # 打开日志文件
+    elif not yn:
         try:
             if lib.LOG_PATH.exists():
                 os.startfile(lib.LOG_PATH.parent)
@@ -175,9 +132,11 @@ def error_dialog(text: str) -> None:
             lib.log.error(f'打开日志文件失败：{e}')
             dialog("打开日志文件失败╥﹏╥...", f"{e}")
 
+    else:
+        log.info('用户取消了操作，程序退出')
+        sys.exit()
 
 # ========== 选项选择对话框 (ChoiceBox) ==========
-
 class _ChoiceBox(Dialog):
     """使用 QFluentWidgets 实现的选项选择对话框"""
 

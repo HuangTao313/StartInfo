@@ -8,6 +8,7 @@ import json
 import hashlib
 import shutil
 import sys
+import ctypes
 from pathlib import Path
 import core.ht_lib as lib
 import core.ui as ui
@@ -510,28 +511,38 @@ async def perform_update(update_info: dict) -> None:
     else:
         apply_full_update(update_file_path)  # 此函数会直接退出进程
 
-# 尝试回到设置
-def return_to_settings() -> None:
-    try:
-        subprocess.Popen(['start', '', str(lib.SETTINGS_PATH)], shell=True)
+# # 尝试回到设置
+# def return_to_settings() -> None:
+#     try:
+#         subprocess.Popen(['start', '', str(lib.SETTINGS_PATH)], shell=True)
+#
+#     except Exception as e:
+#         error_text = f'尝试回到设置主界面时出错\n{str(e)}'
+#         log.error(f'更新器-{error_text}')
+#         ui.error_dialog(error_text)
 
+# 入口
+def start_updater() -> None:
+    # ==========================================
+    # 🌟 核心黑科技：动态唤醒控制台
+    # ==========================================
+    try:
+        # 1. 向 Windows 申请分配一个新的控制台窗口
+        ctypes.windll.kernel32.AllocConsole()
+
+        # 2. 将 Python 的 print 和报错信息重新指向这个新窗口
+        # "CONOUT$" 是 Windows 特有的控制台输出占位符
+        sys.stdout = open("CONOUT$", "w", encoding='utf-8', buffering=1)
+        sys.stderr = open("CONOUT$", "w", encoding='utf-8', buffering=1)
+
+        print(">>> StartInfo 更新器控制台已启动...")
+        print(">>> 正在初始化更新序列...\n")
     except Exception as e:
-        error_text = f'尝试回到设置主界面时出错\n{str(e)}'
-        log.error(f'更新器-{error_text}')
-        ui.error_dialog(error_text)
+        # 如果因为权限等问题分配失败，记录到本地日志里，不影响主程序
+        log.error(f'更新器-控制台分配失败: {e}')
+    # ==========================================
 
-if __name__ == '__main__':
     try:
-        # 初始化UI
-        ui.app_manager.init_app()
-        # 禁止多开
-        checker = lib.SingleInstance(name='Local\\StartInfo-updater')
-        if checker.is_running:
-            # 显示提示
-            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
-            log.warning('更新器-检测到多开，请勿重复启动')
-            sys.exit()
-
         # 检查version.json是否存在
         if not VERSION_PATH.exists():
             if not asyncio.run(get_version_file()):
@@ -547,9 +558,6 @@ if __name__ == '__main__':
                     error_text = '无法获取远程版本信息，请检查网络连接'
                     log.error(f'更新器-{error_text}')
                     ui.error_dialog(f'获取版本信息失败{error_text}')
-                    # 尝试返回设置主界面
-                    return_to_settings()
-                    sys.exit()
 
         # 检查联网状态
         if lib.is_internet():
@@ -559,14 +567,11 @@ if __name__ == '__main__':
             if need_update:
                 text = f'''发现新版本：{update_info.get("version", "未知")}
 
-更新内容：
-{update_info.get("changelog", "暂无更新日志")}'''
+    更新内容：
+    {update_info.get("changelog", "暂无更新日志")}'''
 
                 if not ui.dialog('更新器', text, ['立即更新', '取消更新']):
                     log.info('更新器-用户取消更新')
-                    # 尝试返回设置主界面
-                    return_to_settings()
-                    sys.exit()
 
                 # 执行更新（逻辑已抽离）
                 asyncio.run(perform_update(update_info))
@@ -574,14 +579,16 @@ if __name__ == '__main__':
             else:
                 log.info('更新器-已是最新版本')
                 ui.dialog(lib.TITLE, '更新器-已是最新版本')
-                # 尝试返回设置主界面
-                return_to_settings()
-                sys.exit()
-
 
     except Exception as e:
         log.error(f'更新器-{str(e)}')
         ui.error_dialog(str(e))
-        # 尝试返回设置主界面
-        return_to_settings()
-        sys.exit()
+
+    # 关闭控制台
+    finally:
+        ctypes.windll.kernel32.FreeConsole()
+
+if __name__ == '__main__':
+    # 初始化UI
+    ui.app_manager.init_app()
+    start_updater()

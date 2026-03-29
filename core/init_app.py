@@ -1,11 +1,17 @@
 import aiohttp
+import json
+from pathlib import Path
 from win32com.client import Dispatch
 from . import ht_lib as lib
+from .config import cfg, qconfig
 
 # 获取api信息
 api = lib.read_json(lib.API_PATH)
+# 中国城市列表路径
+CHINA_CITY_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'China_city.json'
 
 # IP定位
+@lib.async_retry_on_value(False)
 async def get_ip_location() -> str | bool:
     """
     使用高德地图 API 自动定位当前公网 IP 所在地
@@ -21,7 +27,8 @@ async def get_ip_location() -> str | bool:
                     params={
                         'key': lib.decrypt(api['restapi.amap.com']['api_key']),
                         'output': 'json'
-                    }
+                    },
+                    ssl=False
             ) as resp:
                 data = await resp.json()
 
@@ -62,60 +69,67 @@ async def get_ip_location() -> str | bool:
         return False
 
 # 获取城市ID
-async def get_city_info_by_location() -> tuple[str, str] | bool:
+def get_city_info_by_location(amap_location=None) -> tuple[str, str] | bool:
     """
     通过IP定位获取实际城市名和city_id
 
     Returns:
-        tuple[str, str]: (实际城市名, city_id)
+        dict{'city_id':'city_id','city':'city'} city_id和城市名
         bool: False 失败时返回
     """
-    # 获取IP定位结果
-    initial_city = await get_ip_location()
-    if not initial_city:
+    # 检测中国城市列表是否存在
+    if not CHINA_CITY_PATH.exists():
+        lib.log.error('程序初始化失败：中国城市列表文件不存在')
         return False
 
-    # 使用定位结果查询和风天气，获取实际城市名和ID
-    api_key = lib.decrypt(api['qweather.com']['api_key'])
-    city_url = api['qweather.com']['url_city_id']
+    # 检测输入值不为空
+    if not amap_location:
+        lib.log.error('程序初始化失败：请检查 IP 定位是否正常')
+        return False
 
-    params = {'key': api_key, 'location': initial_city, 'lang': 'zh'}
-
+    # 读取中国城市列表
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(city_url, params=params) as resp:
-                city_data = await resp.json()
+        city_list = lib.read_json(CHINA_CITY_PATH)
 
-        location_list = city_data.get('location', [])
-        if not location_list:
-            lib.log.warning(f"和风天气未找到匹配的城市: {initial_city}")
-            return False
+        # 第一级：直接完全匹配 (命中 "北京市", "恩施土家族苗族自治州")
+        if amap_location in city_list:
+            return city_list[amap_location]
 
-        # 优先选择排名最高的城市
-        sorted_locations = sorted(location_list, key=lambda x: int(x.get('rank', '999')))
-        best_match = sorted_locations[0]
-        actual_city_name = best_match.get('name', initial_city)
-        city_id = best_match.get('id', '')
+        # 第二级：清理掉“市”、“州”、“区”、“县”后缀再试 (命中 "北京", "恩施")
+        clean_name = amap_location.replace('市', '').replace('州', '').replace('区', '').replace('县', '')
+        if clean_name in city_list:
+            return city_list[clean_name]
 
-        if city_id:
-            return (actual_city_name, city_id)
-        else:
-            return False
+        # 第三级：模糊搜索 (作为最后的兜底，防止极特殊的行政区划命名差异)
+        for key in city_list.keys():
+            if clean_name in key:
+                return city_list[key]
+
+        return False
 
     except Exception as e:
-        lib.log.error(f"获取城市信息时异常: {str(e)}")
+        lib.log.error(f"程序初始化-中国城市列表读取异常: {str(e)}")
         return False
 
 # 程序初始化
 async def init_app():
     if lib.is_internet():
         try:
-            result = await get_city_info_by_location()
+            # 获取IP定位
+            city = await get_ip_location()
+            # 获取城市信息
+            result = get_city_info_by_location(city)
+            # 检查result变量类型
+            if not isinstance(result, dict):
+                lib.log.error('程序初始化失败：城市信息获取失败')
+                return False
+
             if result:
-                actual_city_name, city_id = result
+                actual_city_name = result.get('display', '未知')
+                city_id = result.get('city_id', '未知')
                 lib.log.info(f'程序初始化，已定位到城市：{actual_city_name}')
-                lib.file.write('Weather', 'city_name', value=actual_city_name)
-                lib.file.write('Weather', 'city_id', value=city_id)
+                qconfig.set(cfg.city_name, actual_city_name, save=True)
+                qconfig.set(cfg.city_id, city_id, save=True)
                 lib.log.info(f'程序初始化-已获取城市ID：{city_id}')
                 return [True, actual_city_name]
 
