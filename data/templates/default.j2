@@ -1,0 +1,61 @@
+{% if is_all_off -%}
+★ 开机速览 V2.4.0 ★
+提示：当前未开启任何信息展示模块。
+您可以点击下方“设置”按钮进行配置。
+{% else -%}
+{# --- 顶部问候 --- #}
+{%- if greeting_switch or startup_times_switch -%}
+★ {% if greeting_switch %}{{ greeting }}{% endif %}{% if greeting_switch and startup_times_switch %} {% endif %}{% if startup_times_switch %}今天已开机{{ startup_times }}次{% endif %} ★
+{{ "\n" }}
+{%- endif -%}
+
+{# --- 日期时间 --- #}
+{%- if datetime_switch -%}
+★今天是{{ date }} 农历{{ lunar_date }} {{ weekday }} 第{{ week_num }}周 第{{ day_num }}天
+节假日：{{ holiday }} | 24节气：{{ solar_term }}
+今年已过{{ year_progress }} 还剩{{ year_remain }}
+{{ time_emoji }}当前时间：{{ time }}
+{%- if is_countdown_available -%}
+★📅距离【{{ countdown_text }}】还有 {{ countdown_number }}天★
+{%- endif %}
+{{ "\n" }}
+{%- endif -%}
+
+{# --- 天气信息 --- #}
+{%- if weather_switch -%}
+{{ city_name }}天气：{{ weather_emoji }}{{ weather }} | 🌡{{ temperature }} (体感{{ feels_like }})
+★🍃{{ wind_direction }} {{ wind_speed }} | 🌁空气质量：{{ air_quality }}
+{{ "\n" }}
+{%- endif -%}
+
+{# --- MC服务器状态 (新加入) --- #}
+{%- if mc_server_check_switch -%}
+★ MC服务器: {{ mc_server_name }} ★
+{%- if is_mc_server_online -%}
+🌐 状态: 在线 | ⚡ 延迟: {{ mc_server_latency }}ms | 📊 人数: {{ mc_server_current }}/{{ mc_server_max }}
+{%- if mc_online_friends %}
+✨ 在线好友: {% for name in mc_online_friends %}[{{ name }}]{{ " " if not loop.last }}{% endfor %}
+{%- else %}
+💤 暂无好友在线
+{%- endif %}
+{%- else -%}
+❌ 服务器目前处于离线状态
+{%- endif %}
+{{ "\n" }}
+{%- endif -%}
+
+{# --- 历史上的今天 --- #}
+{%- if historical_switch -%}
+★历史上的今天★
+{{ historical_date }} {{ historical_event }}
+{{ "\n" }}
+{%- endif -%}
+
+{# --- 每日一言 --- #}
+{%- if words_switch -%}
+★每日一言★
+{{ every_day_words_zh }}
+{{ every_day_words_en }}
+{{ "\n" }}
+{%- endif -%}
+{%- endif -%}

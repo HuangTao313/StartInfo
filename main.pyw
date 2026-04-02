@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import sys
 import asyncio
@@ -6,13 +6,13 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from settings import start_settings
+from core.config import cfg
 import core.ht_lib as lib
 import core.init_app as init_app
 import core.get_data as get_data
 import core.ui as ui
 
 # 显式导入
-import deps
 # 获取启动参数
 args = sys.argv
 # 初始化日志管理器
@@ -20,8 +20,8 @@ log = lib.log
 # 初始化文件读写
 file = lib.file
 
-# 检查生日信息
-birthday_info = get_data.check_birthday()
+# 生日信息变量（在 main() 函数内根据启动次数决定是否检测）
+birthday_info = False
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
@@ -30,7 +30,8 @@ def load_template(data: dict[str, str]) -> str | None:
     env = Environment(loader=FileSystemLoader(str(lib.TEMPLATE_FOLDER_PATH)))
 
     # 根据是否有生日信息确定尝试加载的模板顺序
-    if birthday_info:
+    # 从 data 中检查是否有生日信息（birthday_star 字段）
+    if data.get('birthday_star'):
         # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
         templates_to_try = ['birthday_wishes.j2', lib.TEMPLATE_PATH.name, 'default.j2']
     else:
@@ -162,16 +163,24 @@ def handle_j2_template(j2_file_path: Path):
 
 # 程序入口
 def main():
-    # 获取当前日期
-    date = int(time.strftime("%Y%m%d",time.localtime()))
+    # 获取当前日期和时间
+    date = int(time.strftime("%Y%m%d", time.localtime()))
+    timestamp = int(time.time())
     general_data_get_date = file.read('Data', 'other', 'get_date')
-    weather_data_get_time = file.read('Data', 'weather', 'get_time')
-    weather_data_get_time = 0 if weather_data_get_time == None else weather_data_get_time
+    weather_data_get_time_read = file.read('Data', 'weather', 'get_time')
+    weather_data_get_time = 0 if weather_data_get_time_read == None else weather_data_get_time_read
+
+    # 预设变量，用于统一渲染
+    jinja2_data = None
+    start_mode = ""
+
+
     # 如果一般数据已过期
     if general_data_get_date != date:
         # 次数重置
         lib.times('reset')
         log.info('主程序-启动次数已重置')
+
         # 如果联网
         if lib.is_internet():
             # 更新所有数据
@@ -186,19 +195,11 @@ def main():
                 ui.error_dialog(start_mode)
                 sys.exit()
 
-            # 添加开机次数信息
-            jinja2_data['startup_times'] = lib.times('read')
-            # 添加生日信息
-            if birthday_info is not False:
-                jinja2_data.update(birthday_info)
             json_data = get_data.format_data_to_json(data)
             # 缓存数据
             if isinstance(json_data, dict):
-                file.update('Data',update_dict=json_data)
-                # 加载模版
-                text = load_template(jinja2_data)
-                log.info('(主程序-启动模式：更新所有数据并缓存)')
-
+                file.update('Data', update_dict=json_data)
+                start_mode = '(主程序-启动模式：更新所有数据并缓存)'
             else:
                 start_mode = f'获取数据失败：\n{json_data}'
                 log.error(f'主程序{start_mode}')
@@ -207,27 +208,14 @@ def main():
 
         # 如果未联网
         else:
-            startup_times = lib.times('read')
             # 读取缓存
             data = file.read('Data')
             # 格式化数据
             jinja2_data = get_data.format_json_to_jinja2(data)
-            # 添加时间信息
-            time_info = get_data.get_time()
-            if isinstance(time_info, dict):
-                jinja2_data.update(time_info)
-            # 添加开机次数信息
-            jinja2_data['startup_times'] = startup_times
-            # 加载模版
-            text = load_template(jinja2_data)
-            # 次数自增
-            lib.times('add')
-            log.info(f'(主程序-启动模式：未联网，读取旧数据)')
-            log.info(f'主程序-启动次数已自增为{startup_times}次')
+            start_mode = '(主程序-启动模式：未联网，读取旧数据)'
 
     # 如果一般数据未过期
     else:
-        timestamp = int(time.time())
         # 如果天气数据过期
         if timestamp - weather_data_get_time > lib.WEATHER_DATA_EXPIRE_TIME:
             # 获取天气数据
@@ -236,55 +224,91 @@ def main():
             if isinstance(weather_data, dict):
                 file.update('Data', 'weather', update_dict=weather_data)
                 start_mode = '(启动模式：更新天气数据并读取其他缓存数据)'
-
             else:
-                start_mode = f'天气数据获取失败：{weather_data}'
-                log.error(f'主程序-{start_mode}')
-                ui.error_dialog(f'天气数据获取失败：\n{weather_data}')
-                sys.exit()
+                log.error(f'主程序-天气数据获取失败：{weather_data}，将使用缓存数据')
+                start_mode = '(启动模式：天气数据获取失败，读取缓存数据)'
 
-        else:
-            start_mode = '(启动模式：读取缓存数据)'
+        # 如果用户启用了MC服务器玩家信息检测，检查MC服务器数据是否过期
+        if cfg.minecraft_server_checker_switch.value:
+            mc_server_data_get_time_read = file.read('Data', 'minecraft_server_data', 'get_time')
+            mc_server_data_get_time = 0 if mc_server_data_get_time_read in (None, '', '未知') else int(mc_server_data_get_time_read)
+            if timestamp - mc_server_data_get_time >= cfg.minecraft_server_data_refresh_interval.value:
+                # 获取MC服务器信息
+                mc_server_data = asyncio.run(get_data.get_mc_server_status())
+                # 缓存数据
+                if isinstance(mc_server_data, dict):
+                    mc_server_data['get_time'] = int(time.time())
+                    file.update('Data', 'minecraft_server_data', update_dict=mc_server_data)
+                    log.info('主程序-已更新MC服务器数据缓存')
+                else:
+                    log.error(f'主程序-获取MC服务器数据失败：{mc_server_data}，将使用缓存数据')
 
         # 读取缓存数据
         data = file.read('Data')
         # 格式化数据
-        jinja2_data: dict = get_data.format_json_to_jinja2(data)
+        jinja2_data = get_data.format_json_to_jinja2(data)
+
+    # ======================================================
+    # ✨ 统一补充区：这里处理所有分支都要干的事情
+    # ======================================================
+    if isinstance(jinja2_data, dict):
         # 添加时间信息
-        if isinstance(jinja2_data, dict):
-            time_info = get_data.get_time()
-            if isinstance(time_info, dict):
-                jinja2_data.update(time_info)
-            # 添加开机次数信息
-            jinja2_data['startup_times'] = lib.times('read')
-            # 添加生日信息
+        time_info = get_data.get_time()
+        if isinstance(time_info, dict):
+            jinja2_data.update(time_info)
+
+        # 添加开机次数信息
+        startup_times = lib.times('read')
+        jinja2_data['startup_times'] = startup_times
+
+        # 添加生日信息（只在当天第 1 次启动时检测）
+        last_birthday_date = file.read('General', 'last_birthday_date') or ''
+        today_date = time.strftime("%Y%m%d", time.localtime())
+        
+        # 如果今天还没显示过生日祝福
+        if last_birthday_date != today_date:
+            birthday_info = get_data.check_birthday()
             if birthday_info is not False:
                 jinja2_data.update(birthday_info)
-
-            # 加载模版
-            text = load_template(jinja2_data)
-            log.info(f'主程序-{start_mode}')
-            # 检查是否为开机启动
-
+                # 记录今天已显示过
+                file.write('General', 'last_birthday_date', value=today_date)
         else:
-            start_mode = f'缓存数据读取失败：\n{jinja2_data}'
-            log.error(f'主程序-{start_mode}' )
-            ui.error_dialog(start_mode)
-            sys.exit()
+            birthday_info = False  # 今天已显示过，不再检测
 
+        # 添加倒数日信息
+        jinja2_data.update(get_data.get_countdown_day())
+
+        # 添加自定义信息开关
+        info_switchs = get_data.get_custom_info_switch()
+        jinja2_data.update(info_switchs)
+
+        # 加载模版
+        text = load_template(jinja2_data)
+        log.info(f'主程序-{start_mode}')
+
+        # 检查是否为开机启动（处理次数自增）
         is_auto_start = "--startup" in args
-        if is_auto_start:
+        # 如果是自启动或者日期变更后的第一次启动
+        if is_auto_start or general_data_get_date != date:
             # 次数自增
             lib.times('add')
-            log.info(f'主程序-启动次数已自增为{lib.times('read')}次')
+            log.info(f'主程序-启动次数已自增为{lib.times("read")}次')
+    else:
+        # 数据异常处理
+        error_msg = text = f'数据处理失败：{jinja2_data}'
+        log.error(f'主程序-{error_msg}')
+        ui.error_dialog(error_msg)
+        sys.exit()
+
+    # 自动关闭模式
+    auto_close_mode = cfg.auto_close_time.value if cfg.auto_close_switch.value else False
 
     # 弹窗
-    box = ui.main_window(text)
+    box = ui.main_window(text,auto_close_mode)
 
     if box == False:
         log.info('主程序-用户打开了设置')
         start_settings()
-
     else:
         log.info('主程序-用户点击了确定，程序正常结束')
         sys.exit()
@@ -301,36 +325,38 @@ if __name__ == '__main__':
             log.warning('主程序-检测到多开，请勿重复启动')
             sys.exit()
 
-        # 如果是更新后第一次启动
-        if '--update' in args:
-            ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}')
-            from settings import delete_download_cache
-            # 删除下载缓存
-            delete_download_cache()
+        # 检测是否带有启动参数(args列表的长度≥1)
+        if len(args) >= 1:
+            # 如果是更新后第一次启动
+            if '--update' in args:
+                ui.dialog(lib.TITLE, f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}')
+                from settings import delete_download_cache
+                # 删除下载缓存
+                delete_download_cache()
+
+            # 如果是以--settings参数启动
+            elif '--settings' in args:
+                # 启动设置
+                start_settings()
+
+            # 如果是以--updater参数启动
+            elif '--updater' in args:
+                from core.updater import start_updater
+                # 启动更新器
+                start_updater()
+
+            # 如果是从jinja2模板文件启动
+            else:
+                j2_file_path: Path = next(
+                    (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
+                    None
+                )
+                if j2_file_path:
+                    handle_j2_template(j2_file_path)  # 处理模板文件
 
         # 如果是安装后第一次启动
-        elif file.read('General', 'is_first_startup'):
+        if file.read('General', 'is_first_startup'):
             init()
-
-        # 如果是以--settings参数启动
-        elif '--settings' in args:
-            # 启动设置
-            start_settings()
-
-        # 如果是以--updater参数启动
-        elif '--updater' in args:
-            from updater import start_updater
-            # 启动更新器
-            start_updater()
-
-        # 如果是从jinja2模板文件启动
-        else:
-            j2_file_path: Path = next(
-                (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
-                None
-            )
-            if j2_file_path:
-                handle_j2_template(j2_file_path)  # 处理模板文件
 
         # 启动主函数
         main()

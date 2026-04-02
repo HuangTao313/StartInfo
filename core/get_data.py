@@ -1,4 +1,5 @@
 import time
+import datetime
 from typing import Any
 import zhdate
 import asyncio
@@ -7,23 +8,23 @@ import json
 from . import ht_lib as lib
 from .config import cfg
 
-# 获取api信息
+# 获取 api 信息
 api = lib.read_json(lib.API_PATH)
-# 获取emoji
+# 获取 emoji
 emoji = lib.read_json(lib.EMOJI_PATH)
 time_emoji = emoji['time']
 weather_emoji = emoji['weather']
 
-# 获取当前时间emoji
+# 获取当前时间 emoji
 def get_time_emoji(current_time) -> str:
     # 获取当前时间
-    hour = current_time.tm_hour  # 24小时制的小时
+    hour = current_time.tm_hour  # 24 小时制的小时
     minute = current_time.tm_min  # 分钟
 
-    # 转换为12小时制
+    # 转换为 12 小时制
     hour_12 = hour % 12
     if hour_12 == 0:
-        hour_12 = 12  # 12点
+        hour_12 = 12  # 12 点
 
     # 四舍五入逻辑
     if 0 <= minute < 15:
@@ -34,7 +35,7 @@ def get_time_emoji(current_time) -> str:
         # 分钟 >= 45，选择下一个整点
         hour_12 = (hour_12 % 12) + 1
         if hour_12 == 13:
-            hour_12 = 1  # 12点之后是1点
+            hour_12 = 1  # 12 点之后是 1 点
         rounded_time = f"{hour_12}:00"
 
     return time_emoji.get(rounded_time, time_emoji['9:00'])
@@ -69,7 +70,7 @@ def get_date() -> dict[str, str] | bool:
 
         # 年度进度百分比计算
         is_leap = local_time.tm_year % 4 == 0 and (local_time.tm_year % 100 != 0 or local_time.tm_year % 400 == 0)
-        total_days = 366 if is_leap else 365  # 闰年366天，平年365天
+        total_days = 366 if is_leap else 365  # 闰年 366 天，平年 365 天
         year_progress = round((int(day_num) / int(total_days)) * 100, 2)  # 已过的年份百分比
         year_remain = round(100 - year_progress, 2)  # 剩余年份百分比
 
@@ -118,7 +119,7 @@ def get_time() -> dict[str, str] | bool:
         return False
 
 # 获取天气和空气质量
-# 获取天气emoji
+# 获取天气 emoji
 def get_weather_emoji(weather_type) -> str:
     weather_type = str(weather_type).strip()
 
@@ -129,10 +130,10 @@ def get_weather_emoji(weather_type) -> str:
 
     # 2. 关键词回退：优先级可调整
     if '雨' in weather_type:
-        # 优先使用“小雨”的 emoji 作为通用雨
+        # 优先使用"小雨"的 emoji 作为通用雨
         return weather_emoji.get('小雨', '🌧️')
     elif '雪' in weather_type:
-        # 优先使用“小雪”的 emoji 作为通用雪
+        # 优先使用"小雪"的 emoji 作为通用雪
         return weather_emoji.get('小雪', '❄️')
     elif '雷' in weather_type or '电' in weather_type:
         return weather_emoji.get('雷阵雨', '⛈️')
@@ -159,7 +160,7 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
 
             api_key = lib.decrypt(api['qweather.com']['api_key'])
             try:
-                # 1. 创建异步HTTP客户端
+                # 1. 创建异步 HTTP 客户端
                 async with aiohttp.ClientSession() as session:
                     # 2. 并发获取天气和空气质量数据
                     weather_url = api['qweather.com']['url_weather']
@@ -194,7 +195,7 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
                         wind_speed = now.get('windSpeed', '')
                         air_quality = air_data.get("now", {}).get("aqi", "")
                         air_level = air_data.get("now", {}).get("category", "")
-                        air_quality_text = f"{air_level}(PM2.5指数:{air_quality})"
+                        air_quality_text = f"{air_level}(PM2.5 指数:{air_quality})"
                         weather_emoji = get_weather_emoji(weather)
 
                         # 格式化输出信息
@@ -220,7 +221,7 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
                 lib.log.error(f'获取天气信息失败：{str(e)}')
                 return False
         else:
-            lib.log.error('天气：获取api_key失败')
+            lib.log.error('天气：获取 api_key 失败')
             return False
     else:
         lib.log.warning('天气：获取失败，请联网后获取')
@@ -239,7 +240,7 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
             }
 
             try:
-                # 1. 创建异步HTTP客户端
+                # 1. 创建异步 HTTP 客户端
                 async with aiohttp.ClientSession() as session:
                     # 2. 发起异步请求（关键：你用 await 等待网络响应）
                     async with session.get(url, params=params) as response:
@@ -267,13 +268,13 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
                 lib.log.error(f'历史上的今天：请求异常 - {str(e)}')
                 return False
         else:
-            lib.log.error('历史上的今天：获取api_key失败')
+            lib.log.error('历史上的今天：获取 api_key 失败')
             return False
     else:
         lib.log.warning('历史上的今天：请联网后获取')
         return False
 
-# 查询节假日和24节气信息
+# 查询节假日和 24 节气信息
 @lib.async_retry_on_value(False)
 async def get_holiday_solar_term() ->  dict[str, str] | bool:
     if lib.is_internet():
@@ -289,7 +290,7 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
             url = api['www.mxnzp.com']['holiday_solar_term']['url']
 
             try:
-                # 1. 创建异步HTTP客户端
+                # 1. 创建异步 HTTP 客户端
                 async with aiohttp.ClientSession() as session:
                     # 2. 发起异步请求（关键：使用 await 等待网络响应）
                     async with session.get(f'{url}/{formatted_time}', params=solarTerms_params) as response:
@@ -299,24 +300,24 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
                             solar_term_data = data_solar_term["data"]["solarTerms"]
                             holiday_data = data_solar_term["data"]["typeDes"]
 
-                            # 修正1：避免返回字符串中包含"节假日信息："
+                            # 修正 1：避免返回字符串中包含"节假日信息："
                             holiday = holiday_data if holiday_data else "没有节假日"
-                            solar_term = solar_term_data if solar_term_data else "没有找到24节气"
+                            solar_term = solar_term_data if solar_term_data else "没有找到 24 节气"
                             # 格式化输出
                             return {'holiday': holiday, 'solar_term': solar_term}
 
                         else:
-                            lib.log.error('节假日和24节气信息：请求失败')
+                            lib.log.error('节假日和 24 节气信息：请求失败')
                             return False
 
-            except aiohttp.ClientError as e:  # 修正2：使用aiohttp异常类型
-                lib.log.error(f'节假日和24节气信息：请求异常 - {str(e)}')
+            except aiohttp.ClientError as e:  # 修正 2：使用 aiohttp 异常类型
+                lib.log.error(f'节假日和 24 节气信息：请求异常 - {str(e)}')
                 return False
         else:
-            lib.log.error('节假日和24节气信息：获取api_key失败')
+            lib.log.error('节假日和 24 节气信息：获取 api_key 失败')
             return False
     else:
-        lib.log.warning('节假日和24节气信息：请联网后获取')
+        lib.log.warning('节假日和 24 节气信息：请联网后获取')
         return False
 
 # 获取金山词霸每日一言
@@ -327,9 +328,9 @@ async def get_every_day_words() -> dict[str, str] | bool:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
-                    # 直接获取文本内容（绕过Content-Type检查）
+                    # 直接获取文本内容（绕过 Content-Type 检查）
                     text = await response.text()
-                    # 用标准json解析（不依赖Content-Type）
+                    # 用标准 json 解析（不依赖 Content-Type）
                     data = json.loads(text)
                     content = data.get('content', '')
                     note = data.get('note', '')
@@ -346,15 +347,69 @@ async def get_every_day_words() -> dict[str, str] | bool:
         lib.log.warning('金山词霸每日一言：请联网后获取')
         return False
 
+# MC 服务器玩家在线情况检测
+@lib.async_retry_on_value(False)
+async def get_mc_server_status():
+    # 延迟导入
+    from mcstatus import JavaServer
+    """
+    纯异步函数：获取 MC 服务器状态并比对好友列表
+    返回：(dict) 包含在线人数、最大人数、延迟和在线好友名单
+    """
+
+    results = {
+        "mc_server_name": cfg.minecraft_server_name.value,
+        "is_mc_server_online": False,
+        "mc_server_current": 0,
+        "mc_server_max": 0,
+        "mc_server_latency": 0,
+        "mc_online_friends": []
+    }
+
+    # 获取用户配置
+    ip = cfg.minecraft_server_ip.value
+    port = cfg.minecraft_server_port.value
+    if not ip or port in [None, '未知','']:
+        lib.log.error('MC 服务器玩家在线情况检测：请填写完整的服务器地址和端口')
+        return False
+
+    server_addr = f'{ip}:{port}'
+    friends_list = cfg.minecraft_server_friends_list.value
+
+    try:
+        # 1. 异步探测服务器 (mcstatus 内部自带超时处理)
+        server = await JavaServer.async_lookup(server_addr)
+        status = await server.async_status()
+
+        results["is_mc_server_online"] = True
+        results["mc_server_current"] = status.players.online
+        results["mc_server_max"] = status.players.max
+        results["mc_server_latency"] = round(status.latency, 1)
+
+        # 2. 处理好友比对逻辑
+        # 提取采样玩家名单 (注意：部分服务器可能不返回具体名单)
+        if status.players.sample:
+            online_names = [p.name for p in status.players.sample]
+            results["mc_online_friends"] = [name for name in friends_list if name in online_names]
+
+    except Exception as e:
+        # 这里的异常捕获保证了即使 IP 填错或服务器炸了，主程序也不会崩
+        lib.log.error(f'MC 服务器玩家在线情况检测：获取失败：{e}')
+        results["is_mc_server_online"] = False
+
+    return results
+
+
+
 # 生日祝福检测
 def check_birthday() -> bool | dict[str, int | Any]:
     """
     检测今天是否有人生日
-    :return: 如果有人生日，返回 {'birthday_star': '寿星名称', 'age': 年龄, 'life_days': '今天是xx来到这个世界上的第x天'}；否则返回 False
+    :return: 如果有人生日，返回 {'birthday_star': '寿星名称', 'age': 年龄，'life_days': '今天是 xx 来到这个世界上的第 x 天'}；否则返回 False
     """
     # 检查是否启用了生日祝福功能
     try:
-        birthday_wishes_enabled = cfg.birthday_wishes.value if hasattr(cfg.birthday_wishes, 'value') else cfg.birthday_wishes
+        birthday_wishes_enabled = cfg.birthday_wishes_switch.value if hasattr(cfg.birthday_wishes_switch, 'value') else cfg.birthday_wishes_switch
         if not birthday_wishes_enabled:
             return False
     except Exception as e:
@@ -412,25 +467,95 @@ def check_birthday() -> bool | dict[str, int | Any]:
     # 没有人今天生日
     return False
 
+# 获取倒数日
+def get_countdown_day() -> dict[str, int]:
+    """
+        计算从今天到目标日期的剩余天数
+        target_date_str 格式要求：'YYYY-MM-DD'
+        """
+    # 判断用户是否启用倒数日功能
+    if not cfg.countdown_switch.value:
+        return {'is_countdown_available': False}
+
+    # 1. 获取当前日期（只要日期，不要时分秒，方便对齐）
+    today = datetime.datetime.now().date()
+    # 2.获取目标日期
+    target_date_str = cfg.countdown_date.value
+    try:
+        # 2. 将字符串转换为 datetime 对象
+        # %Y-%m-%d 对应 2026-06-21 这种格式
+        target_date_obj = datetime.datetime.strptime(target_date_str, "%Y-%m-%d").date()
+
+        # 3. 两个日期对象直接相减，得到一个 timedelta 对象
+        remaining = target_date_obj - today
+
+        # 如果天数小于 -3，则判断为过期，返回 False
+        if remaining.days < -3:
+            return {'is_countdown_available': False}
+
+        # 4. 返回天数 (.days 属性)
+        return {
+            'is_countdown_available': True,
+            'countdown_text': cfg.countdown_text.value,
+            'countdown_number': remaining.days
+        }
+
+    # 用户设置的日期格式错误，返回 False
+    except ValueError:
+        return {'is_countdown_available': False}
+
 # 获取问候语
 def get_greeting():
     hour = int(time.strftime('%H', local_time))
     return '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 17 else '晚上好！'
+
+# 获取自定义信息开关
+def get_custom_info_switch() -> dict:
+    switch_dict = {
+        'greeting_switch': cfg.greeting_switch.value,
+        'startup_times_switch': cfg.startup_times_switch.value,
+        'datetime_switch': cfg.datetime_switch.value,
+        'countdown_switch': cfg.countdown_switch.value,
+        'weather_switch': cfg.weather_switch.value,
+        'historical_switch': cfg.historical_switch.value,
+        'words_switch': cfg.words_switch.value,
+        'mc_server_check_switch': cfg.minecraft_server_checker_switch.value
+    }
+
+    # 使用 .values() 获取所有的开关状态 (True/False)
+    # any() 会检查里面只要有一个 True，就返回 True
+    # 如果全都是 False，any() 返回 False，则满足 not 条件
+    switch_dict['is_all_off'] = not any(switch_dict.values())
+
+    return switch_dict
 
 # 获取所有信息
 async def get_all_data() -> list[dict[str,str]] | bool:
     # 异步获取所以信息
     try:
         date = get_date()
-        holiday_solar_term, weather_air_quality, today_in_history, everyday_words = await asyncio.gather(
-            get_holiday_solar_term(),
-            get_weather_air_quality(),
-            get_today_in_history(),
-            get_every_day_words()
-        )
+        if cfg.minecraft_server_checker_switch.value:
+            holiday_solar_term, weather_air_quality, today_in_history, everyday_words, minecraft_server_status = await asyncio.gather(
+                get_holiday_solar_term(),
+                get_weather_air_quality(),
+                get_today_in_history(),
+                get_every_day_words(),
+                get_mc_server_status()
+            )
 
-        # 返回全部信息
-        return [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words]
+            # 返回全部信息（6 个元素）
+            return [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words, minecraft_server_status]
+
+        else:
+            holiday_solar_term, weather_air_quality, today_in_history, everyday_words = await asyncio.gather(
+                get_holiday_solar_term(),
+                get_weather_air_quality(),
+                get_today_in_history(),
+                get_every_day_words()
+            )
+
+            # 返回全部信息（5 个元素，兼容旧版）
+            return [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words]
 
     # 处理异常
     except Exception as e:
@@ -440,11 +565,13 @@ async def get_all_data() -> list[dict[str,str]] | bool:
 # 格式化数据
 # 将原始数据转化为缓存格式
 def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
+    """将原始数据转换为缓存格式 (data.json 格式)"""
     # 检查数据是否有效
     if not data or data is False:
         lib.log.error('缓存格式转换失败：数据无效')
         return False
-    if len(data) != 5:
+    # 支持 5 个元素（旧版）或 6 个元素（含 MC 服务器状态）
+    if len(data) not in [5, 6]:
         lib.log.error('缓存格式转换失败：数据长度不合法')
         return False
 
@@ -460,7 +587,8 @@ def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
         data3 = data[3] if isinstance(data[3], dict) else {}
         data4 = data[4] if isinstance(data[4], dict) else {}
 
-        return {
+        # 构建基础返回结构
+        result = {
             'date': date_part,
             'weather': data[2],
             'other': {
@@ -471,17 +599,34 @@ def format_data_to_json(data: list[dict[str, str]]) -> dict | bool:
                 'every_day_words_en': data4.get('every_day_words_en', '')
             }
         }
+
+        # 如果有 MC 服务器状态数据（第 6 个元素），添加到缓存
+        if len(data) == 6 and isinstance(data[5], dict):
+            mc_status = data[5]
+            result['minecraft_server_data'] = {
+                'get_time': int(time.time()),
+                'mc_server_name': mc_status.get('mc_server_name', ''),
+                'is_mc_server_online': mc_status.get('is_mc_server_online', False),
+                'mc_server_current': mc_status.get('mc_server_current', 0),
+                'mc_server_max': mc_status.get('mc_server_max', 0),
+                'mc_server_latency': mc_status.get('mc_server_latency', 0),
+                'mc_online_friends': mc_status.get('mc_online_friends', [])
+            }
+
+        return result
     except Exception as e:
-        lib.log.error(f'缓存格式转换出错: {e}')
+        lib.log.error(f'缓存格式转换出错：{e}')
         return False
 
 # 将原始数据转化为展示格式
 def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
+    """将原始数据转换为 Jinja2 模板展示格式（单层字典）"""
     # 检查数据是否有效
     if not data or data is False:
         lib.log.error('展示格式转换失败：数据无效')
         return False
-    if len(data) != 5:
+    # 支持 5 个元素（旧版）或 6 个元素（含 MC 服务器状态）
+    if len(data) not in [5, 6]:
         lib.log.error('展示格式转换失败：数据长度不合法')
         return False
 
@@ -492,7 +637,9 @@ def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
             'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
             'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
             'humidity', 'wind_direction', 'wind_speed', 'air_quality',
-            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en',
+            'mc_server_name', 'is_mc_server_online', 'mc_server_current', 'mc_server_max',
+            'mc_server_latency', 'mc_online_friends'
         ]}
 
         # 填充动态数据
@@ -510,7 +657,7 @@ def format_data_to_jinja2(data: list[dict[str, str]]) -> dict | bool:
         return info
 
     except Exception as e:
-        lib.log.error(f'展示格式转换出错: {e}')
+        lib.log.error(f'展示格式转换出错：{e}')
         return False
 
 def format_json_to_jinja2(json_data: dict) -> dict | bool:
@@ -518,26 +665,31 @@ def format_json_to_jinja2(json_data: dict) -> dict | bool:
     try:
         # 检查输入是否为有效字典
         if not isinstance(json_data, dict):
-            lib.log.warning(f'format_json_to_jinja2: 输入数据类型错误: {type(json_data)}')
+            lib.log.warning(f'format_json_to_jinja2: 输入数据类型错误：{type(json_data)}')
             # 返回一个基本的字典而不是 False
             return {key: '获取失败' for key in [
                 'greeting', 'date', 'lunar_date', 'time', 'time_emoji', 'weekday',
                 'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
                 'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
                 'humidity', 'wind_direction', 'wind_speed', 'air_quality',
-                'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+                'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en',
+                'mc_server_name', 'is_mc_server_online', 'mc_server_current', 'mc_server_max',
+                'mc_server_latency', 'mc_online_friends'
             ]}
 
         date = json_data.get('date', {})
         weather = json_data.get('weather', {})
         other = json_data.get('other', {})
+        minecraft_server_data = json_data.get('minecraft_server_data', {})
 
         info = {key: '获取失败' for key in [
             'greeting', 'date', 'lunar_date', 'time', 'time_emoji', 'weekday',
             'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
             'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
             'humidity', 'wind_direction', 'wind_speed', 'air_quality',
-            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en',
+            'mc_server_name', 'is_mc_server_online', 'mc_server_current', 'mc_server_max',
+            'mc_server_latency', 'mc_online_friends'
         ]}
 
         info['greeting'] = get_greeting()
@@ -545,7 +697,7 @@ def format_json_to_jinja2(json_data: dict) -> dict | bool:
             info.update(time_info)
 
         # 安全合并各部分数据（仅当它们是字典时才合并）
-        for data_part in [date, weather, other]:
+        for data_part in [date, weather, other, minecraft_server_data]:
             if isinstance(data_part, dict):
                 info.update(data_part)
 
@@ -554,12 +706,14 @@ def format_json_to_jinja2(json_data: dict) -> dict | bool:
         return info
 
     except Exception as e:
-        lib.log.error(f'JSON 转展示格式出错: {e}')
+        lib.log.error(f'JSON 转展示格式出错：{e}')
         # 返回一个基本的字典而不是 False
         return {key: '获取失败' for key in [
             'greeting', 'date', 'lunar_date', 'time', 'time_emoji', 'weekday',
             'week_num', 'day_num', 'year_progress', 'year_remain', 'holiday',
             'solar_term', 'weather', 'weather_emoji', 'temperature', 'feels_like',
             'humidity', 'wind_direction', 'wind_speed', 'air_quality',
-            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en'
+            'historical_date', 'historical_event', 'every_day_words_zh', 'every_day_words_en',
+            'mc_server_name', 'is_mc_server_online', 'mc_server_current', 'mc_server_max',
+            'mc_server_latency', 'mc_online_friends'
         ]}

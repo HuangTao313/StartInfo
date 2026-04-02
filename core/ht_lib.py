@@ -2,7 +2,6 @@
 # 导入区
 # =============================================================================
 import socket
-import sys
 import json
 import ctypes
 import atexit
@@ -14,109 +13,48 @@ import asyncio
 from ctypes.wintypes import HANDLE, DWORD, BOOL
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-from pathlib import Path
 from loguru import logger
 from typing import Any, Dict
 from functools import wraps
+from typing import Union
+from .paths import *
+from .config import cfg
 
-# =============================================================================
-# 防重复导入保护（Nuitka 兼容）
-# =============================================================================
-# if __name__ in sys.modules:
-#     sys.exit(0)
-# =============================================================================
-# 路径与初始化函数
-# =============================================================================
-def get_main_path() -> Path:
-    """智能判断主程序目录"""
-    if getattr(sys, 'frozen', False):
-        # 打包后：exe 所在目录就是主目录
-        path = Path(sys.executable).parent
-    else:
-        # 开发时：可能是 ht_lib.py 所在目录（core/），也可能是主脚本目录
-        path = Path(__file__).parent.resolve()
+# 涉及 cfg 的必须留在后面
+TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
+WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 
-    # 如果路径以 'core' 结尾，说明我们在 core/ 里，要退回上一级
-    if path.name == "core":
-        path = path.parent
-
-    return path
-
-# 主目录
-MAIN_PATH: Path = get_main_path()
-
-# =============================================================================
-# 日志系统初始化
-# =============================================================================
-LOG_PATH: Path = MAIN_PATH / 'data' / 'log' / 'log.log'  # log.log 的路径
-logger.add(LOG_PATH, rotation='1 day', retention='3 days', encoding='utf-8')
+# 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
+logger.add(LOG_PATH, rotation='1 day', retention='3 days', encoding='utf-8', level=cfg.log_level.value)
 log = logger
 
-# =============================================================================
-# 工具函数
-# =============================================================================
-def read_json(file_path) -> dict:
-    """安全读取 JSON 文件"""
+# 读取单个json文件
+def read_json(file_path: Union[str, Path]) -> dict:
+    path = Path(file_path)
+    if not path.exists():
+        log.error(f"文件不存在: {path}")
+        return {}
+
     try:
-        path = Path(file_path)
-        if not path.exists():
-            log.error(f"文件不存在: {file_path}")
-            return {}
-
-        content = path.read_text(encoding='utf-8')
-        return json.loads(content)
-
-    except json.JSONDecodeError as e:
-        log.error(f"JSON 格式错误: {e}")
+        # 使用 with open 配合 json.load，内存效率更高
+        with path.open('r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        log.error(f"解析文件 {path.name} 失败: {e}")
         return {}
-    except FileNotFoundError:
-        log.error(f"文件未找到: {file_path}")
-        return {}
-    except UnicodeDecodeError:
-        log.error(f"文件编码错误: {file_path}")
+    except Exception as e:
+        log.error(f"读取文件 {path.name} 时发生未知错误: {e}")
         return {}
 
 # =============================================================================
-# 数据文件路径
+# 基础配置 (不依赖 cfg 的常量)
 # =============================================================================
-JSON_PATH: Path = MAIN_PATH / 'data' / 'json'
-DATA_PATH: Path = JSON_PATH / 'data.json'              # data.json 的路径
-CONFIG_FILE_PATH = JSON_PATH / 'config.json'       # 配置文件路径
-API_PATH: Path = JSON_PATH / 'api.json'                # api_key.json 的路径
-EMOJI_PATH: Path = JSON_PATH / 'emoji.json'            # emoji 文件路径
-TEMPLATE_FOLDER_PATH: Path = MAIN_PATH / 'data' / 'template'             # 模板文件夹路径
-CURRENT_VERSION_PATH: Path = JSON_PATH / 'current_version.json'  # 本地版本文件路径
-CURRENT_VERSION_JSON: dict = read_json(CURRENT_VERSION_PATH)
-
-# =============================================================================
-# 可执行文件路径
-# =============================================================================
-EXE_PATH: Path = MAIN_PATH / 'main.exe'          # main.exe 的路径
-SETTINGS_PATH: Path = MAIN_PATH / 'settings.exe' # settings.exe 的路径
-UNINS_PATH: Path = MAIN_PATH / 'unins000.exe'    # 卸载程序的路径
-
-# =============================================================================
-# 应用配置
-# =============================================================================
-VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败')  # 版本号
-TITLE: str = f'开机速览({VERSION})'                                 # 全局标题
-SHORTCUT_NAME: str = '开机速览'                            # 开机启动项名称
-WEATHER_DATA_EXPIRE_TIME: int = 1800                                # 天气数据过期时间(单位：秒)
-
-# =============================================================================
-# 系统路径
-# =============================================================================
-STARTUP_PATH: Path = (
-    Path.home() / 'AppData' / 'Roaming' / 'Microsoft' / 'Windows' /
-    'Start Menu' / 'Programs' / 'Startup'
-)  # 获取当前用户的启动文件夹路径
+CURRENT_VERSION_JSON = read_json(CURRENT_VERSION_PATH)
+VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败') # 版本号
+TITLE: str = f'开机速览({VERSION})'                         # 全局标题
+SHORTCUT_NAME: str = '开机速览'                             # 开机启动项名称
 SHORTCUT_PATH: Path = STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'  # 开机启动项路径
-DOWNLOAD_PATH: Path = MAIN_PATH / 'data' / 'download'    # 下载缓存路径
-
-# =============================================================================
-# 安全配置
-# =============================================================================
-KEY: str = "387856766_2174509658_Ht."  # 密钥
+KEY: str = "387856766_2174509658_Ht."                      # 密钥
 
 # 检查网络连接情况
 # 模块级缓存变量（所有导入此模块的文件共享同一个缓存）
@@ -160,7 +98,7 @@ class JsonHandler:
 
     def __init__(self):
         """初始化处理器，使用预定义的JSON_PATH路径"""
-        self.file_path = DATA_PATH  # 保持Path对象类型
+        self.file_path = DATA_FILE_PATH  # 保持Path对象类型
         self.data = self._load_data()
 
     def _load_data(self) -> Dict:
@@ -184,6 +122,7 @@ class JsonHandler:
                         "is_first_startup": True,
                         "data_reset_times": 0,
                         "startup_times": 1,
+                        "last_birthday_date": "",  # 记录上次显示生日祝福的日期
                     },
                     "Data": {
                         "date": {},
@@ -305,9 +244,6 @@ class JsonHandler:
 
 # 初始化data.json读写
 file = JsonHandler()
-# 当前模板文件路径
-from .config import cfg
-TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
 
 # 禁止多开
 class SingleInstance:
@@ -463,22 +399,31 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
         return False, error_text
 
 # 重启
-def restart_program():
-    """兼容互斥锁的强制重启"""
-    # 1. 获取当前程序路径
-    # 如果你是用 Nuitka 编译的，sys.executable 就是那个 main.exe
-
-    # 2. 构造一个简单的 CMD 命令：
-    # taskkill /f /pid {当前PID}  <-- 强制杀掉自己（确保锁释放）
-    # timeout /t 1 /nobreak      <-- 等待1秒（给锁释放留出物理时间）
-    # start "" "{path}"          <-- 重新启动
+def restart_program(args: str = ""):
+    """
+    兼容互斥锁的强制重启
+    :param args: 启动参数，例如 "--settings"。留空则默认启动主程序。
+    """
+    # 1. 获取当前进程 PID
     current_pid = os.getpid()
 
-    # 构造一行流命令
-    cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"'
+    # 2. 构造命令
+    # 注意：start "" "{EXE_PATH}" {args}
+    # 如果 args 不为空，它会紧跟在路径后面
+    # 例如：start "" "C:\path\to\main.exe" --settings
 
-    # 3. 以后台静默方式启动这个命令
+    # 我们加上一个判断，确保参数前面有个空格
+    extra_args = f" {args}" if args else ""
+
+    # 构造一行流命令
+    # taskkill 强制杀掉当前 PID 确保文件锁/互斥锁释放
+    # timeout 等待 1 秒给系统缓冲
+    # start 重新拉起程序
+    cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"{extra_args}'
+
+    # 3. 以后台静默方式执行 CMD 命令
     subprocess.Popen(cmd, shell=True)
+
     # 4. 当前程序立即退出
     sys.exit()
 

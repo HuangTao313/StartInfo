@@ -7,7 +7,7 @@ import asyncio
 from pathlib import Path
 import shutil
 from new_settings import start_new_settings
-from updater import start_updater
+from core.updater import start_updater
 import core.ht_lib as lib
 import core.init_app as init_app
 import core.get_data as get_data
@@ -15,7 +15,6 @@ import core.ui as ui
 from core.config import cfg, qconfig
 
 # 显示导入
-import deps
 # 初始化日志管理器
 log = lib.log
 # 初始化文件读写
@@ -23,7 +22,7 @@ file = lib.file
 # 更新器路径
 UPDATER_PATH = lib.MAIN_PATH / 'updater.exe'
 # 主界面文案
-TEXT = f'{lib.TITLE}-设置'
+TEXT = f'{lib.TITLE}-旧版设置\n旧版设置已停止维护，建议使用新版设置'
 # 当前日期
 date = int(time.strftime("%Y%m%d", time.localtime()))
 if file.read('Data', 'other', 'get_date') != date:
@@ -53,7 +52,7 @@ def check_startup() -> str:
     return '添加到开机启动项' if not init_app.is_shortcut_exist() else '删除开机启动项'
 
 # 定义功能字典
-functions = {'启动新版设置(开发中)': start_new_settings,
+functions = {'启动新版设置': start_new_settings,
              '启动主程序': lib.restart_program
              }
 
@@ -337,7 +336,7 @@ def main():
     while True:
         startup = check_startup()
         choices = [
-            '启动新版设置(开发中)',
+            '启动新版设置',
             startup,
             '打开开机启动项文件夹',
             '启动主程序',
@@ -373,15 +372,21 @@ def main():
 
 # 入口
 def start_settings() -> None:
-    try:
-        # 弹出主窗口
-        main()
-        sys.exit()
+    if not cfg.ban_old_settings.value:
+        try:
+            # 弹出主窗口
+            main()
+            sys.exit()
 
-    except Exception as e:
-        log.error(f'设置-{str(e)}')
-        ui.error_dialog(str(e))
-        sys.exit()
+        except Exception as e:
+            log.error(f'设置-{str(e)}')
+            ui.error_dialog(str(e))
+            sys.exit()
+
+    else:
+        log.info('设置-已禁止旧设置')
+        start_new_settings()
+
 
 if __name__ == "__main__":
     # 初始化UI

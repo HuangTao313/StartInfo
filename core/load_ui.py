@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget
-from basic_settings_page import BasicSettingsWidget
-from custom_settings_page import CustomSettingsWidgets
+from .view.basic_settings_page import BasicSettingsWidget
+from .view.custom_settings_page import CustomSettingsWidgets
+from .view.about_settings_page import AboutSettingsWidgets
 
 
 # # 这个保留，因为它是 Designer 画的普通页面
@@ -23,5 +23,9 @@ class BasicStettingsPage(BasicSettingsWidget):
 
 
 class CustomSettingsPage(CustomSettingsWidgets):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+class AboutSettingsPage(AboutSettingsWidgets):
     def __init__(self, parent=None):
         super().__init__(parent=parent)

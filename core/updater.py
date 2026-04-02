@@ -10,8 +10,8 @@ import shutil
 import sys
 import ctypes
 from pathlib import Path
-import core.ht_lib as lib
-import core.ui as ui
+from . import ht_lib as lib
+from . import ui
 
 # 显示导入
 import deps
@@ -107,7 +107,7 @@ echo ====================================================
 echo 所有文件替换完成，正在启动主程序...
 echo ====================================================
 
-start "" "{exe_path}"
+start "" "{exe_path}" --update
 echo [启动] 主程序已启动
 
 echo [清理] 替换脚本已删除
@@ -117,7 +117,8 @@ timeout /t 1 /nobreak > nul
 exit
 """
 
-    with open(replace_script_path, 'w', encoding='gbk') as f:
+    # 使用 UTF-8-SIG 编码（带 BOM），确保 Windows 批处理正确识别中文
+    with open(replace_script_path, 'w', encoding='utf-8-sig') as f:
         f.write(script_content)
 
     log.info(f"更新器-已创建替换脚本: {replace_script_path}")
@@ -463,6 +464,7 @@ def _build_update_info(remote: dict, update_type: str, reason: str, pkg: dict = 
 
     return {
         'version': remote.get('version', '版本号获取失败'),
+        'release_date': remote.get('release_date', '日期获取失败'),
         'changelog': remote.get('changelog', '更新日志获取失败'),
         'type': update_type,
         'url': pkg.get('url', ''),
@@ -511,82 +513,77 @@ async def perform_update(update_info: dict) -> None:
     else:
         apply_full_update(update_file_path)  # 此函数会直接退出进程
 
-# # 尝试回到设置
-# def return_to_settings() -> None:
-#     try:
-#         subprocess.Popen(['start', '', str(lib.SETTINGS_PATH)], shell=True)
-#
-#     except Exception as e:
-#         error_text = f'尝试回到设置主界面时出错\n{str(e)}'
-#         log.error(f'更新器-{error_text}')
-#         ui.error_dialog(error_text)
-
-# 入口
-def start_updater() -> None:
-    # ==========================================
-    # 🌟 核心黑科技：动态唤醒控制台
-    # ==========================================
+def check_update_logic() -> tuple[bool, dict]:
+    """
+    【核心逻辑】仅检查更新，不触发任何控制台或 UI 弹窗
+    返回: (是否有更新, 更新信息字典)
+    """
     try:
-        # 1. 向 Windows 申请分配一个新的控制台窗口
-        ctypes.windll.kernel32.AllocConsole()
+        # 1. 版本文件维护逻辑
+        if not VERSION_PATH.exists():
+            if not asyncio.run(get_version_file()):
+                return False, {}
+        else:
+            version_data = lib.read_json(VERSION_PATH)
+            # 过期检查（1小时）
+            if int(time.time()) - version_data.get('get_time', 0) >= 3600:
+                if not asyncio.run(get_version_file()):
+                    log.warning("更新器-静默检查失败：无法获取远程版本")
+                    return False, {}
 
-        # 2. 将 Python 的 print 和报错信息重新指向这个新窗口
-        # "CONOUT$" 是 Windows 特有的控制台输出占位符
+        # 2. 联网并比对
+        if lib.is_internet():
+            need_update, update_info = check_update()  # 调用你原有的比对函数
+            return need_update, update_info
+    except Exception as e:
+        log.error(f"静默检查异常: {e}")
+
+    return False, {}
+
+
+def run_update_process(update_info: dict):
+    """
+    【执行逻辑】唤醒控制台并执行真正的下载替换
+    """
+    try:
+        # 申请控制台
+        ctypes.windll.kernel32.AllocConsole()
         sys.stdout = open("CONOUT$", "w", encoding='utf-8', buffering=1)
         sys.stderr = open("CONOUT$", "w", encoding='utf-8', buffering=1)
 
-        print(">>> StartInfo 更新器控制台已启动...")
-        print(">>> 正在初始化更新序列...\n")
-    except Exception as e:
-        # 如果因为权限等问题分配失败，记录到本地日志里，不影响主程序
-        log.error(f'更新器-控制台分配失败: {e}')
-    # ==========================================
+        print(">>> StartInfo 更新序列已启动...")
+        print(f">>> 正在准备更新至版本: {update_info.get('version', 'Unknown')}\n")
 
-    try:
-        # 检查version.json是否存在
-        if not VERSION_PATH.exists():
-            if not asyncio.run(get_version_file()):
-                error_text = '无法获取远程版本信息，请检查网络连接'
-                log.error(f'更新器-{error_text}')
-                ui.error_dialog(f'获取版本信息失败{error_text}')
-
-        else:
-            # 存在，检查版本文件是否过期(过期时间：1小时)
-            version_data = lib.read_json(VERSION_PATH)
-            if int(time.time()) - version_data.get('get_time', 0) >= 3600:
-                if not asyncio.run(get_version_file()):
-                    error_text = '无法获取远程版本信息，请检查网络连接'
-                    log.error(f'更新器-{error_text}')
-                    ui.error_dialog(f'获取版本信息失败{error_text}')
-
-        # 检查联网状态
-        if lib.is_internet():
-            # 检查更新
-            need_update, update_info = check_update()
-            # 如果需要更新
-            if need_update:
-                text = f'''发现新版本：{update_info.get("version", "未知")}
-
-    更新内容：
-    {update_info.get("changelog", "暂无更新日志")}'''
-
-                if not ui.dialog('更新器', text, ['立即更新', '取消更新']):
-                    log.info('更新器-用户取消更新')
-
-                # 执行更新（逻辑已抽离）
-                asyncio.run(perform_update(update_info))
-
-            else:
-                log.info('更新器-已是最新版本')
-                ui.dialog(lib.TITLE, '更新器-已是最新版本')
+        # 执行原有的更新动作
+        asyncio.run(perform_update(update_info))
 
     except Exception as e:
-        log.error(f'更新器-{str(e)}')
-        ui.error_dialog(str(e))
-
-    # 关闭控制台
+        log.error(f"更新执行失败: {e}")
     finally:
+        # 无论成功失败，最后释放控制台
         ctypes.windll.kernel32.FreeConsole()
+
+
+# ==========================================
+# 兼容层：适配旧版设置和直接运行
+# ==========================================
+def start_updater() -> None:
+    """
+    旧版入口：包含检查逻辑和弹窗确认
+    """
+    need_update, update_info = check_update_logic()
+
+    if need_update:
+        text = f"发现新版本：{update_info.get('version', '未知')}\n\n更新内容：\n{update_info.get('changelog', '暂无')}"
+        if ui.dialog('更新器', text, ['立即更新', '取消更新']):
+            run_update_process(update_info)
+        else:
+            log.info('更新器-用户取消更新')
+            lib.restart_program('--settings')
+    else:
+        log.info('更新器-已是最新版本')
+        ui.dialog(lib.TITLE, '更新器-已是最新版本')
+
 
 if __name__ == '__main__':
     # 初始化UI

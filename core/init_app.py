@@ -8,7 +8,7 @@ from .config import cfg, qconfig
 # 获取api信息
 api = lib.read_json(lib.API_PATH)
 # 中国城市列表路径
-CHINA_CITY_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'China_city.json'
+CHINA_CITY_PATH: Path = lib.JSON_PATH / 'China_citys_db.json'
 
 # IP定位
 @lib.async_retry_on_value(False)

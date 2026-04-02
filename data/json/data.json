@@ -2,7 +2,8 @@
     "General": {
         "is_first_startup": true,
         "startup_times": "",
-        "data_reset_times": ""
+        "data_reset_times": "",
+        "last_birthday_date": ""
     },
     "Data": {
         "date": {
@@ -26,7 +27,16 @@
             "wind_direction": "",
             "wind_speed": "",
             "air_quality": "",
-            "weather_emoji": ""
+            "weather_emoji": "☁"
+        },
+        "minecraft_server_data": {
+            "get_time": "",
+            "mc_server_name": "",
+            "is_mc_server_online": "",
+            "mc_server_current": "",
+            "mc_server_max": "",
+            "mc_server_latency": "",
+            "mc_online_friends": []
         },
         "other": {
             "get_date": "",

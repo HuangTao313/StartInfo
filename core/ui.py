@@ -1,7 +1,11 @@
 import sys
 import os
-from PySide6.QtWidgets import QApplication, QFileDialog, QVBoxLayout, QHBoxLayout
-from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton
+import time
+import re
+import winreg
+from PySide6.QtCore import QTimer, Qt
+from PySide6.QtWidgets import QApplication, QFileDialog, QHBoxLayout
+from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton,setThemeColor
 from typing import List
 from pathlib import Path
 from . import ht_lib as lib
@@ -28,7 +32,9 @@ class AppManager:
         """根据 cfg 的值初始化主题"""
         # 直接读取你 config.py 里的当前值
         theme_mode = cfg.theme.value
+        theme_color_mode = cfg.theme_color.value if not cfg.use_win_theme_color.value else get_real_windows_accent_color()
         self.refresh_theme(theme_mode)
+        self.refresh_theme_color(theme_color_mode)
 
     @staticmethod
     def refresh_theme(theme_mode: str):
@@ -43,13 +49,48 @@ class AppManager:
             # QFluentWidgets 完美支持 Theme.AUTO，它会自动看系统设置
             setTheme(Theme.AUTO)
 
+    @staticmethod
+    def refresh_theme_color(color_value):
+        """
+        刷新全局主题色
+        color_value 可以是 QColor, '#ff0000', 或者 Qt.blue
+        """
+        # 注意：qfw 的 setThemeColor 内部会自动处理 qconfig 和 updateStyleSheet
+        # 我们只需要确保传入的是有效的颜色
+        setThemeColor(color_value, save=True)
+
     def get_app(self) -> QApplication:
-        if self._app is None:
-            self.init_app()
-        return self._app
+            if self._app is None:
+                self.init_app()
+            return self._app
 
 # 全局 AppManager 实例
 app_manager = AppManager()
+
+def get_real_windows_accent_color():
+    """
+    直接从注册表读取 Windows 10/11 的实时主题色
+    """
+    try:
+        # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
+        registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+        key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
+
+        # 2. 读取 AccentColor (DWORD格式)
+        # 注册表存的是 AABBGGRR 格式
+        value, _ = winreg.QueryValueEx(key, "AccentColor")
+        winreg.CloseKey(key)
+
+        # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
+        # value 是一个 32 位的整数
+        # 我们通过位运算提取 R, G, B
+        r = value & 0xff
+        g = (value >> 8) & 0xff
+        b = (value >> 16) & 0xff
+
+        return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
+    except Exception:
+        return "#009faa"  # 读取失败时的保底蓝色
 
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """
@@ -374,57 +415,59 @@ def combobox(title: str, message: str = "", options: list[str] = None) -> str | 
         return None
 
 
-# ========== 主窗口 - 支持动态时间更新 ==========
+# ========== 主窗口 - 稳定版（支持禁用自动关闭） ==========
 def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     """
-    主窗口函数 - 支持动态时间更新
-
-    :param text: 窗口显示内容（模板渲染后的文本）
-    :param auto_close_seconds: 自动关闭时间（秒），默认 60 秒，设为 0 则不自动关闭
-    :return: True if confirmed, False otherwise
+    主窗口函数
+    :param text: 渲染后的文本
+    :param auto_close_seconds: 倒计时秒数 (int) 或 禁用状态 (False)
     """
-    import time
-    import re
-    from PySide6.QtCore import QTimer
-
     app_manager.get_app()
 
+    # 1. 清理文本首尾空行
+    clean_text = text.strip()
+
     # 创建对话框
-    dialog_instance = Dialog(lib.TITLE, text, None)
+    dialog_instance = Dialog(lib.TITLE, clean_text, None)
     dialog_instance.yesButton.setText("确定")
     dialog_instance.cancelButton.setText("设置")
 
-    # 动态时间更新（默认开启）
+    # 2. 禁止抖动逻辑
+    dialog_instance.adjustSize()
+    dialog_instance.setFixedSize(dialog_instance.width(), dialog_instance.height())
+    dialog_instance.contentLabel.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+    # 3. 动态时间更新逻辑 (保持开启)
     timer = QTimer()
 
     def update_time():
-        """定时器回调：更新时间"""
         new_time = time.strftime("%H:%M:%S", time.localtime())
-        # 用正则替换文本中的时间（HH:MM:SS 格式）
-        new_content = re.sub(r'\d{2}:\d{2}:\d{2}', new_time, text)
+        current_display_text = dialog_instance.contentLabel.text()
+        new_content = re.sub(r'\d{2}:\d{2}:\d{2}', new_time, current_display_text)
         dialog_instance.contentLabel.setText(new_content)
 
-    # 启动定时器（每秒更新一次）
     timer.timeout.connect(update_time)
     timer.start(1000)
-
-    # 对话框关闭时停止定时器
     dialog_instance.finished.connect(timer.stop)
 
-    # 自动关闭功能
-    if auto_close_seconds > 0:
+    # 4. 自动关闭功能 - 核心逻辑修改
+    # 只有当 auto_close_seconds 不是 False 且 大于 0 时才启动定时器
+    if auto_close_seconds is not False and auto_close_seconds > 0:
         auto_close_timer = QTimer()
-        auto_close_timer.setSingleShot(True)  # 只触发一次
+        auto_close_timer.setSingleShot(True)
 
         def auto_close():
             """自动关闭对话框"""
             dialog_instance.accept()
 
         auto_close_timer.timeout.connect(auto_close)
-        auto_close_timer.start(auto_close_seconds * 1000)  # 转换为毫秒
+        auto_close_timer.start(auto_close_seconds * 1000)
 
-        # 对话框手动关闭时停止自动关闭定时器
+        # 确保手动关闭时也销毁这个定时器
         dialog_instance.finished.connect(auto_close_timer.stop)
+    else:
+        # 如果是 False，这里什么都不做，窗口将一直保持开启直到手动点击
+        pass
 
     # 显示对话框并返回结果
     result = dialog_instance.exec()
