@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import QTimer, QThread, Signal
 from qfluentwidgets import (ScrollArea, ExpandLayout, SettingCardGroup, PrimaryPushSettingCard,ComboBoxSettingCard,
                             FluentIcon as FIF, PushSettingCard, InfoBar, InfoBarPosition)
 
@@ -15,6 +16,70 @@ from ..get_data import get_weather_air_quality, get_mc_server_status
 # 常量定义
 # 中国城市数据库路径
 CITY_DB_PATH = lib.JSON_PATH / 'China_citys_db.json'
+
+# Qt 线程工作类
+class AsyncWeatherWorker(QThread):
+    """异步刷新天气的 Qt 线程工作类"""
+    finished = Signal(bool, str)  # (是否成功, 消息)
+
+    def __init__(self, times: int):
+        super().__init__()
+        self.times = times
+
+    def run(self):
+        """在线程中运行异步任务"""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self._async_refresh_weather())
+            if result:
+                self.finished.emit(True, '天气数据已更新')
+            else:
+                self.finished.emit(False, '获取天气数据失败')
+        except Exception as e:
+            lib.log.error(f'设置-异步刷新天气失败: {e}')
+            self.finished.emit(False, str(e))
+
+    async def _async_refresh_weather(self):
+        """异步刷新天气数据"""
+        import aiohttp
+        try:
+            # 创建独立的 ClientSession，避免跨事件循环问题
+            async with aiohttp.ClientSession() as session:
+                weather_data = await get_weather_air_quality(session=session)
+                if isinstance(weather_data, dict):
+                    lib.file.update('Data', 'weather', update_dict=weather_data)
+                    lib.log.info(f'设置-已更新天气数据')
+
+                    # 次数自增1（使用加密存储）
+                    try:
+                        lib.file.write('General', 'data_reset_times', value=lib.encrypt(str(self.times + 1)))
+                    except Exception as e:
+                        lib.log.error(f'设置-写入重置次数数据失败: {e}')
+
+                    return True
+                else:
+                    lib.log.error('设置-获取天气数据失败')
+                    return False
+        except Exception as e:
+            lib.log.error(f'设置-刷新天气数据时发生异常: {e}')
+            return False
+
+
+class AsyncMCServerWorker(QThread):
+    """异步刷新 MC 服务器的 Qt 线程工作类"""
+    finished = Signal(dict)  # (服务器数据)
+
+    def run(self):
+        """在线程中运行异步任务"""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            mc_server_data = loop.run_until_complete(get_mc_server_status())
+            self.finished.emit(mc_server_data if isinstance(mc_server_data, dict) else {})
+        except Exception as e:
+            lib.log.error(f'设置-异步刷新 MC 服务器失败: {e}')
+            self.finished.emit({})
 
 class BasicSettingsWidget(ScrollArea):
     def __init__(self, parent=None):
@@ -363,10 +428,11 @@ class BasicSettingsWidget(ScrollArea):
         self.startupCard.checkedChanged.connect(self.onStartupChanged)
         self.deleteDownloadTempCard.clicked.connect(self.onDeleteDownloadTempClicked)
         self.cityChooseCard.clicked.connect(self.onCityChooseClicked)
-        self.weatherRefreshCard.clicked.connect(self.onWeatherRefreshClicked)
+        self.weatherRefreshCard.clicked.connect(self._run_async_task)
         self.birthdayListCard.clicked.connect(self.StartConfigFile)
         self.mcFriendsListCard.clicked.connect(self.StartConfigFile)
-        self.mcServerDataRefreshCard.clicked.connect(self.onMCSeverDataRefreshClicked)
+        # 立即刷新服务器数据
+        self.mcServerDataRefreshCard.clicked.connect(self._run_async_task_mc)
         self.openLogFolderCard.clicked.connect(self.onOpenLogFolderClicked)
         
         # 绑定输入值检测回调
@@ -381,6 +447,67 @@ class BasicSettingsWidget(ScrollArea):
         )
 
     # 定义槽函数
+    def _run_async_task(self):
+        """辅助方法：在 Qt 信号槽中正确运行异步任务（非阻塞）"""
+        # 安全读取次数，处理可能的解密失败
+        stored_data = lib.file.read('General', 'data_reset_times')
+        try:
+            if stored_data:
+                times = int(lib.decrypt(stored_data))
+            else:
+                times = 0  # 默认值
+        except (ValueError, TypeError):
+            lib.log.warning('设置-解密次数数据失败，使用默认值6')
+            times = 6
+
+        if times <= 5:
+            # 创建 Qt 线程工作类
+            self.weather_worker = AsyncWeatherWorker(times)
+            # 临时禁用按钮
+            self.weatherRefreshCard.setEnabled(False)
+            self.weather_worker.finished.connect(self._on_weather_refresh_finished)
+            self.weather_worker.start()
+        else:
+            lib.log.warning('设置-已超出每日手动次数，请勿频繁刷新')
+            Notify.warning(title='已超出每日手动刷新次数', content='请勿频繁刷新', parent=self)
+
+    def _on_weather_refresh_finished(self, success: bool, message: str):
+        """天气刷新完成的回调"""
+        if success:
+            Notify.success('天气数据已更新', parent=self)
+        else:
+            Notify.error(title='天气数据获取失败', content='请检查网络连接', parent=self)
+
+        # 恢复按钮
+        self.weatherRefreshCard.setEnabled(True)
+
+    def _run_async_task_mc(self):
+        """辅助方法：在 Qt 信号槽中正确运行 MC 服务器刷新异步任务（非阻塞）"""
+        # 创建 Qt 线程工作类
+        self.mc_worker = AsyncMCServerWorker()
+        self.mc_worker.finished.connect(self._on_mc_refresh_finished)
+        # 临时禁用按钮
+        self.mcServerDataRefreshCard.setEnabled(False)
+        self.mc_worker.start()
+
+    def _on_mc_refresh_finished(self, mc_server_data: dict):
+        """MC 服务器刷新完成的回调"""
+        if mc_server_data:
+            time_now = int(time.time())
+            mc_server_data['get_time'] = time_now
+            lib.file.update('Data', 'minecraft_server_data', update_dict=mc_server_data)
+            Notify.success(
+                title=f'已更新{cfg.minecraft_server_name.value}服务器数据',
+                content=f'当前{mc_server_data.get("mc_server_current", "未知")}人在线',
+                parent=self
+            )
+            lib.log.info(f'设置-已更新{cfg.minecraft_server_name.value}服务器数据')
+        else:
+            Notify.error(title='刷新失败', content='请检查服务器配置', parent=self)
+
+        # 恢复按钮
+        self.mcServerDataRefreshCard.setEnabled(True)
+
     def onStartupChanged(self, is_enabled: bool):
         if is_enabled:
             result = create_shortcut()
@@ -446,30 +573,16 @@ class BasicSettingsWidget(ScrollArea):
             else:
                 times = 0  # 默认值
         except (ValueError, TypeError):
-            log.warning('设置-解密次数数据失败，使用默认值6')
+            lib.log.warning('设置-解密次数数据失败，使用默认值6')
             times = 6
 
         if times <= 5:
-                weather_data = asyncio.run(get_weather_air_quality())
-                if isinstance(weather_data, dict):
-                    lib.file.update('Data', 'weather', update_dict=weather_data)
-                    lib.log.info(f'设置-已更新天气数据')
-                    Notify.success('天气数据已更新',parent=self)
-
-                else:
-                    lib.log.error('设置-获取天气数据失败')
-                    Notify.error(title='天气数据获取失败',content='请检查网络连接',parent=self)
-
+            # 直接调用 _run_async_task 方法，复用已有的 AsyncWeatherWorker
+            self._run_async_task()
 
         else:
-            log.warning('设置-已超出每日重新定位次数')
+            lib.log.warning('设置-已超出每日重新定位次数')
             Notify.warning(title='已超出每日手动刷新次数',content='请勿频繁刷新',parent=self)
-
-        # 次数自增1（使用加密存储）
-        try:
-            lib.file.write('General', 'data_reset_times', value=lib.encrypt(str(times + 1)))
-        except Exception as e:
-            lib.log.error(f'设置-写入重置次数数据失败: {e}')
 
     def StartConfigFile(self):
         try:
@@ -478,14 +591,6 @@ class BasicSettingsWidget(ScrollArea):
         except Exception as e:
             lib.log.error(f'设置-打开配置文件失败: {e}')
             Notify.error(title='打开配置文件失败', content=str(e), parent=self)
-
-    def onMCSeverDataRefreshClicked(self):
-        mc_server_data = asyncio.run(get_mc_server_status())
-        time_now = int(time.time())
-        lib.file.update('Data', 'minecraft_server_data', update_dict=mc_server_data)
-        lib.file.write('Data', 'minecraft_server_data', 'get_time',value=time_now)
-        Notify.success(title=f'已更新{cfg.minecraft_server_name.value}服务器数据', content=f'当前{mc_server_data.get('mc_server_current','未知')}人在线', parent=self)
-        lib.log.info(f'设置-已更新{cfg.minecraft_server_name.value}服务器数据')
 
     # 打开日志文件夹
     def onOpenLogFolderClicked(self):

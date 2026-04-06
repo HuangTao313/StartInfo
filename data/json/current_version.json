@@ -1,6 +1,6 @@
 {
-  "version": "V2.3.0",
-  "release_date": "2026年4月3日(作者的生日)",
-  "release_timestamp": 1775174400,
-  "changelog": "===== 重大更新 =====\n新增内容：\n1.新版设置，UI美观，编辑迅速。旧版设置已默认禁用，可在 设置/基本设置/调试/禁用旧版设置 里启用旧版设置，除彩蛋外已完成到新版设置的迁移。\n\n2.城市选择功能：用于天气数据的获取，api_key的获取逻辑转移到本地中国城市数据库。\n\n3.主程序自动关闭时间和天气数据刷新时间的自定义。\n\n4.信息组件开关：可自由选择需要显示的信息组件，避免信息过多导致主窗口杂乱。\n\n5.倒数日功能：目前仅支持1个倒数日，日期在过期3天后视为无效。\n\n6.生日祝福功能：目前不支持在设置内编辑生日列表，不支持多人同天生日。\n\n7.Minecraft Java版服务器玩家在线情况检测组件。\n\n8.网络请求重试机制：在请求失败后会重试2次。\n\n9.个性化更新：支持更改主题色，或使用Windows的系统主题色。\n\n10.调试更新：\n①可使用 --settings / --updater 参数直接启动设置 / 更新器\n②支持在 设置/基本设置/调试/日志等级 中更改日志等级\n\n性能优化：\n1.为适应新版设置，解耦 data.json 为 data.json 和 config.json，使用户配置和缓存数据分离。\n\n2.合并可执行文件，减小打包体积，提升运行速度。\n\nBUG修复：修复了主窗口刷新时间数据导致窗口抖动的问题。\n\n===== 作者的话 =====\n      这是我中考前最后一次大版本更新，后续版本如无严重bug不会更新。当前版本发布后，我会把全部精力投入到中考备考中。等我中考完回来后，请你一起和我见证 开机速览(StartInfo) 项目的进化。\n\n===== 版权声明 =====\n本项目目前处于内部开发阶段，仅供技术学习与交流参考。\n为确保版本稳定及后续开发计划，请勿私自外传安装包或进行二次分发。\n\n本程序的.ico图标文件均来自 icons8.com\n本程序基于 QFluentWidgets 开发 https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n本程序参考了 ClassWidgets 的部分代码 https://github.com/Class-Widgets/Class-Widgets"
+  "version": "V2.3.1",
+  "release_date": "2026年4月6日",
+  "release_timestamp": 1775473036,
+  "changelog": "性能优化：\n1.优化了异步获取数据的流程。\n\nBUG修复：\n1.修复了无法自定义主窗口自动关闭时间的bug。\n2.修复了手动更新服务器和天气数据，UI会被阻塞的bug。\n\n===== 版权声明 =====\n本项目目前处于内部开发阶段，仅供技术学习与交流参考。\n为确保版本稳定及后续开发计划，请勿私自外传安装包或进行二次分发。\n\n本程序的.ico图标文件均来自 icons8.com\n本程序基于 QFluentWidgets 开发 https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n本程序参考了 ClassWidgets 的部分代码 https://github.com/Class-Widgets/Class-Widgets"
 }

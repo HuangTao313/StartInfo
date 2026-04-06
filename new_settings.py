@@ -1,10 +1,12 @@
 import sys
+import asyncio
 from pathlib import Path
 from PySide6.QtGui import QIcon
 from qfluentwidgets import FluentWindow, FluentIcon
 from core.load_ui import *
 from core.config import cfg
 import core.ht_lib as lib
+import core.ui as ui
 
 # 定义常量
 SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'
@@ -14,7 +16,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import core.ui as ui
+
 
 class NewSettings(FluentWindow):
     def __init__(self):
@@ -52,6 +54,14 @@ class NewSettings(FluentWindow):
 
 def start_new_settings() -> None:
     ui.app_manager.init_app()
+    # 确保事件循环正确设置
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # 没有运行中的循环，创建新的
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     app = ui.app_manager.get_app()
     w = NewSettings()
     w.show()

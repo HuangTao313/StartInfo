@@ -463,3 +463,51 @@ def async_retry_on_value(fail_value="获取失败"):
         return wrapper
 
     return decorator
+
+# =============================================================================
+# 全局异步上下文管理器
+# =============================================================================
+class AsyncSessionManager:
+    """
+    全局异步会话管理器，用于共享 aiohttp.ClientSession
+    减少连接创建开销，提升异步网络请求性能
+    """
+    _instance = None
+    _session = None
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    async def __aenter__(self):
+        """异步上下文管理器入口，创建共享的 ClientSession"""
+        if not self._initialized or self._session is None or self._session.closed:
+            import aiohttp
+            self._session = aiohttp.ClientSession()
+            self._initialized = True
+            log.debug("已创建全局共享的 aiohttp.ClientSession")
+        return self._session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """异步上下文管理器出口，不关闭 session 以保持全局共享"""
+        # 不关闭 session，保持全局共享
+        # 只在程序退出时通过 close() 方法手动关闭
+        pass
+
+    @property
+    def session(self):
+        """获取当前的 ClientSession 实例"""
+        if not self._initialized or self._session is None or self._session.closed:
+            raise RuntimeError("ClientSession 未初始化或已关闭，请使用 async with 语句")
+        return self._session
+
+    async def close(self):
+        """手动关闭会话（用于清理）"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._initialized = False
+
+# 创建全局实例
+async_session = AsyncSessionManager()

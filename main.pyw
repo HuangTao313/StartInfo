@@ -72,8 +72,9 @@ def load_template(data: dict[str, str]) -> str | None:
 
     return f'模板加载失败：找不到可用模板'
 
-# 程序初始化
-def init():
+# 程序初始化（内部函数，仅在main中调用）
+async def _init_internal(session):
+    """内部初始化函数，在main的事件循环中执行"""
     # 询问用户是否添加开机启动项
     # 检查开机启动项是否存在
     if not init_app.is_shortcut_exist():
@@ -87,7 +88,7 @@ def init():
         log.info('主程序-检测到第一次启动，开始执行程序初始化')
 
         # IP定位并获取city_id
-        if asyncio.run(init_app.init_app()):
+        if await init_app.init_app(session=session):
             file.write('General', 'is_first_startup', value=False)
             log.info('主程序-程序初始化完成')
 
@@ -162,7 +163,8 @@ def handle_j2_template(j2_file_path: Path):
         ui.error_dialog(activate_result)
 
 # 程序入口
-def main():
+async def main():
+    """异步主函数，使用全局共享的 ClientSession 统一管理事件循环"""
     # 获取当前日期和时间
     date = int(time.strftime("%Y%m%d", time.localtime()))
     timestamp = int(time.time())
@@ -174,145 +176,151 @@ def main():
     jinja2_data = None
     start_mode = ""
 
+    # 使用全局共享的 ClientSession
+    async with lib.async_session as session:
+        # 如果是安装后第一次启动，执行初始化
+        if file.read('General', 'is_first_startup'):
+            await _init_internal(session)
+        # 如果一般数据已过期
+        if general_data_get_date != date:
+            # 次数重置
+            lib.times('reset')
+            log.info('主程序-启动次数已重置')
 
-    # 如果一般数据已过期
-    if general_data_get_date != date:
-        # 次数重置
-        lib.times('reset')
-        log.info('主程序-启动次数已重置')
+            # 如果联网
+            if lib.is_internet():
+                # 更新所有数据
+                data = await get_data.get_all_data(session=session)
+                # 格式化数据
+                jinja2_data = get_data.format_data_to_jinja2(data)
 
-        # 如果联网
-        if lib.is_internet():
-            # 更新所有数据
-            data = asyncio.run(get_data.get_all_data())
-            # 格式化数据
-            jinja2_data = get_data.format_data_to_jinja2(data)
+                # 检查数据格式化是否成功
+                if isinstance(jinja2_data, bool):
+                    start_mode = f'数据格式化失败：数据无效'
+                    log.error(f'主程序-{start_mode}')
+                    ui.error_dialog(start_mode)
+                    sys.exit()
 
-            # 检查数据格式化是否成功
-            if isinstance(jinja2_data, bool):
-                start_mode = f'数据格式化失败：数据无效'
-                log.error(f'主程序-{start_mode}')
-                ui.error_dialog(start_mode)
-                sys.exit()
+                json_data = get_data.format_data_to_json(data)
+                # 缓存数据
+                if isinstance(json_data, dict):
+                    file.update('Data', update_dict=json_data)
+                    start_mode = '(主程序-启动模式：更新所有数据并缓存)'
+                else:
+                    start_mode = f'获取数据失败：\n{json_data}'
+                    log.error(f'主程序{start_mode}')
+                    ui.error_dialog(start_mode)
+                    sys.exit()
 
-            json_data = get_data.format_data_to_json(data)
-            # 缓存数据
-            if isinstance(json_data, dict):
-                file.update('Data', update_dict=json_data)
-                start_mode = '(主程序-启动模式：更新所有数据并缓存)'
+            # 如果未联网
             else:
-                start_mode = f'获取数据失败：\n{json_data}'
-                log.error(f'主程序{start_mode}')
-                ui.error_dialog(start_mode)
-                sys.exit()
+                # 读取缓存
+                data = file.read('Data')
+                # 格式化数据
+                jinja2_data = get_data.format_json_to_jinja2(data)
+                start_mode = '(主程序-启动模式：未联网，读取旧数据)'
 
-        # 如果未联网
+        # 如果一般数据未过期
         else:
-            # 读取缓存
+            start_mode = '(主程序-启动模式：读取缓存数据)'
+
+            # 如果天气数据过期
+            if timestamp - weather_data_get_time > lib.WEATHER_DATA_EXPIRE_TIME:
+                # 获取天气数据
+                weather_data = await get_data.get_weather_air_quality(session=session)
+                # 缓存数据
+                if isinstance(weather_data, dict):
+                    file.update('Data', 'weather', update_dict=weather_data)
+                    start_mode = '(启动模式：更新天气数据并读取其他缓存数据)'
+                else:
+                    log.error(f'主程序-天气数据获取失败：{weather_data}，将使用缓存数据')
+                    start_mode = '(启动模式：天气数据获取失败，读取缓存数据)'
+
+            # 如果用户启用了MC服务器玩家信息检测，检查MC服务器数据是否过期
+            if cfg.minecraft_server_checker_switch.value:
+                mc_server_data_get_time_read = file.read('Data', 'minecraft_server_data', 'get_time')
+                mc_server_data_get_time = 0 if mc_server_data_get_time_read in (None, '', '未知') else int(mc_server_data_get_time_read)
+                if timestamp - mc_server_data_get_time >= cfg.minecraft_server_data_refresh_interval.value:
+                    # 获取MC服务器信息
+                    mc_server_data = await get_data.get_mc_server_status()
+                    # 缓存数据
+                    if isinstance(mc_server_data, dict):
+                        mc_server_data['get_time'] = int(time.time())
+                        file.update('Data', 'minecraft_server_data', update_dict=mc_server_data)
+                        log.info('主程序-已更新MC服务器数据缓存')
+                    else:
+                        log.error(f'主程序-获取MC服务器数据失败：{mc_server_data}，将使用缓存数据')
+
+            # 读取缓存数据
             data = file.read('Data')
             # 格式化数据
             jinja2_data = get_data.format_json_to_jinja2(data)
-            start_mode = '(主程序-启动模式：未联网，读取旧数据)'
 
-    # 如果一般数据未过期
-    else:
-        # 如果天气数据过期
-        if timestamp - weather_data_get_time > lib.WEATHER_DATA_EXPIRE_TIME:
-            # 获取天气数据
-            weather_data = asyncio.run(get_data.get_weather_air_quality())
-            # 缓存数据
-            if isinstance(weather_data, dict):
-                file.update('Data', 'weather', update_dict=weather_data)
-                start_mode = '(启动模式：更新天气数据并读取其他缓存数据)'
+        # ======================================================
+        # ✨ 统一补充区：这里处理所有分支都要干的事情
+        # ======================================================
+        if isinstance(jinja2_data, dict):
+            # 添加时间信息
+            time_info = get_data.get_time()
+            if isinstance(time_info, dict):
+                jinja2_data.update(time_info)
+
+            # 添加开机次数信息
+            startup_times = lib.times('read')
+            jinja2_data['startup_times'] = startup_times
+
+            # 添加生日信息（只在当天第 1 次启动时检测）
+            last_birthday_date = file.read('General', 'last_birthday_date') or ''
+            today_date = time.strftime("%Y%m%d", time.localtime())
+
+            # 如果今天还没显示过生日祝福
+            if last_birthday_date != today_date:
+                birthday_info = get_data.check_birthday()
+                if birthday_info is not False:
+                    jinja2_data.update(birthday_info)
+                    # 记录今天已显示过
+                    file.write('General', 'last_birthday_date', value=today_date)
             else:
-                log.error(f'主程序-天气数据获取失败：{weather_data}，将使用缓存数据')
-                start_mode = '(启动模式：天气数据获取失败，读取缓存数据)'
+                birthday_info = False  # 今天已显示过，不再检测
 
-        # 如果用户启用了MC服务器玩家信息检测，检查MC服务器数据是否过期
-        if cfg.minecraft_server_checker_switch.value:
-            mc_server_data_get_time_read = file.read('Data', 'minecraft_server_data', 'get_time')
-            mc_server_data_get_time = 0 if mc_server_data_get_time_read in (None, '', '未知') else int(mc_server_data_get_time_read)
-            if timestamp - mc_server_data_get_time >= cfg.minecraft_server_data_refresh_interval.value:
-                # 获取MC服务器信息
-                mc_server_data = asyncio.run(get_data.get_mc_server_status())
-                # 缓存数据
-                if isinstance(mc_server_data, dict):
-                    mc_server_data['get_time'] = int(time.time())
-                    file.update('Data', 'minecraft_server_data', update_dict=mc_server_data)
-                    log.info('主程序-已更新MC服务器数据缓存')
-                else:
-                    log.error(f'主程序-获取MC服务器数据失败：{mc_server_data}，将使用缓存数据')
+            # 添加倒数日信息
+            jinja2_data.update(get_data.get_countdown_day())
 
-        # 读取缓存数据
-        data = file.read('Data')
-        # 格式化数据
-        jinja2_data = get_data.format_json_to_jinja2(data)
+            # 添加自定义信息开关
+            info_switchs = get_data.get_custom_info_switch()
+            jinja2_data.update(info_switchs)
 
-    # ======================================================
-    # ✨ 统一补充区：这里处理所有分支都要干的事情
-    # ======================================================
-    if isinstance(jinja2_data, dict):
-        # 添加时间信息
-        time_info = get_data.get_time()
-        if isinstance(time_info, dict):
-            jinja2_data.update(time_info)
+            # 加载模版
+            text = load_template(jinja2_data)
+            log.info(f'主程序-{start_mode}')
 
-        # 添加开机次数信息
-        startup_times = lib.times('read')
-        jinja2_data['startup_times'] = startup_times
-
-        # 添加生日信息（只在当天第 1 次启动时检测）
-        last_birthday_date = file.read('General', 'last_birthday_date') or ''
-        today_date = time.strftime("%Y%m%d", time.localtime())
-        
-        # 如果今天还没显示过生日祝福
-        if last_birthday_date != today_date:
-            birthday_info = get_data.check_birthday()
-            if birthday_info is not False:
-                jinja2_data.update(birthday_info)
-                # 记录今天已显示过
-                file.write('General', 'last_birthday_date', value=today_date)
+            # 检查是否为开机启动（处理次数自增）
+            is_auto_start = "--startup" in args
+            # 如果是自启动或者日期变更后的第一次启动
+            if is_auto_start or general_data_get_date != date:
+                # 次数自增
+                lib.times('add')
+                log.info(f'主程序-启动次数已自增为{lib.times("read")}次')
         else:
-            birthday_info = False  # 今天已显示过，不再检测
+            # 数据异常处理
+            error_msg = text = f'数据处理失败：{jinja2_data}'
+            log.error(f'主程序-{error_msg}')
+            ui.error_dialog(error_msg)
+            sys.exit()
 
-        # 添加倒数日信息
-        jinja2_data.update(get_data.get_countdown_day())
+        # 自动关闭模式
+        auto_close_mode = cfg.auto_close_time.value if cfg.auto_close_switch.value else False
 
-        # 添加自定义信息开关
-        info_switchs = get_data.get_custom_info_switch()
-        jinja2_data.update(info_switchs)
+        # 弹窗
+        box = ui.main_window(text,auto_close_mode)
 
-        # 加载模版
-        text = load_template(jinja2_data)
-        log.info(f'主程序-{start_mode}')
-
-        # 检查是否为开机启动（处理次数自增）
-        is_auto_start = "--startup" in args
-        # 如果是自启动或者日期变更后的第一次启动
-        if is_auto_start or general_data_get_date != date:
-            # 次数自增
-            lib.times('add')
-            log.info(f'主程序-启动次数已自增为{lib.times("read")}次')
-    else:
-        # 数据异常处理
-        error_msg = text = f'数据处理失败：{jinja2_data}'
-        log.error(f'主程序-{error_msg}')
-        ui.error_dialog(error_msg)
-        sys.exit()
-
-    # 自动关闭模式
-    auto_close_mode = cfg.auto_close_time.value if cfg.auto_close_switch.value else False
-
-    # 弹窗
-    box = ui.main_window(text,auto_close_mode)
-
-    if box == False:
-        log.info('主程序-用户打开了设置')
-        start_settings()
-    else:
-        log.info('主程序-用户点击了确定，程序正常结束')
-        sys.exit()
-
+        if box == False:
+            log.info('主程序-用户打开了设置')
+            start_settings()
+        else:
+            log.info('主程序-用户点击了确定，程序正常结束')
+            sys.exit()
+                
 if __name__ == '__main__':
     try:
         # 初始化
@@ -354,14 +362,35 @@ if __name__ == '__main__':
                 if j2_file_path:
                     handle_j2_template(j2_file_path)  # 处理模板文件
 
-        # 如果是安装后第一次启动
-        if file.read('General', 'is_first_startup'):
-            init()
-
-        # 启动主函数
-        main()
+        # 启动主函数（初始化逻辑已在main内部处理）
+        asyncio.run(main())
 
     except Exception as e:
             log.error(f'主程序-程序运行时发生错误：{str(e)}')
             ui.error_dialog(str(e))
-            sys.exit()
+    finally:
+        # 程序退出前清理资源
+        try:
+            # 检查是否有正在运行的事件循环
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # 没有正在运行的事件循环，创建一个
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop_created = True
+            else:
+                loop_created = False
+
+            # 在现有的事件循环中关闭session
+            if lib.async_session._initialized and lib.async_session._session:
+                loop.run_until_complete(lib.async_session.close())
+                log.info('主程序-已关闭全局共享的 ClientSession')
+
+            # 如果是我们创建的循环，关闭它
+            if loop_created:
+                loop.close()
+        except Exception as e:
+            log.error(f'主程序-清理资源时发生错误：{e}')
+
+        sys.exit()

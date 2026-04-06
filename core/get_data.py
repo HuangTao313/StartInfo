@@ -147,7 +147,8 @@ def get_weather_emoji(weather_type) -> str:
 
 # 获取天气和空气质量信息
 @lib.async_retry_on_value(False)
-async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
+async def get_weather_air_quality(session: aiohttp.ClientSession = None) -> dict[str, str | Any] | bool | str:
+    """获取天气和空气质量信息，使用共享的 ClientSession 以提升性能"""
     if lib.is_internet():
         if api is not None:
             # 添加安全检查，确保配置项是 ConfigItem 对象
@@ -160,62 +161,12 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
 
             api_key = lib.decrypt(api['qweather.com']['api_key'])
             try:
-                # 1. 创建异步 HTTP 客户端
-                async with aiohttp.ClientSession() as session:
-                    # 2. 并发获取天气和空气质量数据
-                    weather_url = api['qweather.com']['url_weather']
-                    air_url = api['qweather.com']['url_air']
-                    params = {
-                        "key": api_key,
-                        "location": city_id
-                    }
-
-                    # 并发执行两个请求（同时发出，自动等待最慢的那个完成）
-                    weather_task = session.get(weather_url, params=params)
-                    air_task = session.get(air_url, params=params)
-
-                    # 等待两个请求都完成
-                    weather_response, air_response = await asyncio.gather(
-                        weather_task,
-                        air_task
-                    )
-
-                    # 解析响应数据
-                    weather_data = await weather_response.json()
-                    air_data = await air_response.json()
-
-                    # 3. 处理数据（同步逻辑，无阻塞）
-                    now = weather_data.get("now", {})
-                    if now:
-                        weather = now.get('text', '')
-                        temperature = now.get('temp', '')
-                        feels_like = now.get('feelsLike', '')
-                        humidity = now.get('humidity', '')
-                        wind_direction = now.get('windDir', '')
-                        wind_speed = now.get('windSpeed', '')
-                        air_quality = air_data.get("now", {}).get("aqi", "")
-                        air_level = air_data.get("now", {}).get("category", "")
-                        air_quality_text = f"{air_level}(PM2.5 指数:{air_quality})"
-                        weather_emoji = get_weather_emoji(weather)
-
-                        # 格式化输出信息
-                        data = {
-                            'get_time': int(time.time()),
-                            'city_name': city_name,
-                            'weather': weather,
-                            'temperature': f'{temperature}℃',
-                            'feels_like': f'{feels_like}℃',
-                            'humidity': f'{humidity}%',
-                            'wind_direction': wind_direction,
-                            'wind_speed': f'{wind_speed}km/h',
-                            'air_quality': air_quality_text,
-                            'weather_emoji': weather_emoji
-                        }
-                        return data
-
-                    else:
-                        lib.log.error('天气：获取失败')
-                        return False
+                # 使用传入的 session，如果没有传入则创建临时的（兼容性）
+                if session is None:
+                    async with aiohttp.ClientSession() as temp_session:
+                        return await _fetch_weather_data(temp_session, city_name, city_id, api_key)
+                else:
+                    return await _fetch_weather_data(session, city_name, city_id, api_key)
 
             except Exception as e:
                 lib.log.error(f'获取天气信息失败：{str(e)}')
@@ -227,9 +178,66 @@ async def get_weather_air_quality() -> dict[str, str | Any] | bool | str:
         lib.log.warning('天气：获取失败，请联网后获取')
         return False
 
+async def _fetch_weather_data(session: aiohttp.ClientSession, city_name: str, city_id: str, api_key: str) -> dict[str, str | Any] | bool:
+    """内部函数：使用给定的 session 获取天气数据"""
+    # 并发获取天气和空气质量数据
+    weather_url = api['qweather.com']['url_weather']
+    air_url = api['qweather.com']['url_air']
+    params = {
+        "key": api_key,
+        "location": city_id
+    }
+
+    # 并发执行两个请求（同时发出，自动等待最慢的那个完成）
+    weather_task = session.get(weather_url, params=params)
+    air_task = session.get(air_url, params=params)
+
+    # 等待两个请求都完成
+    weather_response, air_response = await asyncio.gather(
+        weather_task,
+        air_task
+    )
+
+    # 解析响应数据
+    weather_data = await weather_response.json()
+    air_data = await air_response.json()
+
+    # 处理数据（同步逻辑，无阻塞）
+    now = weather_data.get("now", {})
+    if now:
+        weather = now.get('text', '')
+        temperature = now.get('temp', '')
+        feels_like = now.get('feelsLike', '')
+        humidity = now.get('humidity', '')
+        wind_direction = now.get('windDir', '')
+        wind_speed = now.get('windSpeed', '')
+        air_quality = air_data.get("now", {}).get("aqi", "")
+        air_level = air_data.get("now", {}).get("category", "")
+        air_quality_text = f"{air_level}(PM2.5 指数:{air_quality})"
+        weather_emoji = get_weather_emoji(weather)
+
+        # 格式化输出信息
+        data = {
+            'get_time': int(time.time()),
+            'city_name': city_name,
+            'weather': weather,
+            'temperature': f'{temperature}℃',
+            'feels_like': f'{feels_like}℃',
+            'humidity': f'{humidity}%',
+            'wind_direction': wind_direction,
+            'wind_speed': f'{wind_speed}km/h',
+            'air_quality': air_quality_text,
+            'weather_emoji': weather_emoji
+        }
+        return data
+    else:
+        lib.log.error('天气：获取失败')
+        return False
+
 # 获取历史上的今天信息
 @lib.async_retry_on_value(False)
-async def get_today_in_history() -> dict[str, str | Any] | bool:
+async def get_today_in_history(session: aiohttp.ClientSession = None) -> dict[str, str | Any] | bool:
+    """获取历史上的今天信息，使用共享的 ClientSession 以提升性能"""
     if lib.is_internet():
         if api is not None:
             url = api['www.mxnzp.com']['today_in_history']['url']
@@ -240,29 +248,16 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
             }
 
             try:
-                # 1. 创建异步 HTTP 客户端
-                async with aiohttp.ClientSession() as session:
-                    # 2. 发起异步请求（关键：你用 await 等待网络响应）
+                # 使用传入的 session，如果没有传入则创建临时的（兼容性）
+                if session is None:
+                    async with aiohttp.ClientSession() as temp_session:
+                        async with temp_session.get(url, params=params) as response:
+                            data = await response.json()
+                            return _parse_history_data(data)
+                else:
                     async with session.get(url, params=params) as response:
-                        # 3. 等待响应内容（自动等待网络完成）
                         data = await response.json()
-
-                        if data["code"] == 1:
-                            history_data = data["data"]
-                            if len(history_data) > 0:
-                                history = history_data[0]
-                                # 格式化输出信息
-                                data = {
-                                    'historical_date': f"{history['year']}年{history['month']}月{history['day']}日",
-                                    'historical_event': history['title']
-                                }
-                                return data
-                            else:
-                                lib.log.error('历史上的今天：没有找到历史上的今天的信息')
-                                return False
-                        else:
-                            lib.log.error('历史上的今天：请求失败')
-                            return False
+                        return _parse_history_data(data)
 
             except aiohttp.ClientError as e:
                 lib.log.error(f'历史上的今天：请求异常 - {str(e)}')
@@ -274,9 +269,28 @@ async def get_today_in_history() -> dict[str, str | Any] | bool:
         lib.log.warning('历史上的今天：请联网后获取')
         return False
 
+def _parse_history_data(data: dict) -> dict[str, str | Any] | bool:
+    """内部函数：解析历史上的今天数据"""
+    if data["code"] == 1:
+        history_data = data["data"]
+        if len(history_data) > 0:
+            history = history_data[0]
+            # 格式化输出信息
+            return {
+                'historical_date': f"{history['year']}年{history['month']}月{history['day']}日",
+                'historical_event': history['title']
+            }
+        else:
+            lib.log.error('历史上的今天：没有找到历史上的今天的信息')
+            return False
+    else:
+        lib.log.error('历史上的今天：请求失败')
+        return False
+
 # 查询节假日和 24 节气信息
 @lib.async_retry_on_value(False)
-async def get_holiday_solar_term() ->  dict[str, str] | bool:
+async def get_holiday_solar_term(session: aiohttp.ClientSession = None) ->  dict[str, str] | bool:
+    """查询节假日和 24 节气信息，使用共享的 ClientSession 以提升性能"""
     if lib.is_internet():
         if api is not None:
             current_time = time.localtime()
@@ -290,27 +304,18 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
             url = api['www.mxnzp.com']['holiday_solar_term']['url']
 
             try:
-                # 1. 创建异步 HTTP 客户端
-                async with aiohttp.ClientSession() as session:
-                    # 2. 发起异步请求（关键：使用 await 等待网络响应）
+                # 使用传入的 session，如果没有传入则创建临时的（兼容性）
+                if session is None:
+                    async with aiohttp.ClientSession() as temp_session:
+                        async with temp_session.get(f'{url}/{formatted_time}', params=solarTerms_params) as response:
+                            data_solar_term = await response.json()
+                            return _parse_holiday_data(data_solar_term)
+                else:
                     async with session.get(f'{url}/{formatted_time}', params=solarTerms_params) as response:
-                        # 3. 等待响应内容（自动等待网络完成）
                         data_solar_term = await response.json()
-                        if data_solar_term["code"] == 1:
-                            solar_term_data = data_solar_term["data"]["solarTerms"]
-                            holiday_data = data_solar_term["data"]["typeDes"]
+                        return _parse_holiday_data(data_solar_term)
 
-                            # 修正 1：避免返回字符串中包含"节假日信息："
-                            holiday = holiday_data if holiday_data else "没有节假日"
-                            solar_term = solar_term_data if solar_term_data else "没有找到 24 节气"
-                            # 格式化输出
-                            return {'holiday': holiday, 'solar_term': solar_term}
-
-                        else:
-                            lib.log.error('节假日和 24 节气信息：请求失败')
-                            return False
-
-            except aiohttp.ClientError as e:  # 修正 2：使用 aiohttp 异常类型
+            except aiohttp.ClientError as e:
                 lib.log.error(f'节假日和 24 节气信息：请求异常 - {str(e)}')
                 return False
         else:
@@ -320,25 +325,38 @@ async def get_holiday_solar_term() ->  dict[str, str] | bool:
         lib.log.warning('节假日和 24 节气信息：请联网后获取')
         return False
 
+def _parse_holiday_data(data_solar_term: dict) -> dict[str, str] | bool:
+    """内部函数：解析节假日和24节气数据"""
+    if data_solar_term["code"] == 1:
+        solar_term_data = data_solar_term["data"]["solarTerms"]
+        holiday_data = data_solar_term["data"]["typeDes"]
+
+        # 修正 1：避免返回字符串中包含"节假日信息："
+        holiday = holiday_data if holiday_data else "没有节假日"
+        solar_term = solar_term_data if solar_term_data else "没有找到 24 节气"
+        # 格式化输出
+        return {'holiday': holiday, 'solar_term': solar_term}
+    else:
+        lib.log.error('节假日和 24 节气信息：请求失败')
+        return False
+
 # 获取金山词霸每日一言
 @lib.async_retry_on_value(False)
-async def get_every_day_words() -> dict[str, str] | bool:
+async def get_every_day_words(session: aiohttp.ClientSession = None) -> dict[str, str] | bool:
+    """获取金山词霸每日一言，使用共享的 ClientSession 以提升性能"""
     if lib.is_internet():
         url = api['open.iciba.com']
         try:
-            async with aiohttp.ClientSession() as session:
+            # 使用传入的 session，如果没有传入则创建临时的（兼容性）
+            if session is None:
+                async with aiohttp.ClientSession() as temp_session:
+                    async with temp_session.get(url) as response:
+                        text = await response.text()
+                        return _parse_words_data(text)
+            else:
                 async with session.get(url) as response:
-                    # 直接获取文本内容（绕过 Content-Type 检查）
                     text = await response.text()
-                    # 用标准 json 解析（不依赖 Content-Type）
-                    data = json.loads(text)
-                    content = data.get('content', '')
-                    note = data.get('note', '')
-                    # 格式化输出
-                    return {
-                        'every_day_words_zh': note,
-                        'every_day_words_en': content
-                    }
+                    return _parse_words_data(text)
 
         except Exception as e:
             lib.log.error(f'金山词霸每日一言：获取失败：{e}')
@@ -347,6 +365,17 @@ async def get_every_day_words() -> dict[str, str] | bool:
         lib.log.warning('金山词霸每日一言：请联网后获取')
         return False
 
+def _parse_words_data(text: str) -> dict[str, str] | bool:
+    """内部函数：解析每日一言数据"""
+    data = json.loads(text)
+    content = data.get('content', '')
+    note = data.get('note', '')
+    # 格式化输出
+    return {
+        'every_day_words_zh': note,
+        'every_day_words_en': content
+    }
+
 # MC 服务器玩家在线情况检测
 @lib.async_retry_on_value(False)
 async def get_mc_server_status():
@@ -354,17 +383,9 @@ async def get_mc_server_status():
     from mcstatus import JavaServer
     """
     纯异步函数：获取 MC 服务器状态并比对好友列表
-    返回：(dict) 包含在线人数、最大人数、延迟和在线好友名单
+    返回：(dict) 成功时包含在线人数、最大人数、延迟和在线好友名单
+          (bool) 失败时返回 False
     """
-
-    results = {
-        "mc_server_name": cfg.minecraft_server_name.value,
-        "is_mc_server_online": False,
-        "mc_server_current": 0,
-        "mc_server_max": 0,
-        "mc_server_latency": 0,
-        "mc_online_friends": []
-    }
 
     # 获取用户配置
     ip = cfg.minecraft_server_ip.value
@@ -381,10 +402,15 @@ async def get_mc_server_status():
         server = await JavaServer.async_lookup(server_addr)
         status = await server.async_status()
 
-        results["is_mc_server_online"] = True
-        results["mc_server_current"] = status.players.online
-        results["mc_server_max"] = status.players.max
-        results["mc_server_latency"] = round(status.latency, 1)
+        # 成功获取服务器状态
+        results = {
+            "mc_server_name": cfg.minecraft_server_name.value,
+            "is_mc_server_online": True,
+            "mc_server_current": status.players.online,
+            "mc_server_max": status.players.max,
+            "mc_server_latency": round(status.latency, 1),
+            "mc_online_friends": []
+        }
 
         # 2. 处理好友比对逻辑
         # 提取采样玩家名单 (注意：部分服务器可能不返回具体名单)
@@ -392,12 +418,13 @@ async def get_mc_server_status():
             online_names = [p.name for p in status.players.sample]
             results["mc_online_friends"] = [name for name in friends_list if name in online_names]
 
+        lib.log.info(f'MC 服务器玩家在线情况检测：获取成功，{results["mc_server_current"]}人在线')
+        return results
+
     except Exception as e:
         # 这里的异常捕获保证了即使 IP 填错或服务器炸了，主程序也不会崩
         lib.log.error(f'MC 服务器玩家在线情况检测：获取失败：{e}')
-        results["is_mc_server_online"] = False
-
-    return results
+        return False
 
 
 
@@ -530,34 +557,45 @@ def get_custom_info_switch() -> dict:
     return switch_dict
 
 # 获取所有信息
-async def get_all_data() -> list[dict[str,str]] | bool:
-    # 异步获取所以信息
+async def get_all_data(session: aiohttp.ClientSession = None, force_mc_check: bool = False) -> list[dict[str,str]] | bool:
+    """
+    异步获取所有信息，使用共享的 ClientSession 以提升性能
+
+    Args:
+        session: 共享的 aiohttp.ClientSession 实例
+        force_mc_check: 是否强制检查 MC 服务器状态（忽略缓存过期时间）
+
+    Returns:
+        包含所有信息的列表，格式为 [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words, minecraft_server_status?]
+    """
     try:
         date = get_date()
-        if cfg.minecraft_server_checker_switch.value:
-            holiday_solar_term, weather_air_quality, today_in_history, everyday_words, minecraft_server_status = await asyncio.gather(
-                get_holiday_solar_term(),
-                get_weather_air_quality(),
-                get_today_in_history(),
-                get_every_day_words(),
-                get_mc_server_status()
-            )
+        session_arg = {'session': session} if session else {}
 
+        # 构建需要获取的任务列表
+        tasks = [
+            get_holiday_solar_term(**session_arg),
+            get_weather_air_quality(**session_arg),
+            get_today_in_history(**session_arg),
+            get_every_day_words(**session_arg)
+        ]
+
+        # 检查是否需要获取 MC 服务器状态
+        mc_check_needed = cfg.minecraft_server_checker_switch.value or force_mc_check
+
+        if mc_check_needed:
+            tasks.append(get_mc_server_status())
+
+        # 并发执行所有任务
+        results = await asyncio.gather(*tasks)
+
+        if mc_check_needed:
             # 返回全部信息（6 个元素）
-            return [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words, minecraft_server_status]
-
+            return [date, *results]
         else:
-            holiday_solar_term, weather_air_quality, today_in_history, everyday_words = await asyncio.gather(
-                get_holiday_solar_term(),
-                get_weather_air_quality(),
-                get_today_in_history(),
-                get_every_day_words()
-            )
+            # 返回基本信息（5 个元素，兼容旧版）
+            return [date, *results]
 
-            # 返回全部信息（5 个元素，兼容旧版）
-            return [date, holiday_solar_term, weather_air_quality, today_in_history, everyday_words]
-
-    # 处理异常
     except Exception as e:
         lib.log.error(f'获取所有信息：获取失败：{e}')
         return False

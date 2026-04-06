@@ -12,16 +12,32 @@ CHINA_CITY_PATH: Path = lib.JSON_PATH / 'China_citys_db.json'
 
 # IP定位
 @lib.async_retry_on_value(False)
-async def get_ip_location() -> str | bool:
+async def get_ip_location(session: aiohttp.ClientSession = None) -> str | bool:
     """
     使用高德地图 API 自动定位当前公网 IP 所在地
+
+    Args:
+        session: 共享的 aiohttp.ClientSession 实例（可选）
 
     Returns:
         str: 成功时返回城市名称（如"黄石市"、"恩施土家族苗族自治州"）
         bool: 失败时返回 False
     """
     try:
-        async with aiohttp.ClientSession() as session:
+        # 使用传入的 session，如果没有传入则创建临时的（兼容性）
+        if session is None:
+            async with aiohttp.ClientSession() as temp_session:
+                async with temp_session.get(
+                        'https://restapi.amap.com/v3/ip',
+                        params={
+                            'key': lib.decrypt(api['restapi.amap.com']['api_key']),
+                            'output': 'json'
+                        },
+                        ssl=False
+                ) as resp:
+                    data = await resp.json()
+                    return _parse_ip_location_data(data)
+        else:
             async with session.get(
                     'https://restapi.amap.com/v3/ip',
                     params={
@@ -31,41 +47,44 @@ async def get_ip_location() -> str | bool:
                     ssl=False
             ) as resp:
                 data = await resp.json()
-
-                if data.get('status') == '1':
-                    # 记录完整的API响应数据
-                    lib.log.info(f"程序初始化-高德IP定位API返回数据: {data}")
-
-                    # 🔥 修复：处理高德返回空数组 [] 的情况
-                    raw_city = data.get('city', '')
-
-                    # 高德可能返回 []（空数组）或 ""（空字符串）或正常字符串
-                    if isinstance(raw_city, list):
-                        # 如果是数组，取第一个元素或设为空字符串
-                        city_name = raw_city[0].strip() if raw_city else ''
-                    elif isinstance(raw_city, str):
-                        # 如果是字符串，正常处理
-                        city_name = raw_city.strip()
-                    else:
-                        # 其他类型（理论上不应该出现）设为空字符串
-                        city_name = ''
-
-                    # 检查城市名是否有效
-                    if city_name and city_name != '未知':
-                        lib.log.info(f"程序初始化-高德IP定位成功: {city_name}")
-                        return city_name
-                    else:
-                        lib.log.warning(f"程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}")
-                        return False
-                else:
-                    # API请求失败，记录详细错误信息
-                    error_msg = data.get('info', '未知错误')
-                    error_code = data.get('infocode', '无错误码')
-                    lib.log.error(f"程序初始化-高德IP定位失败: {error_msg} (错误码: {error_code})")
-                    return False
+                return _parse_ip_location_data(data)
 
     except Exception as e:
         lib.log.error(f"程序初始化-IP定位请求异常: {str(e)}")
+        return False
+
+def _parse_ip_location_data(data: dict) -> str | bool:
+    """内部函数：解析高德IP定位数据"""
+    if data.get('status') == '1':
+        # 记录完整的API响应数据
+        lib.log.info(f"程序初始化-高德IP定位API返回数据: {data}")
+
+        # 🔥 修复：处理高德返回空数组 [] 的情况
+        raw_city = data.get('city', '')
+
+        # 高德可能返回 []（空数组）或 ""（空字符串）或正常字符串
+        if isinstance(raw_city, list):
+            # 如果是数组，取第一个元素或设为空字符串
+            city_name = raw_city[0].strip() if raw_city else ''
+        elif isinstance(raw_city, str):
+            # 如果是字符串，正常处理
+            city_name = raw_city.strip()
+        else:
+            # 其他类型（理论上不应该出现）设为空字符串
+            city_name = ''
+
+        # 检查城市名是否有效
+        if city_name and city_name != '未知':
+            lib.log.info(f"程序初始化-高德IP定位成功: {city_name}")
+            return city_name
+        else:
+            lib.log.warning(f"程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}")
+            return False
+    else:
+        # API请求失败，记录详细错误信息
+        error_msg = data.get('info', '未知错误')
+        error_code = data.get('infocode', '无错误码')
+        lib.log.error(f"程序初始化-高德IP定位失败: {error_msg} (错误码: {error_code})")
         return False
 
 # 获取城市ID
@@ -112,11 +131,18 @@ def get_city_info_by_location(amap_location=None) -> tuple[str, str] | bool:
         return False
 
 # 程序初始化
-async def init_app():
+async def init_app(session: aiohttp.ClientSession = None):
+    """
+    程序初始化函数，支持共享的 ClientSession
+
+    Args:
+        session: 共享的 aiohttp.ClientSession 实例（可选）
+    """
     if lib.is_internet():
         try:
             # 获取IP定位
-            city = await get_ip_location()
+            session_arg = {'session': session} if session else {}
+            city = await get_ip_location(**session_arg)
             # 获取城市信息
             result = get_city_info_by_location(city)
             # 检查result变量类型
