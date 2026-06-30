@@ -94,7 +94,6 @@ class MyConfig(QConfig):
     theme = OptionsConfigItem(
         "General", "theme", 'dynamic',
         OptionsValidator(["light", "dark", "dynamic"]),
-        # restart=True  # 建议开启，因为切换主题通常需要重启窗口来彻底刷新 UI
     )
 
     # 使用系统主题色

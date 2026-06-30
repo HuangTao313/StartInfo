@@ -414,9 +414,14 @@ async def get_mc_server_status():
 
         # 2. 处理好友比对逻辑
         # 提取采样玩家名单 (注意：部分服务器可能不返回具体名单)
-        if status.players.sample:
-            online_names = [p.name for p in status.players.sample]
-            results["mc_online_friends"] = [name for name in friends_list if name in online_names]
+        try:
+            if status.players.sample:
+                online_names = [p.name for p in status.players.sample]
+                results["mc_online_friends"] = [name for name in friends_list if name in online_names]
+        except Exception as e:
+            # 玩家列表获取失败不影响基本功能
+            lib.log.warning(f'MC 服务器玩家在线情况检测：获取玩家列表失败，但基本状态正常 - {e}')
+            results["mc_online_friends"] = []
 
         lib.log.info(f'MC 服务器玩家在线情况检测：获取成功，{results["mc_server_current"]}人在线')
         return results

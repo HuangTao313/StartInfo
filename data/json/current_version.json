@@ -2,5 +2,5 @@
   "version": "V2.3.1",
   "release_date": "2026年4月6日",
   "release_timestamp": 1775473036,
-  "changelog": "性能优化：\n1.优化了异步获取数据的流程。\n\nBUG修复：\n1.修复了无法自定义主窗口自动关闭时间的bug。\n2.修复了手动更新服务器和天气数据，UI会被阻塞的bug。\n\n===== 版权声明 =====\n本项目目前处于内部开发阶段，仅供技术学习与交流参考。\n为确保版本稳定及后续开发计划，请勿私自外传安装包或进行二次分发。\n\n本程序的.ico图标文件均来自 icons8.com\n本程序基于 QFluentWidgets 开发 https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n本程序参考了 ClassWidgets 的部分代码 https://github.com/Class-Widgets/Class-Widgets"
+  "changelog": "性能优化：\n1.优化了异步获取数据的流程。\n\nBUG修复：\n1.修复了无法自定义主窗口自动关闭时间的bug。\n2.修复了手动更新服务器和天气数据，UI会被阻塞的bug。\n\n===== 说明 =====\n本项目目前处于个人开发与测试阶段，仅用于技术学习与交流。\n本程序基于 QFluentWidgets（GPLv3）开发：\nhttps://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n因此本项目在正式发布时将遵循 GPLv3 开源协议。\n本程序的 .ico 图标文件来自 icons8.com\n本程序部分设计思路参考 ClassWidgets：\nhttps://github.com/Class-Widgets/Class-Widgets\n本项目不隶属任何商业组织。"
 }

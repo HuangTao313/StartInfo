@@ -13,8 +13,6 @@ from pathlib import Path
 from . import ht_lib as lib
 from . import ui
 
-# 显示导入
-import deps
 # ==================== 路径定义 ====================
 VERSION_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'version.json'  # 远程版本缓存
 CURRENT_VERSION_PATH: Path = lib.CURRENT_VERSION_PATH  # 本地已安装版本记录
@@ -545,23 +543,24 @@ def run_update_process(update_info: dict):
     """
     【执行逻辑】唤醒控制台并执行真正的下载替换
     """
-    try:
-        # 申请控制台
-        ctypes.windll.kernel32.AllocConsole()
-        sys.stdout = open("CONOUT$", "w", encoding='utf-8', buffering=1)
-        sys.stderr = open("CONOUT$", "w", encoding='utf-8', buffering=1)
-
-        print(">>> StartInfo 更新序列已启动...")
-        print(f">>> 正在准备更新至版本: {update_info.get('version', 'Unknown')}\n")
-
-        # 执行原有的更新动作
-        asyncio.run(perform_update(update_info))
-
-    except Exception as e:
-        log.error(f"更新执行失败: {e}")
-    finally:
-        # 无论成功失败，最后释放控制台
-        ctypes.windll.kernel32.FreeConsole()
+    # try:
+    # 申请控制台
+    #     ctypes.windll.kernel32.AllocConsole()
+    #     sys.stdout = open("CONOUT$", "w", encoding='utf-8', buffering=1)
+    #     sys.stderr = open("CONOUT$", "w", encoding='utf-8', buffering=1)
+    #
+    #     print(">>> StartInfo 更新序列已启动...")
+    #     print(f">>> 正在准备更新至版本: {update_info.get('version', 'Unknown')}\n")
+    #
+    #     # 执行原有的更新动作
+    #     asyncio.run(perform_update(update_info))
+    #
+    # except Exception as e:
+    #     log.error(f"更新执行失败: {e}")
+    # finally:
+    #     # 无论成功失败，最后释放控制台
+    #     ctypes.windll.kernel32.FreeConsole()
+    print('执行更新逻辑')
 
 
 # ==========================================

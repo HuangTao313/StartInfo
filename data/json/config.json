@@ -3,7 +3,7 @@
         "auto_close_switch": true,
         "auto_close_time": 60,
         "ban_old_settings": true,
-        "close_settings_action": "restart",
+        "close_settings_action": "exit",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
         "theme": "dynamic",
@@ -17,15 +17,15 @@
         "switch": true
     },
     "Weather": {
-        "city_id": "",
-        "city_name": "",
+        "city_id": "101201001",
+        "city_name": "恩施土家族苗族自治州",
         "interval": 30,
         "switch": true
     },
     "Countdown": {
-        "date": "",
+        "date": "未知",
         "switch": false,
-        "text": ""
+        "text": "未知"
     },
     "InformationSwitch": {
         "datetime": true,
@@ -40,7 +40,7 @@
             "Microsoft YaHei",
             "PingFang SC"
         ],
-        "ThemeColor": "#ff29f4ff",
+        "ThemeColor": "#ff009faa",
         "ThemeMode": "Auto"
     },
     "MinecraftJavaServerChecker": {

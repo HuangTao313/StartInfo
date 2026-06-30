@@ -1,5 +1,4 @@
 import aiohttp
-import json
 from pathlib import Path
 from win32com.client import Dispatch
 from . import ht_lib as lib

@@ -3,6 +3,8 @@ import time
 import sys
 import asyncio
 import subprocess
+
+import aiohttp
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from settings import start_settings
@@ -12,7 +14,6 @@ import core.init_app as init_app
 import core.get_data as get_data
 import core.ui as ui
 
-# 显式导入
 # 获取启动参数
 args = sys.argv
 # 初始化日志管理器
@@ -176,8 +177,8 @@ async def main():
     jinja2_data = None
     start_mode = ""
 
-    # 使用全局共享的 ClientSession
-    async with lib.async_session as session:
+    # # 使用全局共享的 ClientSession
+    async with aiohttp.ClientSession() as session:
         # 如果是安装后第一次启动，执行初始化
         if file.read('General', 'is_first_startup'):
             await _init_internal(session)
@@ -322,9 +323,13 @@ async def main():
             sys.exit()
                 
 if __name__ == '__main__':
-    try:
+    # try:
         # 初始化
         ui.app_manager.init_app()
+        # 使用共享事件循环
+        loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
+
         # 禁止多开
         checker = lib.SingleInstance(name='Local\\StartInfo-main')
         if checker.is_running:
@@ -362,35 +367,48 @@ if __name__ == '__main__':
                 if j2_file_path:
                     handle_j2_template(j2_file_path)  # 处理模板文件
 
-        # 启动主函数（初始化逻辑已在main内部处理）
-        asyncio.run(main())
+        # 预先保存 qasync loop 引用，用于手动清理
+        qasync_loop = asyncio.get_event_loop()
 
-    except Exception as e:
-            log.error(f'主程序-程序运行时发生错误：{str(e)}')
-            ui.error_dialog(str(e))
-    finally:
-        # 程序退出前清理资源
+        # 使用原生 asyncio 事件循环运行主函数（aiohttp 兼容性最佳）
         try:
-            # 检查是否有正在运行的事件循环
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                # 没有正在运行的事件循环，创建一个
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop_created = True
-            else:
-                loop_created = False
+            asyncio.run(main())
+        except SystemExit:
+            # main() 内调用了 sys.exit()（用户点击确定 / 异常退出）
+            # 先关闭 qasync 事件循环，避免 shutdown 时 "Signal source has been deleted" 警告
+            qasync_loop.close()
+            raise
 
-            # 在现有的事件循环中关闭session
-            if lib.async_session._initialized and lib.async_session._session:
-                loop.run_until_complete(lib.async_session.close())
-                log.info('主程序-已关闭全局共享的 ClientSession')
+        # main() 正常返回后（设置窗口等已在内部自行管理事件循环），直接退出
+        sys.exit(0)
 
-            # 如果是我们创建的循环，关闭它
-            if loop_created:
-                loop.close()
-        except Exception as e:
-            log.error(f'主程序-清理资源时发生错误：{e}')
+    # except Exception as e:
+    #         log.error(f'主程序-程序运行时发生错误：{str(e)}')
+    #         ui.error_dialog(str(e))
 
-        sys.exit()
+    # finally:
+    #     # 程序退出前清理资源
+    #     try:
+    #         # 检查是否有正在运行的事件循环
+    #         try:
+    #             loop = asyncio.get_running_loop()
+    #         except RuntimeError:
+    #             # 没有正在运行的事件循环，创建一个
+    #             loop = asyncio.new_event_loop()
+    #             asyncio.set_event_loop(loop)
+    #             loop_created = True
+    #         else:
+    #             loop_created = False
+    #
+    #         # 在现有的事件循环中关闭session
+    #         if lib.async_session._initialized and lib.async_session._session:
+    #             loop.run_until_complete(lib.async_session.close())
+    #             log.info('主程序-已关闭全局共享的 ClientSession')
+    #
+    #         # 如果是我们创建的循环，关闭它
+    #         if loop_created:
+    #             loop.close()
+    #     except Exception as e:
+    #         log.error(f'主程序-清理资源时发生错误：{e}')
+    #
+    #     sys.exit()

@@ -2,12 +2,13 @@ import sys
 import os
 import time
 import re
-import winreg
-from PySide6.QtCore import QTimer, Qt
+import asyncio
+from PySide6.QtCore import QTimer, Qt, QLocale
 from PySide6.QtWidgets import QApplication, QFileDialog, QHBoxLayout
-from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton,setThemeColor
+from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton,setThemeColor, FluentTranslator
 from typing import List
 from pathlib import Path
+from qasync import QEventLoop
 from . import ht_lib as lib
 from .config import cfg
 
@@ -25,6 +26,15 @@ class AppManager:
     def init_app(self):
         if self._app is None:
             self._app = QApplication(sys.argv)
+            # 1.创建 qasync 的事件循环
+            self._loop = QEventLoop(self._app)
+            # 2. 将其设置为全局的 asyncio 事件循环
+            asyncio.set_event_loop(self._loop)
+
+            # 创建翻译器实例，生命周期必须和 app 相同
+            translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
+            self._app.installTranslator(translator)
+
             self._apply_theme()
         return self._app
 
@@ -64,6 +74,11 @@ class AppManager:
                 self.init_app()
             return self._app
 
+    def get_loop(self) -> QEventLoop:
+        if self._app is None:
+            self.init_app()
+        return self._loop
+
 # 全局 AppManager 实例
 app_manager = AppManager()
 
@@ -71,26 +86,26 @@ def get_real_windows_accent_color():
     """
     直接从注册表读取 Windows 10/11 的实时主题色
     """
-    try:
-        # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
-        registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-        key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
-
-        # 2. 读取 AccentColor (DWORD格式)
-        # 注册表存的是 AABBGGRR 格式
-        value, _ = winreg.QueryValueEx(key, "AccentColor")
-        winreg.CloseKey(key)
-
-        # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
-        # value 是一个 32 位的整数
-        # 我们通过位运算提取 R, G, B
-        r = value & 0xff
-        g = (value >> 8) & 0xff
-        b = (value >> 16) & 0xff
-
-        return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
-    except Exception:
-        return "#009faa"  # 读取失败时的保底蓝色
+    # try:
+    #     # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
+    #     registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+    #     key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
+    #
+    #     # 2. 读取 AccentColor (DWORD格式)
+    #     # 注册表存的是 AABBGGRR 格式
+    #     value, _ = winreg.QueryValueEx(key, "AccentColor")
+    #     winreg.CloseKey(key)
+    #
+    #     # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
+    #     # value 是一个 32 位的整数
+    #     # 我们通过位运算提取 R, G, B
+    #     r = value & 0xff
+    #     g = (value >> 8) & 0xff
+    #     b = (value >> 16) & 0xff
+    #
+    #     return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
+    # except Exception:
+    return "#009faa"  # 读取失败时的保底蓝色
 
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """
@@ -174,7 +189,7 @@ def error_dialog(text: str) -> None:
             dialog("打开日志文件失败╥﹏╥...", f"{e}")
 
     else:
-        log.info('用户取消了操作，程序退出')
+        lib.log.info('用户取消了操作，程序退出')
         sys.exit()
 
 # ========== 选项选择对话框 (ChoiceBox) ==========

@@ -7,7 +7,7 @@ import os
 from ..config import cfg
 from .. import ui
 from .. import ht_lib as lib
-from .widgets import Notify, ZhSwitchSettingCard
+from .ui_widgets import Notify, ZhSwitchSettingCard
 
 
 class CustomSettingsWidgets(ScrollArea):
@@ -31,7 +31,7 @@ class CustomSettingsWidgets(ScrollArea):
 
         # 4. 创建组并添加卡片
         # ===== 主题 =====
-        self.themelGroup = SettingCardGroup('主题', self.scrollWidget)
+        self.themeGroup = SettingCardGroup('主题', self.scrollWidget)
 
         # 主题
         self.themeCard = ComboBoxSettingCard(
@@ -44,7 +44,7 @@ class CustomSettingsWidgets(ScrollArea):
             # 索引 1: 深色 -> dark
             # 索引 2: 跟随系统 -> dynamic
             texts=['浅色主题', '深色主题', '跟随系统'],
-            parent=self.themelGroup
+            parent=self.themeGroup
         )
 
         # 使用系统主题色
@@ -53,7 +53,7 @@ class CustomSettingsWidgets(ScrollArea):
             icon=FIF.PALETTE,
             title='使用系统主题色',
             content='使用系统主题色',
-            parent=self.themelGroup
+            parent=self.themeGroup
         )
 
         # 主题色
@@ -62,17 +62,17 @@ class CustomSettingsWidgets(ScrollArea):
             icon=FIF.PALETTE,
             title='主题色',
             content='自定义程序主题色，调整前请先关闭【使用系统主题色】',
-            parent=self.themelGroup
+            parent=self.themeGroup
         )
 
         # 如果使用系统主题色，则禁用自定义主题色
         self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
 
         # 添加进组
-        self.themelGroup.addSettingCard(self.themeCard)
-        self.themelGroup.addSettingCard(self.useWinThemeColor)
-        self.themelGroup.addSettingCard(self.themeColorCard)
-        self.expandLayout.addWidget(self.themelGroup)
+        self.themeGroup.addSettingCard(self.themeCard)
+        self.themeGroup.addSettingCard(self.useWinThemeColor)
+        self.themeGroup.addSettingCard(self.themeColorCard)
+        self.expandLayout.addWidget(self.themeGroup)
 
         # ===== 模板 =====
         self.templatelGroup = SettingCardGroup('模板', self.scrollWidget)

@@ -7,7 +7,7 @@ from PySide6.QtCore import QTimer, QThread, Signal
 from qfluentwidgets import (ScrollArea, ExpandLayout, SettingCardGroup, PrimaryPushSettingCard,ComboBoxSettingCard,
                             FluentIcon as FIF, PushSettingCard, InfoBar, InfoBarPosition)
 
-from .widgets import *
+from .ui_widgets import *
 from .. import ht_lib as lib
 from ..config import cfg  # 导入刚才写的管家
 from ..init_app import is_shortcut_exist, create_shortcut, remove_shortcut
@@ -115,7 +115,9 @@ class BasicSettingsWidget(ScrollArea):
         )
 
         # 检查开机启动状态
-        actual_status = is_shortcut_exist()
+        # actual_status = is_shortcut_exist()
+        # 为了临时适配mac暂时禁用这个功能
+        actual_status = False
         self.startupCard.setChecked(actual_status)
 
         # 自动关闭
@@ -521,7 +523,8 @@ class BasicSettingsWidget(ScrollArea):
             if result:
                 Notify.success(content='已删除开机启动项', parent=self)
             else:
-                Notify.error(content='已删除开机启动项，请查看日志', parent=self)
+                Notify.error(content='删除开机启动项失败，请查看日志', parent=self)
+
 
     def onDeleteDownloadTempClicked(self):
         # 检查下载缓存文件夹是否存在

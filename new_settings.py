@@ -53,19 +53,21 @@ class NewSettings(FluentWindow):
         self.move(x, y)
 
 def start_new_settings() -> None:
-    ui.app_manager.init_app()
     # 确保事件循环正确设置
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        # 没有运行中的循环，创建新的
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     # 没有运行中的循环，创建新的
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
 
     app = ui.app_manager.get_app()
     w = NewSettings()
     w.show()
-    app.exec()
+    loop = ui.app_manager.get_loop()
+    # app.exec()
+    with loop:
+        loop.run_forever()
     # 如果用户选择关闭设置窗口后重启到主程序
     if cfg.close_settings_action.value == 'restart':
         lib.restart_program()

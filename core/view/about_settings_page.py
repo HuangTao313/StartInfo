@@ -10,7 +10,7 @@ from qfluentwidgets import (ScrollArea, ExpandLayout, SubtitleLabel, BodyLabel, 
 
 from ..updater import check_update_logic, run_update_process
 from .. import ht_lib as lib
-from .widgets import Notify
+from .ui_widgets import Notify
 
 
 # 定义常量
