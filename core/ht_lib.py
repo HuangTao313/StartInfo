@@ -9,6 +9,7 @@ import base64
 import shutil
 import subprocess
 import os
+import sys
 import asyncio
 from ctypes.wintypes import HANDLE, DWORD, BOOL
 from Crypto.Cipher import AES
@@ -20,6 +21,7 @@ from typing import Union
 from .paths import *
 from .config import cfg
 
+
 # 涉及 cfg 的必须留在后面
 TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
 WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
@@ -27,6 +29,9 @@ WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 # 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
 logger.add(LOG_PATH, rotation='1 day', retention='3 days', encoding='utf-8', level=cfg.log_level.value)
 log = logger
+
+# 获取全局启动参数
+global_argv = sys.argv
 
 # 读取单个json文件
 def read_json(file_path: Union[str, Path]) -> dict:

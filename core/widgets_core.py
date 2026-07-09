@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sqlite3
 import time
@@ -316,6 +317,7 @@ class WidgetBase:
 
     def __init__(self) -> None:
         # 确保数据库已初始化（幂等）
+        self._skip_cache_flag = False
         CacheManager.init_db()
 
     # ------------------------------------------------------------------
@@ -348,6 +350,18 @@ class WidgetBase:
     def _remove_cache_path(self, json_path: str, cache_key: str = "default") -> bool:
         """删除缓存中指定 JSON 路径的子树。"""
         return CacheManager.remove_path(self.WIDGET_NAME, cache_key, json_path)
+
+    # ------------------------------------------------------------------
+    # 缓存控制
+    # ------------------------------------------------------------------
+
+    def skip_cache(self) -> None:
+        """标记本次获取的数据不应被缓存。
+
+        在 _fetch_data / _parse_data 中遇到失败数据时调用此方法，
+        框架会跳过本次缓存写入，下次调用时仍然重新获取。
+        """
+        self._skip_cache_flag = True
 
     # ------------------------------------------------------------------
     # 缓存有效性判断
@@ -394,7 +408,9 @@ class WidgetBase:
 
         log.info(f'[{self.WIDGET_NAME}] 缓存未命中，重新获取 (key={cache_key})')
         data = self._fetch_data()
-        self._save_cache(data, cache_key)
+        if not self._skip_cache_flag:
+            self._save_cache(data, cache_key)
+        self._skip_cache_flag = False
         return data
 
     # ------------------------------------------------------------------
@@ -418,7 +434,9 @@ class WidgetBase:
 
         log.info(f'[{self.WIDGET_NAME}] 缓存未命中，重新获取 (key={cache_key}, async)')
         data = await self._fetch_data_async()
-        self._save_cache(data, cache_key)
+        if not self._skip_cache_flag:
+            self._save_cache(data, cache_key)
+        self._skip_cache_flag = False
         return data
 
     # ------------------------------------------------------------------
@@ -462,9 +480,12 @@ class NetworkWidgetBase(WidgetBase):
     子类覆写点：
         _parse_data(raw_data: dict) → dict   # 解析 API 返回的 JSON
 
-    可选覆写：
-        params: dict[str, str] | None     # 请求参数
-        headers: dict[str, str] | None    # 请求头
+    类变量（子类直接覆写，和 API_URL 同级）：
+        PARAMS:   dict | None = None      # 请求参数字典
+        HEADERS:  dict | None = None      # 请求头字典
+        RETRY_COUNT: int = 2              # 失败后重试次数（总共请求 count+1 次）
+        RETRY_DELAY: float = 1.0          # 重试间隔（秒）
+        REQUEST_TIMEOUT: float = 5.0      # 单次请求超时时间（秒）
 
     异步请求默认使用短连接（async with，用完即关），适合低频刷新的组件。
     高频场景可覆写 _fetch_data_async() 改用 _async_request_persistent()，
@@ -472,12 +493,14 @@ class NetworkWidgetBase(WidgetBase):
     """
 
     API_URL: str = ''
+    PARAMS: dict[str, str] | None = None
+    HEADERS: dict[str, str] | None = None
+    RETRY_COUNT: int = 2
+    RETRY_DELAY: float = 1.0
+    REQUEST_TIMEOUT: float = 5.0
 
     def __init__(self) -> None:
         super().__init__()
-        # 实例属性，避免多实例共享
-        self.params: dict[str, str] | None = None
-        self.headers: dict[str, str] | None = None
         self._async_client: httpx.AsyncClient | None = None
 
     # ------------------------------------------------------------------
@@ -501,23 +524,34 @@ class NetworkWidgetBase(WidgetBase):
             log.error(msg)
             raise ValueError(msg)
 
-        try:
-            with httpx.Client(timeout=5.0) as client:
-                response = client.get(
-                    self.API_URL,
-                    params=self.params,
-                    headers=self.headers,
-                )
-                response.raise_for_status()
-                return self._parse_data(response.json())
-        except httpx.HTTPError as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败'
-            log.error(f'{msg}: {exc}')
-            raise ConnectionError(msg) from exc
-        except Exception as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
-            log.error(f'{msg}: {exc}')
-            raise RuntimeError(msg) from exc
+        last_exc = None
+        total_attempts = self.RETRY_COUNT + 1
+        for attempt in range(total_attempts):
+            try:
+                with httpx.Client(timeout=self.REQUEST_TIMEOUT) as client:
+                    response = client.get(
+                        self.API_URL,
+                        params=self.PARAMS,
+                        headers=self.HEADERS,
+                    )
+                    response.raise_for_status()
+                    return self._parse_data(response.json())
+            except httpx.HTTPError as exc:
+                last_exc = exc
+                if attempt < total_attempts - 1:
+                    log.warning(
+                        f'[{self.WIDGET_NAME}] 请求失败（{attempt+1}/{total_attempts}），'
+                        f'{self.RETRY_DELAY}s 后重试: {exc}'
+                    )
+                    time.sleep(self.RETRY_DELAY)
+                else:
+                    msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败（已重试 {self.RETRY_COUNT} 次）'
+                    log.error(f'{msg}: {exc}')
+                    raise ConnectionError(msg) from exc
+            except Exception as exc:
+                msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
+                log.error(f'{msg}: {exc}')
+                raise RuntimeError(msg) from exc
 
     # ------------------------------------------------------------------
     # 短连接异步请求（默认，用完即关）
@@ -533,23 +567,32 @@ class NetworkWidgetBase(WidgetBase):
             log.error(msg)
             raise ValueError(msg)
 
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(
-                    self.API_URL,
-                    params=self.params,
-                    headers=self.headers,
-                )
-                response.raise_for_status()
-                return self._parse_data(response.json())
-        except httpx.HTTPError as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败'
-            log.error(f'{msg}: {exc}')
-            raise ConnectionError(msg) from exc
-        except Exception as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
-            log.error(f'{msg}: {exc}')
-            raise RuntimeError(msg) from exc
+        total_attempts = self.RETRY_COUNT + 1
+        for attempt in range(total_attempts):
+            try:
+                async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT) as client:
+                    response = await client.get(
+                        self.API_URL,
+                        params=self.PARAMS,
+                        headers=self.HEADERS,
+                    )
+                    response.raise_for_status()
+                    return self._parse_data(response.json())
+            except httpx.HTTPError as exc:
+                if attempt < total_attempts - 1:
+                    log.warning(
+                        f'[{self.WIDGET_NAME}] 请求失败（{attempt+1}/{total_attempts}），'
+                        f'{self.RETRY_DELAY}s 后重试: {exc}'
+                    )
+                    await asyncio.sleep(self.RETRY_DELAY)
+                else:
+                    msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败（已重试 {self.RETRY_COUNT} 次）'
+                    log.error(f'{msg}: {exc}')
+                    raise ConnectionError(msg) from exc
+            except Exception as exc:
+                msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
+                log.error(f'{msg}: {exc}')
+                raise RuntimeError(msg) from exc
 
     # ------------------------------------------------------------------
     # 长连接异步请求（复用连接池，需手动关闭）
@@ -558,7 +601,7 @@ class NetworkWidgetBase(WidgetBase):
     async def _get_async_client(self) -> httpx.AsyncClient:
         """获取或创建复用的 AsyncClient（懒加载）。"""
         if self._async_client is None:
-            self._async_client = httpx.AsyncClient(timeout=5.0)
+            self._async_client = httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT)
         return self._async_client
 
     async def _async_request_persistent(self) -> dict:
@@ -571,23 +614,32 @@ class NetworkWidgetBase(WidgetBase):
             log.error(msg)
             raise ValueError(msg)
 
-        try:
-            client = await self._get_async_client()
-            response = await client.get(
-                self.API_URL,
-                params=self.params,
-                headers=self.headers,
-            )
-            response.raise_for_status()
-            return self._parse_data(response.json())
-        except httpx.HTTPError as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败'
-            log.error(f'{msg}: {exc}')
-            raise ConnectionError(msg) from exc
-        except Exception as exc:
-            msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
-            log.error(f'{msg}: {exc}')
-            raise RuntimeError(msg) from exc
+        total_attempts = self.RETRY_COUNT + 1
+        for attempt in range(total_attempts):
+            try:
+                client = await self._get_async_client()
+                response = await client.get(
+                    self.API_URL,
+                    params=self.PARAMS,
+                    headers=self.HEADERS,
+                )
+                response.raise_for_status()
+                return self._parse_data(response.json())
+            except httpx.HTTPError as exc:
+                if attempt < total_attempts - 1:
+                    log.warning(
+                        f'[{self.WIDGET_NAME}] 请求失败（{attempt+1}/{total_attempts}），'
+                        f'{self.RETRY_DELAY}s 后重试: {exc}'
+                    )
+                    await asyncio.sleep(self.RETRY_DELAY)
+                else:
+                    msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败（已重试 {self.RETRY_COUNT} 次）'
+                    log.error(f'{msg}: {exc}')
+                    raise ConnectionError(msg) from exc
+            except Exception as exc:
+                msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
+                log.error(f'{msg}: {exc}')
+                raise RuntimeError(msg) from exc
 
     async def close(self) -> None:
         """关闭复用的 AsyncClient，释放连接池资源。"""

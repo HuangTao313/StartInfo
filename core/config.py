@@ -120,6 +120,9 @@ class MyConfig(QConfig):
     # 天气数据更新间隔(单位：分钟，范围：15~60分钟)
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
 
+    # 空气质量数据更新间隔(单位：分钟，范围：15~240分钟)
+    air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
+
     # ===== BirthdayWishes部分 =====
     birthday_wishes_switch = ConfigItem('BirthdayWishes', 'switch', False, BoolValidator())
     birthday_dict = ConfigItem('BirthdayWishes', 'birthday_dict', {'黄桃': '20100403'})

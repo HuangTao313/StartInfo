@@ -441,7 +441,7 @@ def check_birthday() -> bool | dict[str, int | Any]:
     """
     # 检查是否启用了生日祝福功能
     try:
-        birthday_wishes_enabled = cfg.birthday_wishes_switch.value if hasattr(cfg.birthday_wishes_switch, 'value') else cfg.birthday_wishes_switch
+        birthday_wishes_enabled = cfg.birthday_wishes_switch.value
         if not birthday_wishes_enabled:
             return False
     except Exception as e:
@@ -450,7 +450,7 @@ def check_birthday() -> bool | dict[str, int | Any]:
 
     # 获取生日列表
     try:
-        birthday_dict = cfg.birthday_dict.value if hasattr(cfg.birthday_dict, 'value') else cfg.birthday_dict
+        birthday_dict = cfg.birthday_dict.value
     except Exception as e:
         lib.log.error(f'生日：获取生日列表失败 - {str(e)}')
         return False
