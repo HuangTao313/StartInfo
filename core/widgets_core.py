@@ -44,6 +44,7 @@ class CacheManager:
     """组件缓存 SQLite 持久化层（widget_name + cache_key 二级键）。"""
 
     DB_PATH = DB_FOLDER_PATH / 'widgets_cache.db'
+    _initialized = False
 
     # ------------------------------------------------------------------
     # 内部辅助
@@ -64,6 +65,8 @@ class CacheManager:
     @classmethod
     def init_db(cls) -> bool:
         """初始化数据库和表结构。幂等，可重复调用。"""
+        if cls._initialized:
+            return True
         try:
             cls._ensure_db_dir()
             conn = cls._get_connection()
@@ -79,6 +82,7 @@ class CacheManager:
             ''')
             conn.commit()
             conn.close()
+            cls._initialized = True
             log.success(f'[CacheManager] 数据库已在 {cls.DB_PATH} 初始化')
             return True
         except Exception as exc:

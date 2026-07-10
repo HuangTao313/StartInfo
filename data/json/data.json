@@ -5,47 +5,6 @@
         "data_reset_times": 0,
         "last_birthday_date": ""
     },
-    "Data": {
-        "date": {
-            "date": "2026年6月28日",
-            "lunar_date": "农历2026年5月14日",
-            "weekday": "日",
-            "week_num": 25,
-            "day_num": 179,
-            "year_progress": "49.04%",
-            "year_remain": "50.96%",
-            "holiday": "休息日",
-            "solar_term": "夏至后"
-        },
-        "weather": {
-            "get_time": 1782610652,
-            "city_name": "恩施土家族苗族自治州",
-            "weather": "阴",
-            "temperature": "25℃",
-            "feels_like": "27℃",
-            "humidity": "71%",
-            "wind_direction": "东南风",
-            "wind_speed": "7km/h",
-            "air_quality": "优(PM2.5 指数:27)",
-            "weather_emoji": "☁️"
-        },
-        "minecraft_server_data": {
-            "get_time": "",
-            "mc_server_name": "",
-            "is_mc_server_online": "",
-            "mc_server_current": "",
-            "mc_server_max": "",
-            "mc_server_latency": "",
-            "mc_online_friends": []
-        },
-        "other": {
-            "get_date": 20260628,
-            "historical_date": "2016年6月28日",
-            "historical_event": "土耳其机场发生自杀式连环爆炸恐怖袭击事件 造成36人死亡",
-            "every_day_words_zh": "屏幕的光照亮了专注的脸。",
-            "every_day_words_en": "Screen light illuminates a face deep in focus."
-        }
-    },
     "Easter_egg": {
         "name": "你被骗了",
         "is_get": false,

@@ -203,6 +203,10 @@ class BirthdayWidget(LocalWidgetBase):
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
 
+    def mark_as_shown(self) -> None:
+        """标记生日祝福今天已显示，明天之前不再重复检测。"""
+        lib.file.write('General', 'last_birthday_date', time.strftime('%Y%m%d', time.localtime()))
+
     def _fetch_data(self) -> dict | None:
         """刷新生日信息并自动缓存"""
         try:
@@ -522,6 +526,7 @@ class MCServerStatusWidget(LocalWidgetBase):
                 results['mc_online_friends'] = [
                     name for name in friends if name in online_names
                 ]
+
         except Exception as e:
             self.skip_cache()
             log.warning(f'MC 服务器：获取玩家列表失败 - {e}')

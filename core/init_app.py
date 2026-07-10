@@ -1,4 +1,4 @@
-import aiohttp
+import httpx
 from pathlib import Path
 from win32com.client import Dispatch
 from . import ht_lib as lib
@@ -10,44 +10,25 @@ api = lib.read_json(lib.API_PATH)
 CHINA_CITY_PATH: Path = lib.JSON_PATH / 'China_citys_db.json'
 
 # IP定位
-@lib.async_retry_on_value(False)
-async def get_ip_location(session: aiohttp.ClientSession = None) -> str | bool:
+def get_ip_location() -> str | bool:
     """
     使用高德地图 API 自动定位当前公网 IP 所在地
-
-    Args:
-        session: 共享的 aiohttp.ClientSession 实例（可选）
 
     Returns:
         str: 成功时返回城市名称（如"黄石市"、"恩施土家族苗族自治州"）
         bool: 失败时返回 False
     """
     try:
-        # 使用传入的 session，如果没有传入则创建临时的（兼容性）
-        if session is None:
-            async with aiohttp.ClientSession() as temp_session:
-                async with temp_session.get(
-                        'https://restapi.amap.com/v3/ip',
-                        params={
-                            'key': lib.decrypt(api['restapi.amap.com']['api_key']),
-                            'output': 'json'
-                        },
-                        ssl=False
-                ) as resp:
-                    data = await resp.json()
-                    return _parse_ip_location_data(data)
-        else:
-            async with session.get(
-                    'https://restapi.amap.com/v3/ip',
-                    params={
-                        'key': lib.decrypt(api['restapi.amap.com']['api_key']),
-                        'output': 'json'
-                    },
-                    ssl=False
-            ) as resp:
-                data = await resp.json()
-                return _parse_ip_location_data(data)
-
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(
+                'https://restapi.amap.com/v3/ip',
+                params={
+                    'key': lib.decrypt(api['restapi.amap.com']['api_key']),
+                    'output': 'json',
+                },
+            )
+            response.raise_for_status()
+            return _parse_ip_location_data(response.json())
     except Exception as e:
         lib.log.error(f"程序初始化-IP定位请求异常: {str(e)}")
         return False
@@ -130,18 +111,14 @@ def get_city_info_by_location(amap_location=None) -> tuple[str, str] | bool:
         return False
 
 # 程序初始化
-async def init_app(session: aiohttp.ClientSession = None):
+def init_app() -> bool:
     """
-    程序初始化函数，支持共享的 ClientSession
-
-    Args:
-        session: 共享的 aiohttp.ClientSession 实例（可选）
+    程序初始化函数（同步）
     """
     if lib.is_internet():
         try:
             # 获取IP定位
-            session_arg = {'session': session} if session else {}
-            city = await get_ip_location(**session_arg)
+            city = get_ip_location()
             # 获取城市信息
             result = get_city_info_by_location(city)
             # 检查result变量类型

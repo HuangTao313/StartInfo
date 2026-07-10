@@ -121,6 +121,7 @@ class MyConfig(QConfig):
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
 
     # 空气质量数据更新间隔(单位：分钟，范围：15~240分钟)
+    air_quality_switch = ConfigItem('AirQuality', 'switch', True, BoolValidator())
     air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
 
     # ===== BirthdayWishes部分 =====
@@ -137,6 +138,7 @@ class MyConfig(QConfig):
 
     # ===== 信息开关部分 =====
     greeting_switch = ConfigItem('InformationSwitch', 'greeting', True, BoolValidator())
+    holiday_solar_term_switch = ConfigItem('InformationSwitch', 'holiday_solar_term', True, BoolValidator())
     datetime_switch = ConfigItem('InformationSwitch', 'datetime', True, BoolValidator())
     historical_switch = ConfigItem('InformationSwitch', 'historical', True, BoolValidator())
     words_switch = ConfigItem('InformationSwitch', 'words', True, BoolValidator())

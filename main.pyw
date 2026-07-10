@@ -134,7 +134,6 @@ def handle_j2_template(j2_file_path: Path):
                 ui.error_dialog(f'无法打开模板文件，请手动编辑：{j2_file_path}')
 
         # 关闭程序
-        ui.app_manager.quit()
         sys.exit()
 
     # 导入模板
