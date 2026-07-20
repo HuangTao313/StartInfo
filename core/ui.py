@@ -31,6 +31,9 @@ class AppManager:
             # 2. 将其设置为全局的 asyncio 事件循环
             asyncio.set_event_loop(self._loop)
 
+            # 设置 Qt 全局区域为中文，影响日历等原生控件的日期/月份显示
+            QLocale.setDefault(QLocale('zh_CN'))
+
             # 创建翻译器实例，生命周期必须和 app 相同
             translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
             self._app.installTranslator(translator)
@@ -86,26 +89,28 @@ def get_real_windows_accent_color():
     """
     直接从注册表读取 Windows 10/11 的实时主题色
     """
-    # try:
-    #     # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
-    #     registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-    #     key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
-    #
-    #     # 2. 读取 AccentColor (DWORD格式)
-    #     # 注册表存的是 AABBGGRR 格式
-    #     value, _ = winreg.QueryValueEx(key, "AccentColor")
-    #     winreg.CloseKey(key)
-    #
-    #     # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
-    #     # value 是一个 32 位的整数
-    #     # 我们通过位运算提取 R, G, B
-    #     r = value & 0xff
-    #     g = (value >> 8) & 0xff
-    #     b = (value >> 16) & 0xff
-    #
-    #     return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
-    # except Exception:
-    return "#009faa"  # 读取失败时的保底蓝色
+    try:
+        import winreg
+        # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
+        registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+        key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
+
+        # 2. 读取 AccentColor (DWORD格式)
+        # 注册表存的是 AABBGGRR 格式
+        value, _ = winreg.QueryValueEx(key, "AccentColor")
+        winreg.CloseKey(key)
+
+        # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
+        # value 是一个 32 位的整数
+        # 我们通过位运算提取 R, G, B
+        r = value & 0xff
+        g = (value >> 8) & 0xff
+        b = (value >> 16) & 0xff
+
+        return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
+
+    except Exception:
+        return "#009faa"  # 读取失败时的保底蓝色
 
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """

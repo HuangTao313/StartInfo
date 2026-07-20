@@ -1,6 +1,5 @@
 import subprocess
 import zipfile
-import aiohttp
 import asyncio
 import aiofiles
 import time

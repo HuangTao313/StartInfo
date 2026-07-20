@@ -2,7 +2,7 @@ from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageB
                               SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
                             SettingCard, FluentIconBase, LineEdit,ConfigItem, CalendarPicker)
 from PySide6.QtWidgets import QListWidgetItem
-from PySide6.QtCore import Qt, Signal, QDate
+from PySide6.QtCore import Qt, Signal, QDate, QLocale
 
 from typing import Union
 from PySide6.QtGui import QIcon
@@ -198,6 +198,7 @@ class CalendarSettingCard(SettingCard):
 
         # 1. 创建日历选择器
         self.calendarPicker = CalendarPicker(self)
+        self.calendarPicker.locale = QLocale(QLocale.Chinese, QLocale.China)
         self.calendarPicker.setFixedWidth(200)
 
         # --- 汉化关键点 ---

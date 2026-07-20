@@ -1,9 +1,13 @@
 {
+    "AirQuality": {
+        "interval": 120,
+        "switch": true
+    },
     "General": {
         "auto_close_switch": true,
         "auto_close_time": 60,
         "ban_old_settings": true,
-        "close_settings_action": "exit",
+        "close_settings_action": "restart",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
         "theme": "dynamic",
@@ -17,20 +21,21 @@
         "switch": true
     },
     "Weather": {
-        "city_id": "101201001",
-        "city_name": "恩施土家族苗族自治州",
+        "city_id": "101201009",
+        "city_name": "恩施",
         "interval": 30,
         "switch": true
     },
     "Countdown": {
-        "date": "未知",
-        "switch": false,
-        "text": "未知"
+        "date": "2026-08-31",
+        "switch": true,
+        "text": "开学"
     },
     "InformationSwitch": {
         "datetime": true,
         "greeting": true,
         "historical": true,
+        "holiday_solar_term": true,
         "startup_times": true,
         "words": true
     },
@@ -40,16 +45,16 @@
             "Microsoft YaHei",
             "PingFang SC"
         ],
-        "ThemeColor": "#ff009faa",
+        "ThemeColor": "#ff6b69d6",
         "ThemeMode": "Auto"
     },
     "MinecraftJavaServerChecker": {
-        "switch": false,
+        "switch": true,
         "data_refresh_interval": 60,
         "friends_list": [
             "HuangTao3"
         ],
-        "server_ip": "master.mcwok.cn",
+        "server_ip": "wok.shinoyuki.cn",
         "server_name": "World of Kivotos",
         "server_port": "25565"
     }

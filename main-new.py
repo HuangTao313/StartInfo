@@ -7,6 +7,7 @@ from pathlib import Path
 from core.ht_lib import log
 import core.init_app as init_app
 import core.ui as ui
+from new_settings import start_new_settings
 # from core.config import cfg
 from core.widgets import *
 
@@ -21,6 +22,7 @@ def load_template(data: dict[str, str]) -> str | None:
     if data.get('birthday_star'):
         # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
         templates_to_try = ['birthday_wishes.j2', lib.TEMPLATE_PATH.name, 'default.j2']
+
     else:
         # 无生日信息：尝试当前激活的模板，然后是默认模板
         templates_to_try = [lib.TEMPLATE_PATH.name, 'default.j2']
@@ -47,9 +49,11 @@ def load_template(data: dict[str, str]) -> str | None:
                 if not yn:
                     os.startfile(lib.TEMPLATE_FOLDER_PATH)
                     sys.exit()
+
             # 如果是生日模板加载失败，记录日志并继续尝试下一个模板
             elif template_name == 'birthday_wishes.j2':
                 log.warning(f'主程序-生日模板加载失败：{str(e)}，尝试使用其他模板')
+
             # 如果是默认模板也加载失败，弹窗报错并记录日志
             elif template_name == 'default.j2':
                 error_text = f'默认模板加载失败：{str(e)}'
@@ -113,7 +117,8 @@ def handle_j2_template(j2_file_path: Path):
                 subprocess.run(['notepad.exe', str(j2_file_path)], check=True)
                 log.info(f'主程序-已使用记事本打开模板文件：{j2_file_path}')
             except Exception as fallback_e:
-                log.error(f'主程序-回退到记事本也失败了: {fallback_e}')
+                log.error(f'主程序-回退到记事'
+                          f'本也失败了: {fallback_e}')
                 ui.error_dialog(f'无法打开模板文件，请手动编辑：{j2_file_path}')
 
         # 关闭程序
@@ -249,7 +254,7 @@ async def main():
         sys.exit()
     else:
         log.info('主程序-用户打开设置')
-        # start_settings()
+        start_new_settings()
 
 if __name__ == '__main__':
     # 初始化

@@ -457,13 +457,21 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
         'app_secret': lib.decrypt(api['www.mxnzp.com']['holiday_solar_term']['app_secret']),
     }
 
-    def _fetch_data(self) -> dict:
-        """覆写父类：动态拼接日期到 URL 再调同步请求。"""
-        import time
+    def _set_url(self) -> None:
+        """拼接当天日期到 URL 上。"""
         base_url = api['www.mxnzp.com']['holiday_solar_term']['url']
         today = time.strftime('%Y%m%d')
         self.API_URL = f'{base_url}/{today}'
+
+    def _fetch_data(self) -> dict:
+        """同步获取。"""
+        self._set_url()
         return self._sync_request()
+
+    async def _fetch_data_async(self) -> dict:
+        """异步获取。"""
+        self._set_url()
+        return await self._async_request()
 
     def _parse_data(self, raw_data: dict) -> dict | None:
         """解析 API 响应，同时提取节气和节假日信息。"""

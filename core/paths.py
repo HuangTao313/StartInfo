@@ -27,7 +27,7 @@ MAIN_PATH: Path = get_main_path()
 # 数据文件夹目录
 DATA_FOLDER_PATH = MAIN_PATH / 'data'
 # 缓存数据库目录
-DB_FOLDER_PATH = MAIN_PATH / 'DB'
+DB_FOLDER_PATH = DATA_FOLDER_PATH / 'db'
 # JSON 配置文件夹
 JSON_PATH: Path = DATA_FOLDER_PATH / 'json'
 # 模板文件夹路径
