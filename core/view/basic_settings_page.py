@@ -3,21 +3,18 @@
 import os
 import shutil
 
-from PySide6.QtCore import QThread, Signal
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
-                             PrimaryPushSettingCard, PushSettingCard,
-                             SettingCardGroup)
+                            PrimaryPushSettingCard, PushSettingCard,
+                            SettingCardGroup)
 
-from .. import ht_lib as lib
-from ..config import cfg
-from ..init_app import create_shortcut, remove_shortcut
 from .action_helpers import action
 from .base_setting_card import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
                          TextSettingCard, ZhSwitchSettingCard)
-
-# 常量
-CITY_DB_PATH = lib.JSON_PATH / 'China_citys_db.json'
+from .ui_widgets import ExpandGroupCard
+from .. import ht_lib as lib
+from ..config import cfg
+from ..init_app import create_shortcut, remove_shortcut
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -27,23 +24,17 @@ class BasicSettingsPage(BaseSettingPage):
         # ── 基本设置 ──
         generalGroup = SettingCardGroup('基本设置', self.scrollWidget)
 
-        self.startupCard = ZhSwitchSettingCard(
-            FIF.POWER_BUTTON, '开机自启', '是否开机启动',
-            configItem=None, parent=generalGroup,
-        )
+        self.startupCard = ZhSwitchSettingCard(FIF.POWER_BUTTON, '开机自启', '是否开机启动', config_item=None,
+                                               parent=generalGroup)
         self.startupCard.setChecked(False)
         self.startupCard.checkedChanged.connect(self._onStartupChanged)
 
-        self.autoCloseCard = ZhSwitchSettingCard(
-            FIF.CLOSE, '主窗口自动关闭', '主窗口在一段后自动关闭，程序结束运行',
-            configItem=cfg.auto_close_switch, parent=generalGroup,
-        )
+        self.autoCloseCard = ZhSwitchSettingCard(FIF.CLOSE, '主窗口自动关闭', '主窗口在一段后自动关闭，程序结束运行',
+                                                 config_item=cfg.auto_close_switch, parent=generalGroup)
 
-        self.autoCloseTimer = TextSettingCard(
-            icon=FIF.STOP_WATCH, title='自动关闭时间(单位：秒/s)',
-            content='主窗口自动关闭时间(范围：30~300秒，默认60秒)',
-            configItem=cfg.auto_close_time, parent=generalGroup,
-        )
+        self.autoCloseTimer = TextSettingCard(config_item=cfg.auto_close_time, icon=FIF.STOP_WATCH,
+                                              title='自动关闭时间(单位：秒/s)',
+                                              content='主窗口自动关闭时间(范围：30~300秒，默认60秒)', parent=generalGroup)
         self.autoCloseTimer.textChanged.connect(
             lambda text: self._check_input(text, 30, 300, cfg.auto_close_time, self.autoCloseTimer)
         )
@@ -71,67 +62,71 @@ class BasicSettingsPage(BaseSettingPage):
         # ── 天气 ──
         weatherGroup = SettingCardGroup('天气', self.scrollWidget)
 
-        self.weatherSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.CLOUD, title='显示天气', content='显示当前天气',
-            configItem=cfg.weather_switch, parent=weatherGroup,
+        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='显示天气', content='显示当前天气',
+                                                     config_item=cfg.weather_switch, parent=weatherGroup)
+
+        # 创建手风琴组件
+        self.weatherDetailCard = ExpandGroupCard(
+            FIF.CLOUD, '天气信息详细配置', '城市、刷新间隔', parent=weatherGroup,
         )
 
         self.cityChooseCard = PushSettingCard(
             text='选择城市', icon=FIF.SEARCH,
             title=f'选择城市(当前: {cfg.city_name.value})',
-            content='获取天气的城市', parent=weatherGroup,
+            content='获取天气的城市', parent=self.weatherDetailCard,
         )
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
 
-        self.weatherRefreshTimeCard = TextSettingCard(
-            icon=FIF.STOP_WATCH, title='天气数据刷新间隔(单位：分钟/m)',
-            content='天气数据自动刷新时间(范围：15~60分钟，默认30分钟)',
-            configItem=cfg.weather_interval, parent=weatherGroup,
-        )
+        self.weatherRefreshTimeCard = TextSettingCard(config_item=cfg.weather_interval, icon=FIF.STOP_WATCH,
+                                                      title='天气数据刷新间隔(单位：分钟/m)',
+                                                      content='天气数据自动刷新时间(范围：15~60分钟，默认30分钟)',
+                                                      parent=self.weatherDetailCard)
         self.weatherRefreshTimeCard.textChanged.connect(
             lambda text: self._check_input(text, 15, 60, cfg.weather_interval, self.weatherRefreshTimeCard)
         )
 
         self.weatherRefreshCard = PrimaryPushSettingCard(
             text='刷新天气数据', icon=FIF.SYNC,
-            title='刷新天气数据', content='刷新天气数据', parent=weatherGroup,
+            title='刷新天气数据', content='刷新天气数据', parent=self.weatherDetailCard,
         )
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
 
+        self.weatherDetailCard.addCard(self.cityChooseCard)
+        self.weatherDetailCard.addCard(self.weatherRefreshTimeCard)
+        self.weatherDetailCard.addCard(self.weatherRefreshCard)
         weatherGroup.addSettingCard(self.weatherSwitchCard)
-        weatherGroup.addSettingCard(self.cityChooseCard)
-        weatherGroup.addSettingCard(self.weatherRefreshTimeCard)
-        weatherGroup.addSettingCard(self.weatherRefreshCard)
+        weatherGroup.addSettingCard(self.weatherDetailCard)
         self.expandLayout.addWidget(weatherGroup)
 
         # ── 倒数日 ──
         countdownGroup = SettingCardGroup('倒数日', self.scrollWidget)
-        self.countdownCard = ZhSwitchSettingCard(
-            icon=FIF.CALENDAR, title='启用倒数日',
-            content='在主窗口显示："距离【xx】还有xx天"',
-            configItem=cfg.countdown_switch, parent=countdownGroup,
+        self.countdownCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用倒数日',
+                                                 content='在主窗口显示："距离【xx】还有xx天"',
+                                                 config_item=cfg.countdown_switch, parent=countdownGroup)
+
+        # 创建手风琴组件
+        self.countdownDetailCard = ExpandGroupCard(
+            FIF.GLOBE, '倒数日详细配置', '倒数日名称、日期信息', parent=countdownGroup,
         )
-        self.countdownTextCard = TextSettingCard(
-            icon=FIF.EDIT, title='倒数日文本', content='倒数日文本',
-            configItem=cfg.countdown_text, parent=countdownGroup,
-        )
-        self.countdownDateCard = CalendarSettingCard(
-            icon=FIF.CALENDAR, title='倒数目标日期',
-            content='设置你需要倒计时的重要日子',
-            configItem=cfg.countdown_date, parent=countdownGroup,
-        )
+
+        self.countdownTextCard = TextSettingCard(config_item=cfg.countdown_name, icon=FIF.EDIT, title='倒数日名称',
+                                                 content='倒数日名称', parent=self.countdownDetailCard)
+        self.countdownDateCard = CalendarSettingCard(icon=FIF.CALENDAR, title='倒数目标日期',
+                                                     content='设置你需要倒计时的日期', config_item=cfg.countdown_date,
+                                                     parent=self.countdownDetailCard)
+
+        self.countdownDetailCard.addCard(self.countdownTextCard)
+        self.countdownDetailCard.addCard(self.countdownDateCard)
         countdownGroup.addSettingCard(self.countdownCard)
-        countdownGroup.addSettingCard(self.countdownTextCard)
-        countdownGroup.addSettingCard(self.countdownDateCard)
+        countdownGroup.addSettingCard(self.countdownDetailCard)
         self.expandLayout.addWidget(countdownGroup)
 
         # ── 生日祝福 ──
         birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.scrollWidget)
-        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.CALENDAR, title='启用生日祝福',
-            content='在生日当天显示生日祝福',
-            configItem=cfg.birthday_wishes_switch, parent=birthdayGroup,
-        )
+        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用生日祝福',
+                                                            content='在生日当天显示生日祝福',
+                                                            config_item=cfg.birthday_wishes_switch,
+                                                            parent=birthdayGroup)
         self.birthdayListCard = PrimaryPushSettingCard(
             text='编辑生日列表', icon=FIF.SEARCH, title='编辑生日列表',
             content=r'编辑生日列表(目前仅支持手动更改.\data\json\config.json的BirthdayWishes\birthday_dict字典)',
@@ -144,29 +139,31 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── Minecraft 服务器检测器 ──
         mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.scrollWidget)
-        self.mcServerCheckSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.GLOBE, title='启用Minecraft Java版服务器玩家在线情况检测',
-            content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
-            configItem=cfg.minecraft_server_checker_switch, parent=mcGroup,
+        self.mcServerCheckSwitchCard = ZhSwitchSettingCard(icon=FIF.GLOBE,
+                                                           title='启用Minecraft Java版服务器玩家在线情况检测',
+                                                           content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
+                                                           config_item=cfg.minecraft_server_checker_switch,
+                                                           parent=mcGroup)
+
+        # 手风琴：详细配置收起来
+        self.mcDetailCard = ExpandGroupCard(
+            FIF.GLOBE, '服务器详细配置', '配置服务器名称、IP、端口等信息', parent=mcGroup,
         )
-        self.mcServerNameCard = TextSettingCard(
-            icon=FIF.GAME, title='服务器名称', content='Minecraft Java版服务器名称',
-            configItem=cfg.minecraft_server_name, parent=mcGroup,
-        )
-        self.mcServerIPCard = TextSettingCard(
-            icon=FIF.CLOUD, title='服务器IP地址', content='Minecraft Java版服务器IP',
-            configItem=cfg.minecraft_server_ip, parent=mcGroup,
-        )
-        self.mcServerPortCard = TextSettingCard(
-            icon=FIF.INFO, title='服务器端口号',
-            content='Minecraft Java版服务器端口号(一般为25565)',
-            configItem=cfg.minecraft_server_port, parent=mcGroup,
-        )
-        self.mcServerDataRefreshIntervalCard = TextSettingCard(
-            icon=FIF.STOP_WATCH, title='服务器数据刷新间隔(单位：秒/s)',
-            content='Minecraft Java版服务器数据自动刷新时间(范围：5~3600秒，默认60秒)',
-            configItem=cfg.minecraft_server_data_refresh_interval, parent=mcGroup,
-        )
+
+        self.mcServerNameCard = TextSettingCard(config_item=cfg.minecraft_server_name, icon=FIF.GAME,
+                                                title='服务器名称', content='Minecraft Java版服务器名称',
+                                                parent=self.mcDetailCard)
+        self.mcServerIPCard = TextSettingCard(config_item=cfg.minecraft_server_ip, icon=FIF.CLOUD, title='服务器IP地址',
+                                              content='Minecraft Java版服务器IP', parent=self.mcDetailCard)
+        self.mcServerPortCard = TextSettingCard(config_item=cfg.minecraft_server_port, icon=FIF.INFO,
+                                                title='服务器端口号',
+                                                content='Minecraft Java版服务器端口号(一般为25565)',
+                                                parent=self.mcDetailCard)
+        self.mcServerDataRefreshIntervalCard = TextSettingCard(config_item=cfg.minecraft_server_data_refresh_interval,
+                                                               icon=FIF.STOP_WATCH,
+                                                               title='服务器数据刷新间隔(单位：秒/s)',
+                                                               content='Minecraft Java版服务器数据自动刷新时间(范围：5~3600秒，默认60秒)',
+                                                               parent=self.mcDetailCard)
         self.mcServerDataRefreshIntervalCard.textChanged.connect(
             lambda text: self._check_input(text, 5, 3600, cfg.minecraft_server_data_refresh_interval,
                                            self.mcServerDataRefreshIntervalCard)
@@ -174,56 +171,60 @@ class BasicSettingsPage(BaseSettingPage):
         self.mcFriendsListCard = PrimaryPushSettingCard(
             text='编辑朋友列表', icon=FIF.PEOPLE, title='编辑朋友列表',
             content=r'编辑朋友列表(目前仅支持手动修改.\data\json\config.json的MinecraftJavaServerChecker\friends_list列表)',
-            parent=mcGroup,
+            parent=self.mcDetailCard,
         )
         self.mcFriendsListCard.clicked.connect(self._openConfigFile)
         self.mcServerDataRefreshCard = PrimaryPushSettingCard(
             text='立即刷新', icon=FIF.SYNC, title='立即刷新',
-            content='立即刷新Minecraft Java服务器数据', parent=mcGroup,
+            content='立即刷新Minecraft Java服务器数据', parent=self.mcDetailCard,
         )
         self.mcServerDataRefreshCard.clicked.connect(self._onRefreshMCServer)
+
+        self.mcDetailCard.addCard(self.mcServerNameCard)
+        self.mcDetailCard.addCard(self.mcServerIPCard)
+        self.mcDetailCard.addCard(self.mcServerPortCard)
+        self.mcDetailCard.addCard(self.mcServerDataRefreshIntervalCard)
+        self.mcDetailCard.addCard(self.mcFriendsListCard)
+        self.mcDetailCard.addCard(self.mcServerDataRefreshCard)
         mcGroup.addSettingCard(self.mcServerCheckSwitchCard)
-        mcGroup.addSettingCard(self.mcServerNameCard)
-        mcGroup.addSettingCard(self.mcServerIPCard)
-        mcGroup.addSettingCard(self.mcServerPortCard)
-        mcGroup.addSettingCard(self.mcServerDataRefreshIntervalCard)
-        mcGroup.addSettingCard(self.mcFriendsListCard)
-        mcGroup.addSettingCard(self.mcServerDataRefreshCard)
+        mcGroup.addSettingCard(self.mcDetailCard)
         self.expandLayout.addWidget(mcGroup)
 
         # ── 其他信息 ──
         otherGroup = SettingCardGroup('其他信息', self.scrollWidget)
-        self.greetingSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.HEART, title='显示问候语', content='显示当前时间对应的问候语',
-            configItem=cfg.greeting_switch, parent=otherGroup,
+
+        # 创建手风琴组件
+        self.otherDetailCard = ExpandGroupCard(
+            FIF.GLOBE, '其他信息开关', '问候语、开机次数、时间和日期等信息', parent=otherGroup,
         )
-        self.startupTimesSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.POWER_BUTTON, title='显示开机次数', content='显示开机次数',
-            configItem=cfg.startup_times_switch, parent=otherGroup,
-        )
-        self.datetimeSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.DATE_TIME, title='显示时间和日期', content='显示当前时间、日期',
-            configItem=cfg.datetime_switch, parent=otherGroup,
-        )
-        self.historicalSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.HISTORY, title='显示历史上的今天', content='显示历史上的今天信息',
-            configItem=cfg.historical_switch, parent=otherGroup,
-        )
-        self.wordsSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.ALIGNMENT, title='显示每日一言', content='显示每日一言信息',
-            configItem=cfg.words_switch, parent=otherGroup,
-        )
-        otherGroup.addSettingCard(self.greetingSwitchCard)
-        otherGroup.addSettingCard(self.startupTimesSwitchCard)
-        otherGroup.addSettingCard(self.datetimeSwitchCard)
-        otherGroup.addSettingCard(self.historicalSwitchCard)
-        otherGroup.addSettingCard(self.wordsSwitchCard)
+
+        self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='显示问候语',
+                                                      content='显示当前时间对应的问候语',
+                                                      config_item=cfg.greeting_switch, parent=self.otherDetailCard)
+        self.startupTimesSwitchCard = ZhSwitchSettingCard(icon=FIF.POWER_BUTTON, title='显示开机次数',
+                                                          content='显示开机次数', config_item=cfg.startup_times_switch,
+                                                          parent=self.otherDetailCard)
+        self.datetimeSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='显示时间和日期',
+                                                      content='显示当前时间、日期', config_item=cfg.datetime_switch,
+                                                      parent=self.otherDetailCard)
+        self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='显示历史上的今天',
+                                                        content='显示历史上的今天信息',
+                                                        config_item=cfg.historical_switch, parent=self.otherDetailCard)
+        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.ALIGNMENT, title='显示每日一言', content='显示每日一言信息',
+                                                   config_item=cfg.words_switch, parent=self.otherDetailCard)
+
+        self.otherDetailCard.addCard(self.greetingSwitchCard)
+        self.otherDetailCard.addCard(self.startupTimesSwitchCard)
+        self.otherDetailCard.addCard(self.datetimeSwitchCard)
+        self.otherDetailCard.addCard(self.historicalSwitchCard)
+        self.otherDetailCard.addCard(self.wordsSwitchCard)
+        otherGroup.addSettingCard(self.otherDetailCard)
         self.expandLayout.addWidget(otherGroup)
 
         # ── 调试 ──
         debugGroup = SettingCardGroup('调试', self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCard(
-            icon=FIF.ALIGNMENT, title='日志等级', content='调整程序的日志等级',
+            icon=FIF.ALIGNMENT, title='日志等级', content='调整程序的日志等级，重启后生效',
             texts=cfg.log_level_list, configItem=cfg.log_level, parent=debugGroup,
         )
         self.openLogFolderCard = PrimaryPushSettingCard(
@@ -232,13 +233,8 @@ class BasicSettingsPage(BaseSettingPage):
         )
         self.openLogFolderCard.clicked.connect(lambda: os.startfile(lib.LOG_FOLDER_PATH))
 
-        self.banOldSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.CLOSE, title='禁用旧版设置', content='直接启动新版设置',
-            configItem=cfg.ban_old_settings, parent=debugGroup,
-        )
         debugGroup.addSettingCard(self.logLevelCard)
         debugGroup.addSettingCard(self.openLogFolderCard)
-        debugGroup.addSettingCard(self.banOldSwitchCard)
         self.expandLayout.addWidget(debugGroup)
 
         self.finalise()
@@ -296,8 +292,7 @@ class BasicSettingsPage(BaseSettingPage):
             return False
 
     def _onCityChooseClicked(self):
-        city_list = lib.read_json(CITY_DB_PATH)
-        box = CitySearchBox(city_list, self)
+        box = CitySearchBox(self)
         if box.exec():
             city_id = box.get_selected_city_id()
             display_name = box.get_selected_city_display()

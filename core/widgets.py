@@ -11,7 +11,7 @@ from .config import cfg
 # StartInfo默认组件
 # 于2026.6.30开始重构
 # 获取 api 信息
-api = lib.read_json(lib.API_PATH)
+api = lib.read_json(lib.API_FILE_PATH)
 
 # 管理日志
 log = lib.log
@@ -51,15 +51,15 @@ class DateTimeWidget(LocalWidgetBase):
 
         # 四舍五入逻辑
         if 0 <= minute < 15:
-            rounded_time = f"{hour_12}:00"
+            rounded_time = f'{hour_12}:00'
         elif 15 <= minute < 45:
-            rounded_time = f"{hour_12}:30"
+            rounded_time = f'{hour_12}:30'
         else:
             # 分钟 >= 45，选择下一个整点
             hour_12 = (hour_12 % 12) + 1
             if hour_12 == 13:
                 hour_12 = 1  # 12 点之后是 1 点
-            rounded_time = f"{hour_12}:00"
+            rounded_time = f'{hour_12}:00'
 
         return time_emoji.get(rounded_time, time_emoji['9:00'])
 
@@ -97,11 +97,12 @@ class DateTimeWidget(LocalWidgetBase):
            """
         try:
             current_time = time.localtime()
-            date_str = f"{current_time.tm_year}年{current_time.tm_mon}月{current_time.tm_mday}日"
+            date_str = f'{current_time.tm_year}年{current_time.tm_mon}月{current_time.tm_mday}日'
 
             # 使用 from_datetime 获取农历日期，避免 today() 的问题
             try:
                 lunar_date = str(zhdate.ZhDate.from_datetime(datetime.now()))
+
             except Exception:
                 # 如果 from_datetime 也失败，尝试手动构造
                 try:
@@ -177,7 +178,7 @@ class CountDownDayWidget(LocalWidgetBase):
         try:
             # 2. 将字符串转换为 datetime 对象
             # %Y-%m-%d 对应 2026-06-21 这种格式
-            target_date_obj = datetime.strptime(target_date_str, "%Y-%m-%d").date()
+            target_date_obj = datetime.strptime(target_date_str, '%Y-%m-%d').date()
 
             # 3. 两个日期对象直接相减，得到一个 timedelta 对象
             remaining = target_date_obj - today
@@ -189,7 +190,7 @@ class CountDownDayWidget(LocalWidgetBase):
             # 4. 返回天数 (.days 属性)
             return {
                 'is_countdown_available': True,
-                'countdown_text': cfg.countdown_text.value,
+                'countdown_name': cfg.countdown_name.value,
                 'countdown_number': remaining.days
             }
 
@@ -222,7 +223,7 @@ class BirthdayWidget(LocalWidgetBase):
             return None
 
             # 获取今天的月和日
-        today_month_day = time.strftime("%m%d", global_time)
+        today_month_day = time.strftime('%m%d', global_time)
         current_year = global_time.tm_year
 
         # 遍历生日列表，检查是否有人今天生日
@@ -330,7 +331,7 @@ class WeatherWidget(NetworkWidgetBase):
     LOCAL_INTERVAL = f'{cfg.weather_interval.value}m'
     API_URL = api['qweather.com']['url_weather']
     PARAMS = {
-        'key': lib.decrypt(api['qweather.com']['api_key']),
+        'key': api['qweather.com']['api_key'],
         'location' : cfg.city_id.value,
     }
 
@@ -345,11 +346,11 @@ class WeatherWidget(NetworkWidgetBase):
 
         # 2. 关键词回退：优先级可调整
         if '雨' in weather_type:
-            # 优先使用"小雨"的 emoji 作为通用雨
+            # 优先使用'小雨'的 emoji 作为通用雨
             return weather_emoji.get('小雨', '🌧️')
 
         elif '雪' in weather_type:
-            # 优先使用"小雪"的 emoji 作为通用雪
+            # 优先使用'小雪'的 emoji 作为通用雪
             return weather_emoji.get('小雪', '❄️')
 
         elif '雷' in weather_type or '电' in weather_type:
@@ -394,7 +395,7 @@ class AirQualityWidget(NetworkWidgetBase):
     LOCAL_INTERVAL = f'{cfg.air_quality_interval.value}m'
     API_URL = api['qweather.com']['url_air']
     PARAMS = {
-        'key': lib.decrypt(api['qweather.com']['api_key']),
+        'key': api['qweather.com']['api_key'],
         'location': cfg.city_id.value,
     }
 
@@ -402,8 +403,8 @@ class AirQualityWidget(NetworkWidgetBase):
         """解析数据"""
         now = raw_data.get('now')
         if now:
-            air_quality = now.get("aqi", '')
-            air_level = now.get("category", '')
+            air_quality = now.get('aqi', '')
+            air_level = now.get('category', '')
             air_quality_text = f'{air_level}(PM2.5 指数:{air_quality})'
 
             return {'air_quality': air_quality_text}
@@ -420,9 +421,9 @@ class TodayInHistoryWidget(NetworkWidgetBase):
     LOCAL_INTERVAL = '1d'
     API_URL = api['www.mxnzp.com']['today_in_history']['url']
     PARAMS = {
-        "args": 1,
-        "app_id": lib.decrypt(api['www.mxnzp.com']['today_in_history']['app_id']),
-        "app_secret": lib.decrypt(api['www.mxnzp.com']['today_in_history']['app_secret'])
+        'args': 1,
+        'app_id': api['www.mxnzp.com']['today_in_history']['app_id'],
+        'app_secret': api['www.mxnzp.com']['today_in_history']['app_secret']
     }
 
     def _parse_data(self, raw_data: dict) -> dict | None:
@@ -433,7 +434,7 @@ class TodayInHistoryWidget(NetworkWidgetBase):
                 history = history_data[0]
                 # 格式化输出信息
                 return {
-                    'historical_date': f"{history['year']}年{history['month']}月{history['day']}日",
+                    'historical_date': f'{history['year']}年{history['month']}月{history['day']}日',
                     'historical_event': history['title']
                 }
             else:
@@ -453,8 +454,8 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
     API_URL = ''
     PARAMS = {
         'args': 1,
-        'app_id': lib.decrypt(api['www.mxnzp.com']['holiday_solar_term']['app_id']),
-        'app_secret': lib.decrypt(api['www.mxnzp.com']['holiday_solar_term']['app_secret']),
+        'app_id': api['www.mxnzp.com']['holiday_solar_term']['app_id'],
+        'app_secret': api['www.mxnzp.com']['holiday_solar_term']['app_secret'],
     }
 
     def _set_url(self) -> None:
@@ -561,7 +562,7 @@ class MCServerStatusWidget(LocalWidgetBase):
             server = JavaServer.lookup(f'{ip}:{port}')
             status = server.status()
             results = self._build_status(status)
-            log.info(f'MC 服务器（同步）：{results["mc_server_current"]}人在线')
+            log.info(f'MC 服务器（同步）：{results['mc_server_current']}人在线')
             return results
 
         except Exception as e:
@@ -589,7 +590,7 @@ class MCServerStatusWidget(LocalWidgetBase):
             server = await JavaServer.async_lookup(f'{ip}:{port}')
             status = await server.async_status()
             results = self._build_status(status)
-            log.info(f'MC 服务器（异步）：{results["mc_server_current"]}人在线')
+            log.info(f'MC 服务器（异步）：{results['mc_server_current']}人在线')
             return results
 
         except Exception as e:

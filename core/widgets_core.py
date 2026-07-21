@@ -3,18 +3,18 @@
 
 核心理念：
     子类声明意图（WIDGET_NAME / NEED_CACHE / LOCAL_INTERVAL），
-    框架通过 get_data() 模板方法自动编排"读缓存 → 判断过期 → 重新获取 → 写回缓存"。
+    框架通过 get_data() 模板方法自动编排'读缓存 → 判断过期 → 重新获取 → 写回缓存'。
 
 使用示例：
 
     class MyWeather(NetworkWidgetBase):
-        WIDGET_NAME = "天气"
+        WIDGET_NAME = '天气'
         NEED_CACHE = True
-        LOCAL_INTERVAL = "1h"
-        API_URL = "https://api.weather.com/v1"
+        LOCAL_INTERVAL = '1h'
+        API_URL = 'https://api.weather.com/v1'
 
         def _parse_data(self, data: dict) -> dict:
-            return {"temp": data["current"]["temp"]}
+            return {'temp': data['current']['temp']}
 
     w = MyWeather()
     w.get_data()                     # 自动走缓存
@@ -91,7 +91,7 @@ class CacheManager:
 
     @classmethod
     def save_cache(
-        cls, widget_name: str, data: dict, cache_key: str = "default",
+        cls, widget_name: str, data: dict, cache_key: str = 'default',
     ) -> bool:
         """写入 / 更新缓存。"""
         try:
@@ -113,7 +113,7 @@ class CacheManager:
 
     @classmethod
     def read_cache(
-        cls, widget_name: str, cache_key: str = "default",
+        cls, widget_name: str, cache_key: str = 'default',
     ) -> tuple[dict, float] | None:
         """读取缓存，返回 (data_dict, updated_at_timestamp) 或 None。"""
         try:
@@ -164,12 +164,12 @@ class CacheManager:
 
     @staticmethod
     def _normalize_path(json_path: str) -> str:
-        """将 'weather.temp' 转为 '$."weather"."temp"'，适配 SQLite JSON 路径语法。"""
+        """将 'weather.temp' 转为 '$.'weather'.'temp''，适配 SQLite JSON 路径语法。"""
         json_path = json_path.strip()
         if json_path.startswith('$'):
             return json_path
         parts = json_path.split('.')
-        return '$.' + '.'.join(f'"{p}"' for p in parts)
+        return '$.' + '.'.join(f'{p}' for p in parts)
 
     # ------------------------------------------------------------------
     # SQLite 原生 JSON 路径读写（json_extract / json_set / json_remove）
@@ -180,7 +180,7 @@ class CacheManager:
                   ) -> tuple[Any, float] | None:
         """按 JSON 路径读取子树。返回 (value, timestamp) 或 None。
 
-        json_path 支持点分写法：'weather.temp' → '$."weather"."temp"'。
+        json_path 支持点分写法：'weather.temp' → '$.'weather'.'temp''。
         SQL 层直接用 json_extract()，不把整条记录反序列化到 Python。
         """
         try:
@@ -328,10 +328,10 @@ class WidgetBase:
     # 缓存辅助（开发者可直接调用，但通常不需要）
     # ------------------------------------------------------------------
 
-    def _read_cache(self, cache_key: str = "default") -> tuple[dict, float] | None:
+    def _read_cache(self, cache_key: str = 'default') -> tuple[dict, float] | None:
         return CacheManager.read_cache(self.WIDGET_NAME, cache_key)
 
-    def _save_cache(self, data: dict, cache_key: str = "default") -> bool:
+    def _save_cache(self, data: dict, cache_key: str = 'default') -> bool:
         return CacheManager.save_cache(self.WIDGET_NAME, data, cache_key)
 
     def _clear_cache(self, cache_key: str | None = None) -> bool:
@@ -341,17 +341,17 @@ class WidgetBase:
     # 路径级缓存访问（透传 CacheManager 的 SQLite JSON 原生方法）
     # ------------------------------------------------------------------
 
-    def _read_cache_path(self, json_path: str, cache_key: str = "default"
+    def _read_cache_path(self, json_path: str, cache_key: str = 'default'
                          ) -> tuple[Any, float] | None:
         """按 JSON 路径读取缓存子树。"""
         return CacheManager.read_path(self.WIDGET_NAME, cache_key, json_path)
 
     def _update_cache_path(self, json_path: str, value: Any,
-                           cache_key: str = "default") -> bool:
+                           cache_key: str = 'default') -> bool:
         """局部更新缓存中指定 JSON 路径的值。"""
         return CacheManager.update_path(self.WIDGET_NAME, cache_key, json_path, value)
 
-    def _remove_cache_path(self, json_path: str, cache_key: str = "default") -> bool:
+    def _remove_cache_path(self, json_path: str, cache_key: str = 'default') -> bool:
         """删除缓存中指定 JSON 路径的子树。"""
         return CacheManager.remove_path(self.WIDGET_NAME, cache_key, json_path)
 
@@ -386,7 +386,7 @@ class WidgetBase:
     # ------------------------------------------------------------------
 
     def get_data(
-        self, *, force_refresh: bool = False, cache_key: str = "default",
+        self, *, force_refresh: bool = False, cache_key: str = 'default',
     ) -> dict:
         """获取组件数据（自动处理缓存）。
 
@@ -422,7 +422,7 @@ class WidgetBase:
     # ------------------------------------------------------------------
 
     async def get_data_async(
-        self, *, force_refresh: bool = False, cache_key: str = "default",
+        self, *, force_refresh: bool = False, cache_key: str = 'default',
     ) -> dict:
         """异步版 get_data()，流程相同。"""
         if not self.NEED_CACHE:
@@ -521,14 +521,14 @@ class NetworkWidgetBase(WidgetBase):
     # 同步请求
     # ------------------------------------------------------------------
 
-    def _sync_request(self) -> dict:
+    def _sync_request(self) -> dict | None:
         """发出同步 GET 请求并返回解析后的数据。"""
         if not self.API_URL:
             msg = f'联网组件 [{self.WIDGET_NAME}] 未配置 API_URL'
             log.error(msg)
             raise ValueError(msg)
 
-        last_exc = None
+        # last_exc = None
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
@@ -541,7 +541,7 @@ class NetworkWidgetBase(WidgetBase):
                     response.raise_for_status()
                     return self._parse_data(response.json())
             except httpx.HTTPError as exc:
-                last_exc = exc
+                # last_exc = exc
                 if attempt < total_attempts - 1:
                     log.warning(
                         f'[{self.WIDGET_NAME}] 请求失败（{attempt+1}/{total_attempts}），'
@@ -561,7 +561,7 @@ class NetworkWidgetBase(WidgetBase):
     # 短连接异步请求（默认，用完即关）
     # ------------------------------------------------------------------
 
-    async def _async_request(self) -> dict:
+    async def _async_request(self) -> dict | None:
         """短连接异步 GET 请求。每次调用创建临时 AsyncClient，请求结束自动关闭。
 
         适合大多数组件（小时/天级刷新），无需手动管理连接。
@@ -608,7 +608,7 @@ class NetworkWidgetBase(WidgetBase):
             self._async_client = httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT)
         return self._async_client
 
-    async def _async_request_persistent(self) -> dict:
+    async def _async_request_persistent(self) -> dict | None:
         """长连接异步 GET 请求。复用 AsyncClient 连接池，适合高频刷新。
 
         需要在不再使用时调用 await widget.close() 释放资源。

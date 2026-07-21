@@ -22,7 +22,7 @@ log = lib.log
 async def get_version_file() -> bool:
     """
     【使用场景】启动更新流程前，获取远程最新版本元数据
-    【输入】无（自动从 lib.API_PATH 读取加密URL）
+    【输入】无（自动从 lib.API_FILE_PATH 读取加密URL）
     【输出】bool - True=成功下载并保存到 VERSION_PATH（含 get_time 字段）
     【注意】
       - 会自动创建 VERSION_PATH 的父目录
@@ -30,7 +30,7 @@ async def get_version_file() -> bool:
       - 保留你原有的解密逻辑和错误处理
     """
     try:
-        api_data = lib.read_json(lib.API_PATH)
+        api_data = lib.read_json(lib.API_FILE_PATH)
         if 'check_update_url' not in api_data:
             log.error("更新器-API配置中缺少check_update_url字段")
             return False

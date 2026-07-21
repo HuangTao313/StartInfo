@@ -1,19 +1,16 @@
 """个性化设置页面。"""
 
 import os
-from pathlib import Path
 
-from PySide6.QtCore import Qt
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
-                             FluentIcon as FIF, PushSettingCard,
-                             PrimaryPushSettingCard, SettingCardGroup)
+                            FluentIcon as FIF, PushSettingCard,
+                            PrimaryPushSettingCard, SettingCardGroup)
 
-from ..config import cfg
-from .. import ui
-from .. import ht_lib as lib
 from .base_setting_card import BaseSettingPage
-from .action_helpers import action
 from .ui_widgets import Notify, ZhSwitchSettingCard
+from .. import ht_lib as lib
+from .. import ui
+from ..config import cfg
 
 
 class CustomSettingsPage(BaseSettingPage):
@@ -30,11 +27,8 @@ class CustomSettingsPage(BaseSettingPage):
             parent=self.themeGroup,
         )
 
-        self.useWinThemeColor = ZhSwitchSettingCard(
-            configItem=cfg.use_win_theme_color, icon=FIF.PALETTE,
-            title='使用系统主题色', content='使用系统主题色',
-            parent=self.themeGroup,
-        )
+        self.useWinThemeColor = ZhSwitchSettingCard(icon=FIF.PALETTE, title='使用系统主题色', content='使用系统主题色',
+                                                    config_item=cfg.use_win_theme_color, parent=self.themeGroup)
 
         self.themeColorCard = ColorSettingCard(
             configItem=cfg.theme_color, icon=FIF.PALETTE,

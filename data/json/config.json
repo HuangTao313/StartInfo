@@ -6,7 +6,6 @@
     "General": {
         "auto_close_switch": true,
         "auto_close_time": 60,
-        "ban_old_settings": true,
         "close_settings_action": "restart",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
@@ -21,15 +20,15 @@
         "switch": true
     },
     "Weather": {
-        "city_id": "101201009",
-        "city_name": "恩施",
+        "city_id": "101120407",
+        "city_name": "德州·庆云",
         "interval": 30,
         "switch": true
     },
     "Countdown": {
         "date": "2026-08-31",
-        "switch": true,
-        "text": "开学"
+        "name": "未知",
+        "switch": true
     },
     "InformationSwitch": {
         "datetime": true,

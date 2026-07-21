@@ -7,13 +7,12 @@ from pathlib import Path
 from core.ht_lib import log
 import core.init_app as init_app
 import core.ui as ui
-from new_settings import start_new_settings
-# from core.config import cfg
 from core.widgets import *
+from settings import start_settings
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
-    """加载并渲染模板（支持默认模板回退）"""
+    '''加载并渲染模板（支持默认模板回退）'''
     # FileSystemLoader 需要目录路径，而不是文件路径
     env = Environment(loader=FileSystemLoader(str(lib.TEMPLATE_FOLDER_PATH)))
 
@@ -64,7 +63,7 @@ def load_template(data: dict[str, str]) -> str | None:
     return f'模板加载失败：找不到可用模板'
 
 def init():
-    """程序初始化"""
+    '''程序初始化'''
     # 检查开机启动项是否存在
     if not init_app.is_shortcut_exist():
         if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
@@ -86,7 +85,7 @@ def init():
             log.warning('主程序-程序初始化失败：当前未联网')
 
 def handle_j2_template(j2_file_path: Path):
-    """处理 .j2 模板文件的逻辑"""
+    '''处理 .j2 模板文件的逻辑'''
     # 提示用户选择操作
     user_choice = ui.dialog(
         lib.TITLE,
@@ -108,10 +107,10 @@ def handle_j2_template(j2_file_path: Path):
                 subprocess.run([vsc_path, str(j2_file_path)], check=True)
                 log.info(f'主程序-已使用 VSCode 打开模板文件：{j2_file_path}')
             else:
-                raise FileNotFoundError("VS Code 未安装或未添加到系统 PATH")
+                raise FileNotFoundError('VS Code 未安装或未添加到系统 PATH')
 
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            log.error(f"主程序-无法使用 VSCode 打开模板文件: {e}")
+            log.error(f'主程序-无法使用 VSCode 打开模板文件: {e}')
             # 回退到记事本（可选）
             try:
                 subprocess.run(['notepad.exe', str(j2_file_path)], check=True)
@@ -127,7 +126,7 @@ def handle_j2_template(j2_file_path: Path):
     # 导入模板
     is_success, result_message = lib.import_template(j2_file_path)
     if not is_success:
-        log.error(f"主程序-模板导入失败：{result_message}")
+        log.error(f'主程序-模板导入失败：{result_message}')
         ui.error_dialog(result_message)
         return
 
@@ -147,11 +146,11 @@ def handle_j2_template(j2_file_path: Path):
     is_activate_success, activate_result = lib.activate_template(j2_file_path)
     # 如果启用失败
     if not is_activate_success:
-        log.error(f"主程序-启用模板失败：{activate_result}")
+        log.error(f'主程序-启用模板失败：{activate_result}')
         ui.error_dialog(activate_result)
 
 async def main():
-    """程序主函数"""
+    '''程序主函数'''
     # 创建所有已启用的组件实例
     component_config = [
         (cfg.datetime_switch, DateTimeWidget),
@@ -254,7 +253,7 @@ async def main():
         sys.exit()
     else:
         log.info('主程序-用户打开设置')
-        start_new_settings()
+        start_settings()
 
 if __name__ == '__main__':
     # 初始化
@@ -263,16 +262,17 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     asyncio.set_event_loop(loop)
 
-    # 禁止多开
-    checker = lib.SingleInstance(name='Local\\StartInfo-main')
-    if checker.is_running:
-        # 显示提示
-        ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
-        log.warning('主程序-检测到多开，请勿重复启动')
-        sys.exit()
+    # 禁止多开-Windows下
+    if lib.system == 'Windows':
+        checker = lib.WinSingleInstance(name='Local\\StartInfo-main')
+        if checker.is_running:
+            # 显示提示
+            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
+            log.warning('主程序-检测到多开，请勿重复启动')
+            sys.exit()
 
     # 检测是否带有启动参数(args列表的长度≥1)
-    if len(lib.global_argv) >= 1:
+    elif len(lib.global_argv) >= 1:
         # 如果是更新后第一次启动
         if '--update' in lib.global_argv:
             ui.dialog(lib.TITLE,
@@ -285,9 +285,8 @@ if __name__ == '__main__':
         # 如果是以--settings参数启动
         elif '--settings' in lib.global_argv:
             # 启动设置
-            # from settings import start_settings
-            # start_settings()
-            pass
+            from settings import start_settings
+            start_settings()
 
         # 如果是以--updater参数启动
         elif '--updater' in lib.global_argv:
@@ -313,7 +312,7 @@ if __name__ == '__main__':
         asyncio.run(main())
     except SystemExit:
         # main() 内调用了 sys.exit()（用户点击确定 / 异常退出）
-        # 先关闭 qasync 事件循环，避免 shutdown 时 "Signal source has been deleted" 警告
+        # 先关闭 qasync 事件循环，避免 shutdown 时 'Signal source has been deleted' 警告
         qasync_loop.close()
         raise
 

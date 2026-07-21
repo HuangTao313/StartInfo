@@ -1,17 +1,16 @@
 """关于页面。"""
 
 import os
-import sys
 import shutil
+import sys
 
 from PySide6.QtGui import QPixmap
 from qfluentwidgets import (SubtitleLabel, BodyLabel, SettingCardGroup,
-                             FluentIcon as FIF, PrimaryPushSettingCard, MessageBox)
+                            FluentIcon as FIF, PrimaryPushSettingCard, MessageBox)
 
-from ..updater import check_update_logic, run_update_process
-from .. import ht_lib as lib
 from .base_setting_card import BaseSettingPage
-from .action_helpers import action
+from .. import ht_lib as lib
+from ..updater import check_update_logic, run_update_process
 
 # 常量
 LOGO_ICON_PATH = lib.DATA_FOLDER_PATH / 'icons' / 'information.ico'
@@ -37,8 +36,8 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 更新日志
         changelog_text = (
-            f'发布日期：{lib.CURRENT_VERSION_JSON.get("release_date", "获取失败")}\n\n'
-            f'更新日志：\n{lib.CURRENT_VERSION_JSON.get("changelog", "获取失败")}'
+            f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date', '获取失败')}\n\n'
+            f'更新日志：\n{lib.CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
         )
         changelog = BodyLabel(changelog_text, self.scrollWidget)
         changelog.setWordWrap(True)
@@ -76,9 +75,9 @@ class AboutSettingsPage(BaseSettingPage):
         update_available, new_version_data = check_update_logic()
         if update_available:
             content = (
-                f'版本号：{new_version_data.get("version", "获取失败")}\n'
-                f'发布日期：{new_version_data.get("release_date", "获取失败")}\n'
-                f'更新日志：\n{new_version_data.get("changelog", "暂无更新日志")}'
+                f'版本号：{new_version_data.get('version', '获取失败')}\n'
+                f'发布日期：{new_version_data.get('release_date', '获取失败')}\n'
+                f'更新日志：\n{new_version_data.get('changelog', '暂无更新日志')}'
             )
             box = MessageBox('发现新版本', content, self)
             box.yesButton.setText('立即更新')

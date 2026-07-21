@@ -1,11 +1,14 @@
 from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
                               SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
-                            SettingCard, FluentIconBase, LineEdit,ConfigItem, CalendarPicker)
+                            SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
+                            ExpandGroupSettingCard)
 from PySide6.QtWidgets import QListWidgetItem
 from PySide6.QtCore import Qt, Signal, QDate, QLocale
 
 from typing import Union
 from PySide6.QtGui import QIcon
+import sqlite3
+from core.paths import DB_FOLDER_PATH
 # from PySide6.QtWidgets import QLabel
 
 
@@ -13,83 +16,86 @@ class ZhSwitchSettingCard(SwitchSettingCard):
     """
     支持中文状态文字的开关设置卡片
     """
-    def __init__(self, icon, title, content=None, configItem=None, parent=None):
-        super().__init__(icon, title, content, configItem, parent)
+    def __init__(self, icon, title, content=None, config_item=None, parent=None):
+        super().__init__(icon, title, content, config_item, parent)
         # 初始化时强制同步一次中文
         self._updateText(self.isChecked())
 
-    def _updateText(self, isChecked: bool):
+    def _updateText(self, is_checked: bool):
         # 核心：直接绕过原本的 tr('On')，强制写入中文
-        self.switchButton.setText("启用" if isChecked else "关闭")
+        self.switchButton.setText('启用' if is_checked else '关闭')
 
-    def setValue(self, isChecked: bool):
+    def setValue(self, is_checked: bool):
         # 彻底重写父类的逻辑，干掉那个烦人的 self.tr('On')
         if self.configItem:
-            qconfig.set(self.configItem, isChecked)
+            qconfig.set(self.configItem, is_checked)
 
-        self.switchButton.setChecked(isChecked)
-        self._updateText(isChecked)
+        self.switchButton.setChecked(is_checked)
+        self._updateText(is_checked)
 
 
 class CitySearchBox(MessageBoxBase):
-    def __init__(self, city_data, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.all_cities = city_data  # 传入你 read_json 读出来的列表
+        # 从数据库加载城市数据
+        self._db_path = str(DB_FOLDER_PATH / 'China_cities.db')
 
         # 1. 初始化 UI 组件
-        self.titleLabel = SubtitleLabel("搜索城市", self)
-        self.hintLabel = BodyLabel("请输入城市名进行搜索(支持输入省份)", self)
+        self.titleLabel = SubtitleLabel('搜索城市', self)
+        self.hintLabel = BodyLabel('请输入城市名进行搜索(支持输入省份)', self)
         self.searchEdit = SearchLineEdit(self)
         self.cityList = ListWidget(self)
 
         # 2. 配置组件属性
-        self.searchEdit.setPlaceholderText("例如：北京 / 上海 / 武汉")
+        self.searchEdit.setPlaceholderText('例如：北京 / 上海 / 武汉')
         self.searchEdit.setClearButtonEnabled(True)
-        self.yesButton.setText("选择此城市")
-        self.cancelButton.setText("取消")
+        self.yesButton.setText('选择此城市')
+        self.cancelButton.setText('取消')
 
-        # 3. 设置布局（按照 CW 的顺序）
+        # 3. 设置布局
         self.viewLayout.addWidget(self.titleLabel)
         self.viewLayout.addWidget(self.hintLabel)
         self.viewLayout.addWidget(self.searchEdit)
         self.viewLayout.addWidget(self.cityList)
 
-        # 4. 设置弹窗尺寸（参考 CW 的 500x600）
+        # 4. 设置弹窗尺寸
         self.widget.setMinimumWidth(500)
         self.widget.setFixedHeight(600)
 
         # 5. 绑定搜索逻辑
         self.searchEdit.textChanged.connect(self._onSearchChanged)
 
-        # 初始显示全部（或者前 100 个，防止数据量太大初始化慢）
-        self._onSearchChanged("")
+        # 初始显示全部
+        self._onSearchChanged('')
 
     def _onSearchChanged(self, text):
-        """ 适配嵌套字典格式的过滤逻辑 """
+        """使用 SQL LIKE 查询过滤城市"""
         self.cityList.clear()
+        search_key = text.strip()
 
-        search_key = text.lower().strip()
-        count = 0
+        conn = sqlite3.connect(self._db_path)
+        cursor = conn.cursor()
 
-        # 使用 .items() 同时获取 键(name) 和 值(info)
-        for name, info in self.all_cities.items():
-            # 逻辑：如果搜索词在 键名 里，或者在 info['full'] 完整路径里
-            if search_key in name.lower() or search_key in info.get('full', '').lower():
-                # 创建列表项，显示 display 字段（如：北京·海淀）
-                item = QListWidgetItem(info.get('full', name))
+        if search_key:
+            # 搜索 name 或 full 字段
+            like_pattern = f'%{search_key}%'
+            cursor.execute(
+                'SELECT name, city_id, full, display FROM cities WHERE name LIKE ? OR full LIKE ? LIMIT 100',
+                (like_pattern, like_pattern)
+            )
+        else:
+            cursor.execute('SELECT name, city_id, full, display FROM cities LIMIT 100')
 
-                # 把整个 info 字典存进 item，方便后面读取 city_id
-                item.setData(Qt.UserRole, info)
+        for row in cursor.fetchall():
+            name, city_id, full, display = row
+            item = QListWidgetItem(full)
+            item.setData(Qt.UserRole, {'city_id': city_id, 'full': full, 'display': display})
+            self.cityList.addItem(item)
 
-                self.cityList.addItem(item)
-                count += 1
-
-            # 性能优化：搜索结果超过 100 个停止遍历
-            if count >= 100:
-                break
+        conn.close()
 
     # def get_selected_city(self):
-    #     """ 获取当前选中的城市 """
+    #     ''' 获取当前选中的城市 '''
     #     item = self.cityList.currentItem()
     #     return item.text() if item else None
 
@@ -120,7 +126,7 @@ class TextSettingCard(SettingCard):
 
     textChanged = Signal(str)
 
-    def __init__(self, configItem: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
+    def __init__(self, config_item: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
                  title, content=None, parent=None):
         """
         参数:
@@ -141,7 +147,7 @@ class TextSettingCard(SettingCard):
             父组件
         """
         super().__init__(icon, title, content, parent)
-        self.configItem = configItem
+        self.configItem = config_item
 
         # 1. 创建输入框
         self.lineEdit = LineEdit(self)
@@ -149,11 +155,11 @@ class TextSettingCard(SettingCard):
 
         # 2. 初始化数值
         if self.configItem:
-            self.lineEdit.setText(str(configItem.value))
+            self.lineEdit.setText(str(config_item.value))
             # 只有存在配置项时才绑定自动更新信号
             self.configItem.valueChanged.connect(self.setText)
         else:
-            self.lineEdit.setPlaceholderText("未关联配置项...")
+            self.lineEdit.setPlaceholderText('未关联配置项...')
 
         # 3. 布局
         self.hBoxLayout.addStretch(1)
@@ -189,12 +195,12 @@ class CalendarSettingCard(SettingCard):
     dateChanged = Signal(QDate)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None,
-                 configItem: ConfigItem = None, parent=None):
+                 config_item: ConfigItem = None, parent=None):
         """
-        configItem 存储的通常是 ISO 格式的日期字符串 (如 "2026-06-20")
+        configItem 存储的通常是 ISO 格式的日期字符串 (如 '2026-06-20')
         """
         super().__init__(icon, title, content, parent)
-        self.configItem = configItem
+        self.configItem = config_item
 
         # 1. 创建日历选择器
         self.calendarPicker = CalendarPicker(self)
@@ -203,7 +209,7 @@ class CalendarSettingCard(SettingCard):
 
         # --- 汉化关键点 ---
         # 覆盖源码中的 'Pick a date'
-        self.calendarPicker.setText("选择一个日期")
+        self.calendarPicker.setText('选择一个日期')
         # ----------
 
         # 2. 初始化日期
@@ -250,7 +256,7 @@ class Notify:
     """弹窗提醒工具类"""
 
     @staticmethod
-    def info(content: str, title: str = "信息", duration: int = 2000, parent=None):
+    def info(content: str, title: str = '信息', duration: int = 2000, parent=None):
         """显示普通信息提示"""
         # 如果调用时没传 parent，尝试从 AppManager 获取主窗口（假设你存了）
         # 或者在调用时手动传 self
@@ -265,7 +271,7 @@ class Notify:
         )
 
     @staticmethod
-    def success(content: str, title: str = "成功", duration: int = 2000, parent=None):
+    def success(content: str, title: str = '成功', duration: int = 2000, parent=None):
         """显示成功绿条弹窗"""
         # 如果调用时没传 parent，尝试从 AppManager 获取主窗口（假设你存了）
         # 或者在调用时手动传 self
@@ -280,7 +286,7 @@ class Notify:
         )
 
     @staticmethod
-    def warning(content: str, title: str = "警告", duration: int = 5000, parent=None):
+    def warning(content: str, title: str = '警告', duration: int = 5000, parent=None):
         """显示橙色警告弹窗"""
         InfoBar.warning(
             title=title,
@@ -293,7 +299,7 @@ class Notify:
         )
 
     @staticmethod
-    def error(content: str, title: str = "错误", duration: int = 5000, parent=None):
+    def error(content: str, title: str = '错误', duration: int = 5000, parent=None):
         """显示错误红条弹窗"""
         InfoBar.error(
             title=title,
@@ -304,3 +310,24 @@ class Notify:
             duration=duration,
             parent=parent
         )
+
+
+class ExpandGroupCard(ExpandGroupSettingCard):
+    """手风琴卡片——展开区域背景自动跟随主题，无需手动设透明。
+
+    用法：
+        detail = ExpandGroupCard(FIF.GLOBE, '标题', '描述')
+        detail.addCard(TextSettingCard(..., parent=detail))
+        detail.addCard(PushSettingCard(..., parent=detail))
+        group.addSettingCard(detail)
+    """
+
+    def __init__(self, icon, title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.view.setStyleSheet('background: transparent;')
+        self.viewLayout.setContentsMargins(0, 0, 0, 0)
+        self.viewLayout.setSpacing(0)
+
+    def addCard(self, card: SettingCard):
+        """添加一张标准设置卡到手风琴展开区域。"""
+        self.addGroupWidget(card)

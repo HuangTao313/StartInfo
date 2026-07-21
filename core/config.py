@@ -1,6 +1,6 @@
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,ColorConfigItem,ColorValidator,
-                            ConfigItem, BoolValidator, Theme, qconfig, EnumSerializer, ConfigValidator)
-from . import ht_lib as lib
+                            ConfigItem, BoolValidator, qconfig, ConfigValidator)
+from . import paths as lib
 
 
 class StringValidator(ConfigValidator):
@@ -12,7 +12,7 @@ class StringValidator(ConfigValidator):
         """修正值：如果不是有效字符串，返回默认值；否则返回原值"""
         if isinstance(value, str) and len(value) > 0:
             return value
-        return "未知"  # 默认值
+        return '未知'  # 默认值
 
 
 class IntRangeValidator(ConfigValidator):
@@ -29,7 +29,7 @@ class IntRangeValidator(ConfigValidator):
     def validate(self, value):
         return isinstance(value, int) and self.min_val <= value <= self.max_val
 
-    def correct(self, value):
+    def correct(self, value: object) -> int:
         try:
             val = int(value)
         except (ValueError, TypeError):
@@ -73,18 +73,18 @@ class MyConfig(QConfig):
         """
         # 1. 确保文件夹存在，不存在就返回默认
         if not lib.TEMPLATE_FOLDER_PATH.exists():
-            return ["default.j2"]
+            return ['default.j2']
 
         # 2. 扫描所有 .j2 文件，不包含 birthday_wishes.j2
         files = [
-            p.name for p in lib.TEMPLATE_FOLDER_PATH.glob("*.j2")
+            p.name for p in lib.TEMPLATE_FOLDER_PATH.glob('*.j2')
             if p.is_file() and p.name != 'birthday_wishes.j2'
         ]
 
         # 3. 关键：QFW 的 OptionsConfigItem 严禁返回空列表
         # 如果没找到任何文件，手动塞一个默认值进去
         if not files:
-            return ["default.j2"]
+            return ['default.j2']
 
         return files
 
@@ -92,18 +92,18 @@ class MyConfig(QConfig):
 
     # 主题
     theme = OptionsConfigItem(
-        "General", "theme", 'dynamic',
-        OptionsValidator(["light", "dark", "dynamic"]),
+        'General', 'theme', 'dynamic',
+        OptionsValidator(['light', 'dark', 'dynamic']),
     )
 
     # 使用系统主题色
     use_win_theme_color = ConfigItem('General', 'use_win_theme_color', True, BoolValidator())
 
     # 主题色
-    theme_color = ColorConfigItem("General", "theme_color", '#ff009faa',ColorValidator(default='#ff009faa'))
+    theme_color = ColorConfigItem('General', 'theme_color', '#ff009faa',ColorValidator(default='#ff009faa'))
     # 倒数日功能
     countdown_switch = ConfigItem('Countdown', 'switch', False, BoolValidator())
-    countdown_text = ConfigItem('Countdown', 'text', '',StringValidator())
+    countdown_name = ConfigItem('Countdown', 'name', '', StringValidator())
     countdown_date = ConfigItem('Countdown', 'date', '', StringValidator())
 
     # 自动关闭
@@ -148,8 +148,6 @@ class MyConfig(QConfig):
     # 日志等级列表
     log_level_list = ['DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']
     log_level = OptionsConfigItem('General', 'log_level', 'WARNING', OptionsValidator(log_level_list))
-    # 禁用旧版设置
-    ban_old_settings = ConfigItem('General', 'ban_old_settings', False, BoolValidator())
 
 cfg = MyConfig()
 # 建议加上路径，确保它生成在你项目的 data 目录下
@@ -157,9 +155,3 @@ qconfig.load(lib.CONFIG_FILE_PATH, cfg)
 
 # 导出 qconfig 和 cfg，方便其他模块使用
 __all__ = ['cfg', 'qconfig', 'MyConfig']
-
-# 添加调试日志，检查配置项是否正确加载
-# lib.log.info(f'配置加载：city_name 类型 = {type(cfg.city_name)}, 值 = {cfg.city_name.value if hasattr(cfg.city_name, "value") else cfg.city_name}')
-# lib.log.info(f'配置加载：city_id 类型 = {type(cfg.city_id)}, 值 = {cfg.city_id.value if hasattr(cfg.city_id, "value") else cfg.city_id}')
-# lib.log.info(f'配置加载：birthday_wishes_switch 类型 = {type(cfg.birthday_wishes_switch)}, 值 = {cfg.birthday_wishes_switch.value if hasattr(cfg.birthday_wishes_switch, "value") else cfg.birthday_wishes_switch}')
-# lib.log.info(f'配置加载：birthday_dict 类型 = {type(cfg.birthday_dict)}, 值 = {cfg.birthday_dict.value if hasattr(cfg.birthday_dict, "value") else cfg.birthday_dict}')

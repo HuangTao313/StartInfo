@@ -85,32 +85,41 @@ class AppManager:
 # 全局 AppManager 实例
 app_manager = AppManager()
 
-def get_real_windows_accent_color():
-    """
-    直接从注册表读取 Windows 10/11 的实时主题色
-    """
+def get_real_windows_accent_color() -> str:
+    """获取系统的主题色"""
     try:
-        import winreg
-        # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
-        registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-        key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\DWM")
+        # 如果系统是Windows
+        if lib.system == 'Windows':
+            import winreg
+            # 1. 定位到 DWM (Desktop Window Manager) 的注册表路径
+            registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+            key = winreg.OpenKey(registry, r'Software\Microsoft\Windows\DWM')
 
-        # 2. 读取 AccentColor (DWORD格式)
-        # 注册表存的是 AABBGGRR 格式
-        value, _ = winreg.QueryValueEx(key, "AccentColor")
-        winreg.CloseKey(key)
+            # 2. 读取 AccentColor (DWORD格式)
+            # 注册表存的是 AABBGGRR 格式
+            value, _ = winreg.QueryValueEx(key, 'AccentColor')
+            winreg.CloseKey(key)
 
-        # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
-        # value 是一个 32 位的整数
-        # 我们通过位运算提取 R, G, B
-        r = value & 0xff
-        g = (value >> 8) & 0xff
-        b = (value >> 16) & 0xff
+            # 3. 核心转换逻辑：将 AABBGGRR 转为 #RRGGBB
+            # value 是一个 32 位的整数
+            # 我们通过位运算提取 R, G, B
+            r = value & 0xff
+            g = (value >> 8) & 0xff
+            b = (value >> 16) & 0xff
 
-        return f"#{r:02x}{g:02x}{b:02x}".upper().lower()
+            return f'#{r:02x}{g:02x}{b:02x}'.upper().lower()
+        
+        # 如果系统是MacOS
+        elif lib.system == 'Darwin':
+            # 暂时留空
+            pass
+        
+        # 如果系统是其他，返回默认蓝色
+        else:
+            return '#009faa'
 
     except Exception:
-        return "#009faa"  # 读取失败时的保底蓝色
+        return '#009faa'  # 读取失败时的保底蓝色
 
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """
@@ -137,14 +146,14 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
         dialog.yesButton.setText(buttons[0])
         dialog.cancelButton.setText(buttons[1])
     else:
-        raise ValueError("按钮列表长度不能超过 2")
+        raise ValueError('按钮列表长度不能超过 2')
 
     # 显示对话框并返回结果
     result = dialog.exec()
     return result
 
 # 文件选择对话框
-def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") -> Path | None:
+def file_dialog(title: str, directory: str = '', filter: str = 'All Files (*)') -> Path | None:
     """
     文件选择对话框 - 使用单例 QApplication
 
@@ -172,7 +181,7 @@ def file_dialog(title: str, directory: str = "", filter: str = "All Files (*)") 
 
 # 报错弹窗
 def error_dialog(text: str) -> None:
-    yn = dialog("程序运行时发生错误╥﹏╥...", text, ['重启', '打开日志文件'])
+    yn = dialog('程序运行时发生错误╥﹏╥...', text, ['重启', '打开日志文件'])
     if yn:
         # 重启
         lib.restart_program()
@@ -187,11 +196,11 @@ def error_dialog(text: str) -> None:
 
             else:
                 lib.log.error(f'打开日志文件失败 - 日志文件不存在：{lib.LOG_PATH}')
-                dialog("打开日志文件失败╥﹏╥...", f"日志文件不存在：{lib.LOG_PATH}")
+                dialog('打开日志文件失败╥﹏╥...', f'日志文件不存在：{lib.LOG_PATH}')
 
         except Exception as e:
             lib.log.error(f'打开日志文件失败：{e}')
-            dialog("打开日志文件失败╥﹏╥...", f"{e}")
+            dialog('打开日志文件失败╥﹏╥...', f'{e}')
 
     else:
         lib.log.info('用户取消了操作，程序退出')
@@ -247,13 +256,13 @@ class _ChoiceBox(Dialog):
         button_layout.setContentsMargins(20, 15, 20, 20)
 
         # 确定按钮（高亮样式）
-        self.ok_button = PrimaryPushButton("确定")
+        self.ok_button = PrimaryPushButton('确定')
         self.ok_button.setMinimumWidth(100)
         self.ok_button.clicked.connect(self._on_ok_clicked)
         self.ok_button.setEnabled(False)  # 初始禁用，选中选项后启用
 
         # 取消按钮（普通样式）
-        self.cancel_button = PushButton("取消")
+        self.cancel_button = PushButton('取消')
         self.cancel_button.setMinimumWidth(100)
         self.cancel_button.clicked.connect(self.reject)
 
@@ -365,12 +374,12 @@ class _ComboBoxDialog(Dialog):
         button_layout.setContentsMargins(20, 15, 20, 20)
 
         # 确定按钮（高亮样式）
-        self.ok_button = PrimaryPushButton("确定")
+        self.ok_button = PrimaryPushButton('确定')
         self.ok_button.setMinimumWidth(100)
         self.ok_button.clicked.connect(self._on_ok_clicked)
 
         # 取消按钮（普通样式）
-        self.cancel_button = PushButton("取消")
+        self.cancel_button = PushButton('取消')
         self.cancel_button.setMinimumWidth(100)
         self.cancel_button.clicked.connect(self.reject)
 
@@ -402,7 +411,7 @@ class _ComboBoxDialog(Dialog):
         return self.selected_option
 
 
-def combobox(title: str, message: str = "", options: list[str] = None) -> str | None:
+def combobox(title: str, message: str = '', options: list[str] = None) -> str | None:
     """
     显示选项选择对话框（下拉框样式）
 
@@ -420,7 +429,7 @@ def combobox(title: str, message: str = "", options: list[str] = None) -> str | 
     
     # 如果 message 为 None，设为空字符串
     if message is None:
-        message = ""
+        message = ''
 
     # 创建对话框
     dialog = _ComboBoxDialog(title, message, options)
@@ -449,8 +458,8 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
 
     # 创建对话框
     dialog_instance = Dialog(lib.TITLE, clean_text, None)
-    dialog_instance.yesButton.setText("确定")
-    dialog_instance.cancelButton.setText("设置")
+    dialog_instance.yesButton.setText('确定')
+    dialog_instance.cancelButton.setText('设置')
 
     # 2. 禁止抖动逻辑
     dialog_instance.adjustSize()
@@ -461,7 +470,7 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     timer = QTimer()
 
     def update_time():
-        new_time = time.strftime("%H:%M:%S", time.localtime())
+        new_time = time.strftime('%H:%M:%S', time.localtime())
         current_display_text = dialog_instance.contentLabel.text()
         new_content = re.sub(r'\d{2}:\d{2}:\d{2}', new_time, current_display_text)
         dialog_instance.contentLabel.setText(new_content)
