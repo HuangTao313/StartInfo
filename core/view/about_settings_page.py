@@ -5,6 +5,7 @@ import shutil
 import sys
 
 from PySide6.QtGui import QPixmap
+from qasync import asyncSlot
 from qfluentwidgets import (SubtitleLabel, BodyLabel, SettingCardGroup,
                             FluentIcon as FIF, PrimaryPushSettingCard, MessageBox)
 
@@ -71,24 +72,29 @@ class AboutSettingsPage(BaseSettingPage):
     # 槽函数
     # ------------------------------------------------------------------
 
-    def onUpdateClicked(self):
-        update_available, new_version_data = check_update_logic()
-        if update_available:
-            content = (
-                f'版本号：{new_version_data.get('version', '获取失败')}\n'
-                f'发布日期：{new_version_data.get('release_date', '获取失败')}\n'
-                f'更新日志：\n{new_version_data.get('changelog', '暂无更新日志')}'
-            )
-            box = MessageBox('发现新版本', content, self)
-            box.yesButton.setText('立即更新')
-            box.cancelButton.setText('取消更新')
-            if box.exec():
-                lib.log.info('>>> 准备接入更新流程...')
-                self.window().close()
-                run_update_process(new_version_data)
-        else:
-            from .ui_widgets import Notify
-            Notify.info(content='当前已经是最新版本', parent=self)
+    @asyncSlot()
+    async def onUpdateClicked(self):
+        self.checkUpdateCard.setEnabled(False)
+        try:
+            update_available, new_version_data = await check_update_logic()
+            if update_available:
+                content = (
+                    f'版本号：{new_version_data.get('version', '获取失败')}\n'
+                    f'发布日期：{new_version_data.get('release_date', '获取失败')}\n'
+                    f'更新日志：\n{new_version_data.get('changelog', '暂无更新日志')}'
+                )
+                box = MessageBox('发现新版本', content, self)
+                box.yesButton.setText('立即更新')
+                box.cancelButton.setText('取消更新')
+                if box.exec():
+                    lib.log.info('>>> 准备接入更新流程...')
+                    self.window().close()
+                    run_update_process(new_version_data)
+            else:
+                from .ui_widgets import Notify
+                Notify.info(content='当前已经是最新版本', parent=self)
+        finally:
+            self.checkUpdateCard.setEnabled(True)
 
     def onUninstallClicked(self):
         box = MessageBox('卸载确认', '确定要卸载本程序吗？', self)

@@ -43,13 +43,10 @@ class SettingsWindow(FluentWindow):
 
 
 def start_settings():
+    app = ui.app_manager.get_app()
     w = SettingsWindow()
-    w.setAttribute(Qt.WA_DeleteOnClose)
     w.show()
-
     loop = ui.app_manager.get_loop()
-    w.destroyed.connect(loop.quit)
-
     with loop:
         loop.run_forever()
 

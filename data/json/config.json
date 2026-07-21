@@ -6,7 +6,7 @@
     "General": {
         "auto_close_switch": true,
         "auto_close_time": 60,
-        "close_settings_action": "exit",
+        "close_settings_action": "restart",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
         "theme": "dynamic",

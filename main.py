@@ -272,7 +272,7 @@ if __name__ == '__main__':
             sys.exit()
 
     # 检测是否带有启动参数(args列表的长度≥1)
-    elif len(lib.global_argv) >= 1:
+    if len(lib.global_argv) >= 1:
         # 如果是更新后第一次启动
         if '--update' in lib.global_argv:
             ui.dialog(lib.TITLE,
@@ -294,6 +294,8 @@ if __name__ == '__main__':
 
             # 启动更新器
             start_updater()
+
+            sys.exit()
 
         # 如果是从jinja2模板文件启动
         else:
