@@ -8,6 +8,8 @@ from .config import cfg, qconfig
 api = lib.read_json(lib.API_FILE_PATH)
 # 中国城市列表路径
 CHINA_CITY_PATH: Path = lib.JSON_PATH / 'China_cities_db.json'
+# 日志
+log = lib.log
 
 # IP定位
 def get_ip_location() -> str | bool:
@@ -30,14 +32,14 @@ def get_ip_location() -> str | bool:
             response.raise_for_status()
             return _parse_ip_location_data(response.json())
     except Exception as e:
-        lib.log.error(f'程序初始化-IP定位请求异常: {str(e)}')
+        log.error(f'程序初始化-IP定位请求异常: {str(e)}')
         return False
 
 def _parse_ip_location_data(data: dict) -> str | bool:
     """内部函数：解析高德IP定位数据"""
     if data.get('status') == '1':
         # 记录完整的API响应数据
-        lib.log.info(f'程序初始化-高德IP定位API返回数据: {data}')
+        log.info(f'程序初始化-高德IP定位API返回数据: {data}')
 
         # 🔥 修复：处理高德返回空数组 [] 的情况
         raw_city = data.get('city', '')
@@ -55,16 +57,16 @@ def _parse_ip_location_data(data: dict) -> str | bool:
 
         # 检查城市名是否有效
         if city_name and city_name != '未知':
-            lib.log.info(f'程序初始化-高德IP定位成功: {city_name}')
+            log.info(f'程序初始化-高德IP定位成功: {city_name}')
             return city_name
         else:
-            lib.log.warning(f'程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}')
+            log.warning(f'程序初始化-高德IP定位返回无效城市名: {repr(raw_city)}')
             return False
     else:
         # API请求失败，记录详细错误信息
         error_msg = data.get('info', '未知错误')
         error_code = data.get('infocode', '无错误码')
-        lib.log.error(f'程序初始化-高德IP定位失败: {error_msg} (错误码: {error_code})')
+        log.error(f'程序初始化-高德IP定位失败: {error_msg} (错误码: {error_code})')
         return False
 
 # 获取城市ID
@@ -78,12 +80,12 @@ def get_city_info_by_location(amap_location=None) -> tuple[str, str] | bool:
     """
     # 检测中国城市列表是否存在
     if not CHINA_CITY_PATH.exists():
-        lib.log.error('程序初始化失败：中国城市列表文件不存在')
+        log.error('程序初始化失败：中国城市列表文件不存在')
         return False
 
     # 检测输入值不为空
     if not amap_location:
-        lib.log.error('程序初始化失败：请检查 IP 定位是否正常')
+        log.error('程序初始化失败：请检查 IP 定位是否正常')
         return False
 
     # 读取中国城市列表
@@ -107,7 +109,7 @@ def get_city_info_by_location(amap_location=None) -> tuple[str, str] | bool:
         return False
 
     except Exception as e:
-        lib.log.error(f'程序初始化-中国城市列表读取异常: {str(e)}')
+        log.error(f'程序初始化-中国城市列表读取异常: {str(e)}')
         return False
 
 # 程序初始化
@@ -123,28 +125,28 @@ def init_app() -> bool | list[bool | str]:
             result = get_city_info_by_location(city)
             # 检查result变量类型
             if not isinstance(result, dict):
-                lib.log.error('程序初始化失败：城市信息获取失败')
+                log.error('程序初始化失败：城市信息获取失败')
                 return False
 
             if result:
                 actual_city_name = result.get('display', '未知')
                 city_id = result.get('city_id', '未知')
-                lib.log.info(f'程序初始化，已定位到城市：{actual_city_name}')
+                log.info(f'程序初始化，已定位到城市：{actual_city_name}')
                 qconfig.set(cfg.city_name, actual_city_name, save=True)
                 qconfig.set(cfg.city_id, city_id, save=True)
-                lib.log.info(f'程序初始化-已获取城市ID：{city_id}')
+                log.info(f'程序初始化-已获取城市ID：{city_id}')
                 return [True, actual_city_name]
 
             else:
-                lib.log.error('程序初始化失败：无法获取位置信息或城市ID')
+                log.error('程序初始化失败：无法获取位置信息或城市ID')
                 return False
 
         except Exception as e:
-            lib.log.error(f'程序初始化失败：{str(e)}')
+            log.error(f'程序初始化失败：{str(e)}')
             return False
 
     else:
-        lib.log.warning('程序初始化失败：请检查网络连接')
+        log.warning('程序初始化失败：请检查网络连接')
         return False
 
 # 创建快捷方式
@@ -162,7 +164,7 @@ def create_shortcut() -> bool:
             shortcut.Arguments = '--startup'
             shortcut.WorkingDirectory = str(lib.MAIN_PATH)  # 设置工作目录
             shortcut.save()
-            lib.log.info(f'快捷方式已创建并移动到启动文件夹: {lib.SHORTCUT_PATH}')
+            log.info(f'快捷方式已创建并移动到启动文件夹: {lib.SHORTCUT_PATH}')
             return True
 
         # 如果系统是MacOS
@@ -172,7 +174,7 @@ def create_shortcut() -> bool:
 
 
     except Exception as e:
-        lib.log.error(f'创建快捷方式失败: {str(e)}')
+        log.error(f'创建快捷方式失败: {str(e)}')
         return False
 
 
@@ -190,13 +192,13 @@ def is_shortcut_exist() -> bool:
             shell = Dispatch('WScript.Shell')
             shortcut = shell.CreateShortCut(str(lib.SHORTCUT_PATH))
             if shortcut.Targetpath == str(lib.EXE_PATH):
-                lib.log.info(f'快捷方式已存在，且目标路径正确: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式已存在，且目标路径正确: {lib.SHORTCUT_PATH}')
                 return True
             else:
-                lib.log.info(f'快捷方式已存在，但目标路径不匹配: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式已存在，但目标路径不匹配: {lib.SHORTCUT_PATH}')
                 return False
         else:
-            lib.log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+            log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
             return False
 
     # 如果系统是MacOS
@@ -214,9 +216,9 @@ def remove_shortcut() -> bool:
         if lib.system == 'Windows':
             if lib.SHORTCUT_PATH.exists():
                 lib.SHORTCUT_PATH.unlink(missing_ok = True)
-                lib.log.info(f'快捷方式已删除: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式已删除: {lib.SHORTCUT_PATH}')
             else:
-                lib.log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
             return True
 
         # 如果系统是MacOS
@@ -225,5 +227,5 @@ def remove_shortcut() -> bool:
             pass
 
     except Exception as e:
-        lib.log.error(f'删除快捷方式时出错: {e}')
+        log.error(f'删除快捷方式时出错: {e}')
         return False

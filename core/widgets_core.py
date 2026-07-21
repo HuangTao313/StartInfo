@@ -85,6 +85,7 @@ class CacheManager:
             cls._initialized = True
             log.success(f'[CacheManager] 数据库已在 {cls.DB_PATH} 初始化')
             return True
+
         except Exception as exc:
             log.error(f'[CacheManager] 数据库初始化失败: {exc}')
             return False
@@ -107,6 +108,7 @@ class CacheManager:
             conn.close()
             log.info(f'[CacheManager] [{widget_name}:{cache_key}] 缓存写入成功')
             return True
+
         except Exception as exc:
             log.error(f'[CacheManager] [{widget_name}:{cache_key}] 写入失败: {exc}')
             return False
@@ -129,6 +131,7 @@ class CacheManager:
             if row:
                 return json.loads(row[0]), row[1]
             return None
+
         except Exception as exc:
             log.error(f'[CacheManager] [{widget_name}:{cache_key}] 读取失败: {exc}')
             return None
@@ -154,6 +157,7 @@ class CacheManager:
             conn.commit()
             conn.close()
             return True
+
         except Exception as exc:
             log.error(f'[CacheManager] 删除缓存失败: {exc}')
             return False
@@ -201,6 +205,7 @@ class CacheManager:
             if isinstance(value, str) and value.strip()[:1] in ('{', '['):
                 value = json.loads(value)
             return value, row[1]
+
         except Exception as exc:
             log.error(
                 f'[CacheManager] 路径读取 [{widget_name}:{cache_key}::{json_path}] 失败: {exc}'
@@ -237,6 +242,7 @@ class CacheManager:
             conn.close()
             log.info(f'[CacheManager] [{widget_name}:{cache_key}::{json_path}] 路径更新成功')
             return True
+
         except Exception as exc:
             log.error(f'[CacheManager] 路径更新失败: {exc}')
             return False
@@ -260,6 +266,7 @@ class CacheManager:
             conn.close()
             log.info(f'[CacheManager] [{widget_name}:{cache_key}::{json_path}] 路径删除成功')
             return True
+
         except Exception as exc:
             log.error(f'[CacheManager] 路径删除失败: {exc}')
             return False
@@ -552,6 +559,7 @@ class NetworkWidgetBase(WidgetBase):
                     msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败（已重试 {self.RETRY_COUNT} 次）'
                     log.error(f'{msg}: {exc}')
                     raise ConnectionError(msg) from exc
+
             except Exception as exc:
                 msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
                 log.error(f'{msg}: {exc}')
@@ -593,6 +601,7 @@ class NetworkWidgetBase(WidgetBase):
                     msg = f'组件 [{self.WIDGET_NAME}] 获取数据失败（已重试 {self.RETRY_COUNT} 次）'
                     log.error(f'{msg}: {exc}')
                     raise ConnectionError(msg) from exc
+
             except Exception as exc:
                 msg = f'组件 [{self.WIDGET_NAME}] 发生未知错误'
                 log.error(f'{msg}: {exc}')

@@ -1,12 +1,15 @@
 """新版设置窗口入口。"""
 from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 from qfluentwidgets import FluentWindow, FluentIcon
 
+import sys
 import core.ht_lib as lib
 import core.ui as ui
-# from core.view.about_settings_page import AboutSettingsPage
+from core.view.about_settings_page import AboutSettingsPage
 from core.view.basic_settings_page import BasicSettingsPage
 from core.view.custom_settings_page import CustomSettingsPage
+from core.view.ui_widgets import Notify
 from core.config import cfg
 
 # 常量
@@ -25,7 +28,11 @@ class SettingsWindow(FluentWindow):
 
         self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, '基本设置')
         self.addSubInterface(CustomSettingsPage(self), FluentIcon.BRUSH, '个性化')
-        # self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于')
+        self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于')
+
+        # 系统兼容性警告
+        if lib.system != 'Windows':
+            Notify.warning(content='当前系统暂不支持某些功能', parent=self)
 
     def _center(self):
         screen = ui.app_manager.get_app().primaryScreen()
@@ -36,16 +43,23 @@ class SettingsWindow(FluentWindow):
 
 
 def start_settings():
-    app = ui.app_manager.get_app()
     w = SettingsWindow()
+    w.setAttribute(Qt.WA_DeleteOnClose)
     w.show()
+
     loop = ui.app_manager.get_loop()
+    w.destroyed.connect(loop.quit)
+
     with loop:
         loop.run_forever()
 
-if __name__ == '__main__':
-    start_settings()
     if cfg.close_settings_action.value == 'restart':
-        print('restart')
         from core.ht_lib import restart_program
         restart_program()
+
+    else:
+        sys.exit()
+
+
+if __name__ == '__main__':
+    start_settings()

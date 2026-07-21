@@ -4,13 +4,13 @@ import os
 
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             FluentIcon as FIF, PushSettingCard,
-                            PrimaryPushSettingCard, SettingCardGroup)
+                            PrimaryPushSettingCard, SettingCardGroup, qconfig)
 
-from .base_setting_card import BaseSettingPage
+from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
 from .. import ht_lib as lib
 from .. import ui
-from ..config import cfg
+from ..config import cfg, qconfig
 
 
 class CustomSettingsPage(BaseSettingPage):
@@ -84,6 +84,12 @@ class CustomSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(self.templateGroup)
 
         self.finalise()
+
+        # —— 禁用其他系统暂未适配的功能 ——
+        if lib.system != 'Windows':
+            # 使用系统主题色
+            qconfig.set(cfg.use_win_theme_color, False, save=True)
+            self.useWinThemeColor.setEnabled(False)
 
         # ── 信号 ──
         cfg.theme.valueChanged.connect(self._onThemeChanged)

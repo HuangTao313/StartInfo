@@ -1,13 +1,12 @@
 import subprocess
 import zipfile
 import asyncio
-import aiofiles
+import httpx
 import time
 import json
 import hashlib
 import shutil
 import sys
-import ctypes
 from pathlib import Path
 from . import ht_lib as lib
 from . import ui
@@ -19,7 +18,7 @@ log = lib.log
 
 
 # ==================== 保留你原有的函数 ====================
-async def get_version_file() -> bool:
+def get_version_file() -> bool:
     """
     【使用场景】启动更新流程前，获取远程最新版本元数据
     【输入】无（自动从 lib.API_FILE_PATH 读取加密URL）
@@ -27,14 +26,14 @@ async def get_version_file() -> bool:
     【注意】
       - 会自动创建 VERSION_PATH 的父目录
       - 失败时记录详细错误日志
-      - 保留你原有的解密逻辑和错误处理
     """
     try:
         api_data = lib.read_json(lib.API_FILE_PATH)
         if 'check_update_url' not in api_data:
             log.error("更新器-API配置中缺少check_update_url字段")
             return False
-        url = lib.decrypt(api_data['check_update_url'])
+        url = api_data['check_update_url']
+
     except Exception as e:
         log.error(f"更新器-解密更新URL失败: {e}")
         return False
@@ -42,19 +41,19 @@ async def get_version_file() -> bool:
     try:
         # 修复点：创建的是父目录（json/），不是 version.json 文件本身
         VERSION_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     except Exception as e:
         log.error(f"更新器-创建版本目录失败: {e}")
         return False
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
-                response.raise_for_status()
-                content = await response.read()
-                existing_data = json.loads(content.decode('utf-8'))
-                existing_data['get_time'] = int(time.time())
-                with open(VERSION_PATH, 'w', encoding='utf-8') as f:
-                    json.dump(existing_data, f, ensure_ascii=False, indent=4)
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            existing_data = response.json()
+            existing_data['get_time'] = int(time.time())
+            with open(VERSION_PATH, 'w', encoding='utf-8') as f:
+                json.dump(existing_data, f, ensure_ascii=False, indent=4)
         log.info(f"更新器-已成功获取版本文件: {VERSION_PATH}")
         return True
     except Exception as e:
@@ -151,8 +150,8 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
         return False
 
 
-# ==================== 下载模块（aria2） ====================
-async def download_file(url: str, filename: str, show_progress: bool = True) -> Path | None:
+# ==================== 下载模块 ====================
+def download_file(url: str, filename: str, show_progress: bool = True) -> Path | None:
     """
     【使用场景】下载更新包（增量包/安装程序）
     【输入】
@@ -162,7 +161,7 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
     【输出】Path | None - 成功返回完整路径，失败返回None
     【注意】
       - 自动创建 lib.DOWNLOAD_PATH
-      - 使用 aiohttp 流式下载（内存友好）
+      - 使用 httpx 流式下载（内存友好）
       - 支持实时控制台进度条
       - 返回 Path 对象便于后续操作
     """
@@ -170,23 +169,25 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
     output_path = lib.DOWNLOAD_PATH / filename
 
     # 请求超时设置
-    timeout = aiohttp.ClientTimeout(
-        total=300,  # 总超时 5分钟
-        connect=30  # 连接超时 30秒
+    timeout = httpx.Timeout(
+        connect=30.0,  # 连接超时 30秒
+        read=300.0,    # 读取超时 5分钟
+        write=300.0,
+        pool=300.0,
     )
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(lib.decrypt(url)) as resp:
+        with httpx.Client(timeout=timeout) as client:
+            with client.stream("GET", url) as resp:
                 resp.raise_for_status()
 
                 # 获取文件总大小（用于进度计算）
                 total_size = int(resp.headers.get('content-length', 0))
 
                 downloaded = 0
-                async with aiofiles.open(output_path, 'wb') as f:
-                    async for chunk in resp.content.iter_chunked(8192):  # 8KB/块
-                        await f.write(chunk)
+                with open(output_path, 'wb') as f:
+                    for chunk in resp.iter_bytes(chunk_size=8192):  # 8KB/块
+                        f.write(chunk)
                         downloaded += len(chunk)
 
                         # 显示进度条
@@ -201,9 +202,9 @@ async def download_file(url: str, filename: str, show_progress: bool = True) -> 
                 log.info(f'更新器-下载完成: {filename} ({downloaded} bytes)')
                 return output_path
 
-    except asyncio.TimeoutError:
+    except httpx.TimeoutException:
         log.error(f"更新器-下载超时 (300秒): {filename}")
-    except aiohttp.ClientError as e:
+    except httpx.HTTPError as e:
         log.error(f"更新器-HTTP下载错误: {e}")
     except Exception as e:
         log.error(f"更新器-下载异常: {str(e)}")
@@ -335,6 +336,7 @@ def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete
         if temp_dir.exists():
             try:
                 shutil.rmtree(lib.DOWNLOAD_PATH)
+
             except Exception as e:
                 log.warning(f"更新器-清理临时目录失败: {e}")
 
@@ -471,14 +473,14 @@ def _build_update_info(remote: dict, update_type: str, reason: str, pkg: dict = 
     }
 
 
-async def perform_update(update_info: dict) -> None:
+def perform_update(update_info: dict) -> None:
     """执行完整的更新流程（下载 → 校验 → 应用）"""
     update_type_en = update_info.get('type', '')
     file_name = 'update_package.zip' if update_type_en == 'incremental' else 'StartInfo.exe'
 
     # 下载
     log.info(f'更新器-准备{"增量" if update_type_en == "incremental" else "完整"}更新，正在下载...')
-    update_file_path = await download_file(update_info['url'], filename=file_name)
+    update_file_path = download_file(update_info['url'], filename=file_name)
     if not update_file_path:
         ui.dialog('更新失败', '下载更新包时出错，请稍后重试。')
         return
@@ -510,7 +512,7 @@ async def perform_update(update_info: dict) -> None:
     else:
         apply_full_update(update_file_path)  # 此函数会直接退出进程
 
-def check_update_logic() -> tuple[bool, dict]:
+async def check_update_logic() -> tuple[bool, dict]:
     """
     【核心逻辑】仅检查更新，不触发任何控制台或 UI 弹窗
     返回: (是否有更新, 更新信息字典)
@@ -518,13 +520,13 @@ def check_update_logic() -> tuple[bool, dict]:
     try:
         # 1. 版本文件维护逻辑
         if not VERSION_PATH.exists():
-            if not asyncio.run(get_version_file()):
+            if not await asyncio.to_thread(get_version_file):
                 return False, {}
         else:
             version_data = lib.read_json(VERSION_PATH)
             # 过期检查（1小时）
             if int(time.time()) - version_data.get('get_time', 0) >= 3600:
-                if not asyncio.run(get_version_file()):
+                if not await asyncio.to_thread(get_version_file):
                     log.warning("更新器-静默检查失败：无法获取远程版本")
                     return False, {}
 
@@ -538,28 +540,11 @@ def check_update_logic() -> tuple[bool, dict]:
     return False, {}
 
 
-def run_update_process(update_info: dict):
+def run_update_process(update_info: dict) -> None:
     """
-    【执行逻辑】唤醒控制台并执行真正的下载替换
+    【执行逻辑】执行下载替换（窗口已关闭，同步即可）。
     """
-    # try:
-    # 申请控制台
-    #     ctypes.windll.kernel32.AllocConsole()
-    #     sys.stdout = open("CONOUT$", "w", encoding='utf-8', buffering=1)
-    #     sys.stderr = open("CONOUT$", "w", encoding='utf-8', buffering=1)
-    #
-    #     print(">>> StartInfo 更新序列已启动...")
-    #     print(f">>> 正在准备更新至版本: {update_info.get('version', 'Unknown')}\n")
-    #
-    #     # 执行原有的更新动作
-    #     asyncio.run(perform_update(update_info))
-    #
-    # except Exception as e:
-    #     log.error(f"更新执行失败: {e}")
-    # finally:
-    #     # 无论成功失败，最后释放控制台
-    #     ctypes.windll.kernel32.FreeConsole()
-    print('执行更新逻辑')
+    perform_update(update_info)
 
 
 # ==========================================
@@ -569,7 +554,8 @@ def start_updater() -> None:
     """
     旧版入口：包含检查逻辑和弹窗确认
     """
-    need_update, update_info = check_update_logic()
+    loop = asyncio.get_event_loop()
+    need_update, update_info = loop.run_until_complete(check_update_logic())
 
     if need_update:
         text = f"发现新版本：{update_info.get('version', '未知')}\n\n更新内容：\n{update_info.get('changelog', '暂无')}"

@@ -13,7 +13,7 @@ from .config import cfg
 # 获取 api 信息
 api = lib.read_json(lib.API_FILE_PATH)
 
-# 管理日志
+# 日志
 log = lib.log
 
 # 获取 emoji
@@ -438,11 +438,11 @@ class TodayInHistoryWidget(NetworkWidgetBase):
                     'historical_event': history['title']
                 }
             else:
-                lib.log.error('历史上的今天：没有找到历史上的今天的信息')
+                log.error('历史上的今天：没有找到历史上的今天的信息')
                 return None
         else:
             self.skip_cache()
-            lib.log.error('历史上的今天：请求失败')
+            log.error('历史上的今天：请求失败')
             return None
 
 # 4.节假日和24节气

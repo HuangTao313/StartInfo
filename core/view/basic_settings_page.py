@@ -7,14 +7,14 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             PrimaryPushSettingCard, PushSettingCard,
                             SettingCardGroup)
 
-from .action_helpers import action
-from .base_setting_card import BaseSettingPage
+from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
-                         TextSettingCard, ZhSwitchSettingCard)
+                         TextSettingCard, ZhSwitchSettingCard, action)
 from .ui_widgets import ExpandGroupCard
 from .. import ht_lib as lib
-from ..config import cfg
+from ..config import cfg, qconfig
 from ..init_app import create_shortcut, remove_shortcut
+from ..ui import log
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -239,31 +239,48 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.finalise()
 
+        # ------------------------------------------------------------------
+        # 禁用其他系统暂未适配的功能
+        # ------------------------------------------------------------------
+        if lib.system != 'Windows':
+            # 开机自启
+            self.startupCard.setEnabled(False)
+            # 关闭设置窗口后的行为锁定为【直接退出】
+            qconfig.set(cfg.close_settings_action, 'exit', save=True)
+            self.closeSettingsAction.setEnabled(False)
+
+
     # ------------------------------------------------------------------
     # 辅助
     # ------------------------------------------------------------------
 
     def _check_input(self, text, min_val, max_val, config_item, card):
-        """验证数值输入并修正。"""
+        """验证用户输入的数字是否在有效范围内。"""
         try:
             value = int(text)
-            if isinstance(config_item.validator, type(cfg.auto_close_time.validator).__bases__[-1]):
-                pass
-            if min_val <= value <= max_val:
-                return
         except (ValueError, TypeError):
-            pass
-        corrected = config_item.validator.correct(text)
-        config_item._set(corrected)
-        card.setText(str(corrected))
+            Notify.warning(
+                title='输入错误',
+                content=f'请输入有效的整数，已恢复为 {config_item.value}',
+                parent=self,
+            )
+            card.setText(str(config_item.value))
+            return
 
-    @staticmethod
-    def _openConfigFile():
+        if not min_val <= value <= max_val:
+            Notify.warning(
+                title='输入错误',
+                content=f'请输入 {min_val}~{max_val} 之间的值，已恢复为 {config_item.value}',
+                parent=self,
+            )
+            card.setText(str(config_item.value))
+
+    def _openConfigFile(self):
         try:
             os.startfile(lib.CONFIG_FILE_PATH)
         except Exception as e:
             lib.log.error(f'设置-打开配置文件失败: {e}')
-            Notify.error(title='打开配置文件失败', content=str(e))
+            Notify.error(title='打开配置文件失败', content=str(e), parent=self)
 
     # ------------------------------------------------------------------
     # 槽函数
@@ -307,12 +324,22 @@ class BasicSettingsPage(BaseSettingPage):
 
     @action('天气数据已更新', '获取失败')
     async def _onRefreshWeather(self):
-        from core.widgets import WeatherWidget
-        w = WeatherWidget()
-        return await w.get_data_async(force_refresh=True)
+        self.weatherRefreshCard.setEnabled(False)
+        try:
+            from core.widgets import WeatherWidget
+            w = WeatherWidget()
+            return await w.get_data_async(force_refresh=True)
+
+        finally:
+            self.weatherRefreshCard.setEnabled(True)
 
     @action('MC 服务器数据已更新', '刷新失败')
     async def _onRefreshMCServer(self):
-        from core.widgets import MCServerStatusWidget
-        mc = MCServerStatusWidget()
-        return await mc.get_data_async()
+        self.mcServerDataRefreshCard.setEnabled(False)
+        try:
+            from core.widgets import MCServerStatusWidget
+            mc = MCServerStatusWidget()
+            return await mc.get_data_async(force_refresh=True)
+
+        finally:
+            self.mcServerDataRefreshCard.setEnabled(True)

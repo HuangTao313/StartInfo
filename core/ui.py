@@ -12,6 +12,8 @@ from qasync import QEventLoop
 from . import ht_lib as lib
 from .config import cfg
 
+# 日志
+log = lib.log
 
 class AppManager:
     _instance = None
@@ -108,13 +110,8 @@ def get_real_windows_accent_color() -> str:
             b = (value >> 16) & 0xff
 
             return f'#{r:02x}{g:02x}{b:02x}'.upper().lower()
-        
-        # 如果系统是MacOS
-        elif lib.system == 'Darwin':
-            # 暂时留空
-            pass
-        
-        # 如果系统是其他，返回默认蓝色
+
+        # 如果系统是MacOS，暂时返回默认蓝色
         else:
             return '#009faa'
 
@@ -192,18 +189,18 @@ def error_dialog(text: str) -> None:
             if lib.LOG_PATH.exists():
                 os.startfile(lib.LOG_PATH.parent)
                 os.startfile(lib.LOG_PATH)
-                lib.log.info(f'已打开日志文件：{lib.LOG_PATH}')
+                log.info(f'已打开日志文件：{lib.LOG_PATH}')
 
             else:
-                lib.log.error(f'打开日志文件失败 - 日志文件不存在：{lib.LOG_PATH}')
+                log.error(f'打开日志文件失败 - 日志文件不存在：{lib.LOG_PATH}')
                 dialog('打开日志文件失败╥﹏╥...', f'日志文件不存在：{lib.LOG_PATH}')
 
         except Exception as e:
-            lib.log.error(f'打开日志文件失败：{e}')
+            log.error(f'打开日志文件失败：{e}')
             dialog('打开日志文件失败╥﹏╥...', f'{e}')
 
     else:
-        lib.log.info('用户取消了操作，程序退出')
+        log.info('用户取消了操作，程序退出')
         sys.exit()
 
 # ========== 选项选择对话框 (ChoiceBox) ==========
