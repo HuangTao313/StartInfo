@@ -60,10 +60,13 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(generalGroup)
 
         # ── 天气 ──
-        weatherGroup = SettingCardGroup('天气', self.scrollWidget)
+        weatherGroup = SettingCardGroup('天气&空气质量(请先选择您所在的城市)', self.scrollWidget)
 
-        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='显示天气', content='显示当前天气',
+        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='显示天气', content='显示当前城市的天气信息',
                                                      config_item=cfg.weather_switch, parent=weatherGroup)
+
+        self.airQualitySwitchCard = ZhSwitchSettingCard(icon=FIF.LEAF, title='显示空气质量', content='显示当前城市的空气质量信息',
+                                                        config_item=cfg.air_quality_switch, parent=weatherGroup)
 
         # 创建手风琴组件
         self.weatherDetailCard = ExpandGroupCard(
@@ -78,23 +81,41 @@ class BasicSettingsPage(BaseSettingPage):
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
 
         self.weatherRefreshTimeCard = TextSettingCard(config_item=cfg.weather_interval, icon=FIF.STOP_WATCH,
-                                                      title='天气数据刷新间隔(单位：分钟/m)',
-                                                      content='天气数据自动刷新时间(范围：15~60分钟，默认30分钟)',
+                                                      title='天气信息刷新间隔(单位：分钟/m)',
+                                                      content='天气信息自动刷新时间(范围：15~60分钟，默认30分钟)',
                                                       parent=self.weatherDetailCard)
         self.weatherRefreshTimeCard.textChanged.connect(
             lambda text: self._check_input(text, 15, 60, cfg.weather_interval, self.weatherRefreshTimeCard)
         )
 
+        self.airQualityRefreshTimeCard = TextSettingCard(config_item=cfg.air_quality_interval, icon=FIF.STOP_WATCH,
+                                                         title='空气质量信息刷新间隔(单位：分钟/m)',
+                                                         content='天气信息自动刷新时间(范围：15~240分钟，默认120分钟)')
+        self.airQualityRefreshTimeCard.textChanged.connect(
+            lambda text: self._check_input(text, 15, 240, cfg.air_quality_interval, self.airQualityRefreshTimeCard)
+        )
+
+
         self.weatherRefreshCard = PrimaryPushSettingCard(
-            text='刷新天气数据', icon=FIF.SYNC,
-            title='刷新天气数据', content='刷新天气数据', parent=self.weatherDetailCard,
+            text='刷新天气信息', icon=FIF.SYNC,
+            title='刷新天气信息', content='刷新天气信息', parent=self.weatherDetailCard,
         )
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
 
+        self.airQualityRefreshCard = PrimaryPushSettingCard(
+            text='刷新空气质量信息', icon=FIF.SYNC,
+            title='刷新空气质量信息', content='刷新空气质量信息', parent=self.weatherDetailCard,
+        )
+
+        self.airQualityRefreshCard.clicked.connect(self._onRefreshAirQuality)
+
         self.weatherDetailCard.addCard(self.cityChooseCard)
         self.weatherDetailCard.addCard(self.weatherRefreshTimeCard)
+        self.weatherDetailCard.addCard(self.airQualityRefreshTimeCard)
         self.weatherDetailCard.addCard(self.weatherRefreshCard)
+        self.weatherDetailCard.addCard(self.airQualityRefreshCard)
         weatherGroup.addSettingCard(self.weatherSwitchCard)
+        weatherGroup.addSettingCard(self.airQualitySwitchCard)
         weatherGroup.addSettingCard(self.weatherDetailCard)
         self.expandLayout.addWidget(weatherGroup)
 
@@ -161,8 +182,8 @@ class BasicSettingsPage(BaseSettingPage):
                                                 parent=self.mcDetailCard)
         self.mcServerDataRefreshIntervalCard = TextSettingCard(config_item=cfg.minecraft_server_data_refresh_interval,
                                                                icon=FIF.STOP_WATCH,
-                                                               title='服务器数据刷新间隔(单位：秒/s)',
-                                                               content='Minecraft Java版服务器数据自动刷新时间(范围：5~3600秒，默认60秒)',
+                                                               title='服务器信息刷新间隔(单位：秒/s)',
+                                                               content='Minecraft Java版服务器信息自动刷新时间(范围：5~3600秒，默认60秒)',
                                                                parent=self.mcDetailCard)
         self.mcServerDataRefreshIntervalCard.textChanged.connect(
             lambda text: self._check_input(text, 5, 3600, cfg.minecraft_server_data_refresh_interval,
@@ -176,7 +197,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.mcFriendsListCard.clicked.connect(self._openConfigFile)
         self.mcServerDataRefreshCard = PrimaryPushSettingCard(
             text='立即刷新', icon=FIF.SYNC, title='立即刷新',
-            content='立即刷新Minecraft Java服务器数据', parent=self.mcDetailCard,
+            content='立即刷新Minecraft Java服务器信息', parent=self.mcDetailCard,
         )
         self.mcServerDataRefreshCard.clicked.connect(self._onRefreshMCServer)
 
@@ -319,10 +340,10 @@ class BasicSettingsPage(BaseSettingPage):
                 cfg.set(cfg.city_name, display_name)
                 self.cityChooseCard.setTitle(f'选择城市(当前: {display_name})')
                 if city_id != old_city_id:
-                    Notify.success(title=f'已设置城市 {display_name}', content='正在获取天气数据...', parent=self)
+                    Notify.success(title=f'已设置城市 {display_name}', content='正在获取天气信息...', parent=self)
                     self._onRefreshWeather()
 
-    @action('天气数据已更新', '获取失败')
+    @action('天气信息已更新', '获取失败')
     async def _onRefreshWeather(self):
         self.weatherRefreshCard.setEnabled(False)
         try:
@@ -333,7 +354,18 @@ class BasicSettingsPage(BaseSettingPage):
         finally:
             self.weatherRefreshCard.setEnabled(True)
 
-    @action('MC 服务器数据已更新', '刷新失败')
+    @action('空气质量信息已更新', '获取失败')
+    async def _onRefreshAirQuality(self):
+        self.airQualityRefreshCard.setEnabled(False)
+        try:
+            from core.widgets import AirQualityWidget
+            w = AirQualityWidget()
+            return await w.get_data_async(force_refresh=True)
+
+        finally:
+            self.airQualityRefreshCard.setEnabled(True)
+
+    @action('MC 服务器信息已更新', '刷新失败')
     async def _onRefreshMCServer(self):
         self.mcServerDataRefreshCard.setEnabled(False)
         try:

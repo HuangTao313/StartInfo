@@ -114,14 +114,14 @@ class MyConfig(QConfig):
     close_settings_action = OptionsConfigItem('General', 'close_settings_action', 'restart', OptionsValidator(['restart', 'exit']))
 
     # ===== Weather部分 =====
-    weather_switch = ConfigItem('Weather', 'switch', True, BoolValidator())
+    weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
     city_name = ConfigItem('Weather', 'city_name', '北京市',StringValidator())
     city_id = ConfigItem('Weather', 'city_id', '101010100',StringValidator())
     # 天气数据更新间隔(单位：分钟，范围：15~60分钟)
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
 
     # 空气质量数据更新间隔(单位：分钟，范围：15~240分钟)
-    air_quality_switch = ConfigItem('AirQuality', 'switch', True, BoolValidator())
+    air_quality_switch = ConfigItem('AirQuality', 'switch', False, BoolValidator())
     air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
 
     # ===== BirthdayWishes部分 =====

@@ -1,8 +1,4 @@
 {
-  "restapi.amap.com": {
-    "url": "https://restapi.amap.com/v3/ip",
-    "api_key": "8aa148f399f3fc0a87166becddb0b3b4"
-  },
   "qweather.com": {
     "url_weather": "https://ne3qqm4n8w.re.qweatherapi.com/v7/weather/now",
     "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now",

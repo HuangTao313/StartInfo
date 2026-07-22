@@ -266,9 +266,10 @@ class GreetingWidget(LocalWidgetBase):
     WIDGET_NAME = 'Greeting'
     NEED_CACHE = False
     
-    def _fetch_data(self) -> str:
+    def _fetch_data(self) -> dict:
         hour = int(time.strftime('%H', global_time))
-        return '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 17 else '晚上好！'
+        greeting = '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 17 else '晚上好！'
+        return {'greeting': greeting}
 
 # 5.开机次数
 class StartupTimesWidget(LocalWidgetBase):
@@ -280,7 +281,7 @@ class StartupTimesWidget(LocalWidgetBase):
     WIDGET_NAME = 'StartupTimes'
     NEED_CACHE = False
 
-    def _read_value(self, path: str, default: object = 0) -> int | Any:
+    def _read_value(self, path: str = 'times', default: object = 1) -> int | Any:
         """读取缓存路径的值，不存在时返回默认值。"""
         cached = self._read_cache_path(path)
         return cached[0] if cached is not None else default
@@ -312,15 +313,15 @@ class StartupTimesWidget(LocalWidgetBase):
             if global_date != last_date:
                 # 新的一天 → 重置
                 self._reset_times()
-                return {'times': 1}
+                return {'startup_times': 1}
             else:
                 # 同一天多次启动 → 自增
                 times = self._add_times()
-                return {'times': times}
+                return {'startup_times': times}
         else:
             # 手动打开，只读不写
-            times = self._read_value('times')
-            return {'times': times}
+            times = self._read_value()
+            return {'startup_times': times}
 
 # ===== 联网组件 =====
 # 1.天气

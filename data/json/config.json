@@ -1,7 +1,7 @@
 {
     "AirQuality": {
         "interval": 120,
-        "switch": true
+        "switch": false
     },
     "General": {
         "auto_close_switch": true,
@@ -20,20 +20,20 @@
         "switch": true
     },
     "Weather": {
-        "city_id": "101120407",
-        "city_name": "德州·庆云",
+        "city_id": "",
+        "city_name": "",
         "interval": 60,
-        "switch": true
+        "switch": false
     },
     "Countdown": {
-        "date": "2026-08-31",
-        "name": "未知",
-        "switch": true
+        "date": "",
+        "name": "",
+        "switch": false
     },
     "InformationSwitch": {
         "datetime": true,
         "greeting": true,
-        "historical": true,
+        "historical": false,
         "holiday_solar_term": true,
         "startup_times": true,
         "words": true
@@ -48,13 +48,11 @@
         "ThemeMode": "Auto"
     },
     "MinecraftJavaServerChecker": {
-        "switch": true,
+        "switch": false,
         "data_refresh_interval": 60,
-        "friends_list": [
-            "HuangTao3"
-        ],
-        "server_ip": "wok.shinoyuki.cn",
-        "server_name": "World of Kivotos",
+        "friends_list": [],
+        "server_ip": "",
+        "server_name": "",
         "server_port": "25565"
     }
 }

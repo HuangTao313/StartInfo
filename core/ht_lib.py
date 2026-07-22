@@ -203,7 +203,7 @@ class JsonHandler:
     def _save(self):
         """保存数据到文件（自动创建目录）"""
         # 检查数据完整性，避免保存不完整的数据
-        required_keys = ['General', 'Data', 'Easter_egg']
+        required_keys = ['General']
         if not all(key in self.data for key in required_keys):
             missing_keys = [key for key in required_keys if key not in self.data]
             log.error(f'数据不完整，缺少必要的键: {missing_keys}，拒绝保存以避免覆盖原有数据')
@@ -402,50 +402,34 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
         return False, error_text
 
 # 重启
-def restart_program(args: str = ''):
+def restart_program(args: str = ""):
     """
-    重启当前程序
-
-    开发环境:
-        使用当前 Python 解释器重新启动 main.py
-
-    打包环境:
-        Windows 下通过独立 cmd 进程重新启动 exe，
-        避免当前进程退出导致启动命令被中断。
+    兼容互斥锁的强制重启
+    :param args: 启动参数，例如 "--settings"。留空则默认启动主程序。
     """
-
-    # 开发环境
-    if not getattr(sys, 'frozen', False):
-        log.debug('尝试在开发环境重启，此功能未完善')
-        subprocess.Popen(
-            'uv run main.py',
-            shell=True,
-            cwd=str(MAIN_PATH),
-        )
-        sys.exit()
-
-    # Windows 打包环境
-    elif system == 'Windows':
+    # 如果是Windows系统
+    if system == 'Windows':
+        # 1. 获取当前进程 PID
         current_pid = os.getpid()
-        # 拼接启动参数
-        extra_args = f' {args}' if args else ''
-        # 结束旧进程 -> 等待资源释放 -> 启动新进程
-        cmd = (
-            f'taskkill /f /pid {current_pid} '
-            f'& timeout /t 1 /nobreak '
-            f'& start "" "{sys.executable}"{extra_args}'
-        )
 
-        # 独立执行，避免随当前进程退出
-        subprocess.Popen(
-            cmd,
-            shell=True,
-            creationflags=(
-                subprocess.CREATE_NEW_PROCESS_GROUP |
-                subprocess.CREATE_NO_WINDOW
-            )
-        )
+        # 2. 构造命令
+        # 注意：start "" "{EXE_PATH}" {args}
+        # 如果 args 不为空，它会紧跟在路径后面
+        # 例如：start "" "C:\path\to\main.exe" --settings
 
+        # 我们加上一个判断，确保参数前面有个空格
+        extra_args = f" {args}" if args else ""
+
+        # 构造一行流命令
+        # taskkill 强制杀掉当前 PID 确保文件锁/互斥锁释放
+        # timeout 等待 1 秒给系统缓冲
+        # start 重新拉起程序
+        cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"{extra_args}'
+
+        # 3. 以后台静默方式执行 CMD 命令
+        subprocess.Popen(cmd, shell=True)
+
+        # 4. 当前程序立即退出
         sys.exit()
 
     # MacOS打包环境

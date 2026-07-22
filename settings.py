@@ -1,16 +1,16 @@
 """新版设置窗口入口。"""
+import sys
+
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt
 from qfluentwidgets import FluentWindow, FluentIcon
 
-import sys
 import core.ht_lib as lib
 import core.ui as ui
+from core.config import cfg
 from core.view.about_settings_page import AboutSettingsPage
 from core.view.basic_settings_page import BasicSettingsPage
 from core.view.custom_settings_page import CustomSettingsPage
 from core.view.ui_widgets import Notify
-from core.config import cfg
 
 # 常量
 SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'

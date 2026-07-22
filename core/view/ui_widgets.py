@@ -11,7 +11,7 @@ import sqlite3
 from qasync import asyncSlot
 import functools
 from core.paths import DB_FOLDER_PATH
-# from PySide6.QtWidgets import QLabel
+from core.ht_lib import log
 
 
 class ZhSwitchSettingCard(SwitchSettingCard):
@@ -372,7 +372,7 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
                 return result
 
             except Exception as e:
-                lib.log.error(f'设置-操作失败: {e}')
+                log.error(f'设置-操作失败: {e}')
                 InfoBar.error(title=str(e), content='', parent=self,
                               position=InfoBarPosition.TOP,
                               duration=3000)

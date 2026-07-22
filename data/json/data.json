@@ -1,13 +1,7 @@
 {
     "General": {
-        "is_first_startup": false,
-        "startup_times": 2,
-        "data_reset_times": 0,
+        "is_first_startup": true,
+        "data_reset_times": "",
         "last_birthday_date": ""
-    },
-    "Easter_egg": {
-        "name": "你被骗了",
-        "is_get": false,
-        "get_date": ""
     }
 }

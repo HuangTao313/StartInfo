@@ -8,11 +8,10 @@ from core.ht_lib import log
 import core.init_app as init_app
 import core.ui as ui
 from core.widgets import *
-from settings import start_settings
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
-    '''加载并渲染模板（支持默认模板回退）'''
+    """加载并渲染模板（支持默认模板回退）"""
     # FileSystemLoader 需要目录路径，而不是文件路径
     env = Environment(loader=FileSystemLoader(str(lib.TEMPLATE_FOLDER_PATH)))
 
@@ -63,29 +62,33 @@ def load_template(data: dict[str, str]) -> str | None:
     return f'模板加载失败：找不到可用模板'
 
 def init():
-    '''程序初始化'''
+    """程序初始化"""
     # 检查开机启动项是否存在
     if not init_app.is_shortcut_exist():
         if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
             init_app.create_shortcut()
             log.info('主程序-用户已添加开机启动项')
 
-    # 检查网络连接情况
-    if lib.is_internet():
-        # 开始初始化流程
-        log.info('主程序-检测到第一次启动，开始执行程序初始化')
+    ui.dialog(lib.TITLE, '注：第一次启动时，天气、空气质量组件默认禁用，请先在设置中选择您所在的城市')
+    lib.file.write('General', 'is_first_startup', value=False)
 
-        # IP定位并获取city_id
-        if init_app.init_app():
-            file.write('General', 'is_first_startup', value=False)
-            log.info('主程序-程序初始化完成')
 
-        else:
-            ui.dialog(lib.TITLE, '未检测到网络连接，请检查网络连接并重新启动程序！\n╥﹏╥...')
-            log.warning('主程序-程序初始化失败：当前未联网')
+    # # 检查网络连接情况
+    # if lib.is_internet():
+    #     # 开始初始化流程
+    #     log.info('主程序-检测到第一次启动，开始执行程序初始化')
+    #
+    #     # IP定位并获取city_id
+    #     if init_app.init_app():
+    #         file.write('General', 'is_first_startup', value=False)
+    #         log.info('主程序-程序初始化完成')
+    #
+    #     else:
+    #         ui.dialog(lib.TITLE, '未检测到网络连接，请检查网络连接并重新启动程序！\n╥﹏╥...')
+    #         log.warning('主程序-程序初始化失败：当前未联网')
 
 def handle_j2_template(j2_file_path: Path):
-    '''处理 .j2 模板文件的逻辑'''
+    """处理 .j2 模板文件的逻辑"""
     # 提示用户选择操作
     user_choice = ui.dialog(
         lib.TITLE,
@@ -149,8 +152,8 @@ def handle_j2_template(j2_file_path: Path):
         log.error(f'主程序-启用模板失败：{activate_result}')
         ui.error_dialog(activate_result)
 
-async def main():
-    '''程序主函数'''
+async def main() -> None:
+    """程序主函数"""
     # 创建所有已启用的组件实例
     component_config = [
         (cfg.datetime_switch, DateTimeWidget),
@@ -222,6 +225,7 @@ async def main():
         'datetime_switch': cfg.datetime_switch.value,
         'countdown_switch': cfg.countdown_switch.value,
         'weather_switch': cfg.weather_switch.value,
+        'air_quality_switch': cfg.air_quality_switch.value,
         'historical_switch': cfg.historical_switch.value,
         'words_switch': cfg.words_switch.value,
         'mc_server_check_switch': cfg.minecraft_server_checker_switch.value,
@@ -253,6 +257,7 @@ async def main():
         sys.exit()
     else:
         log.info('主程序-用户打开设置')
+        from settings import start_settings
         start_settings()
 
 if __name__ == '__main__':
@@ -271,8 +276,14 @@ if __name__ == '__main__':
             log.warning('主程序-检测到多开，请勿重复启动')
             sys.exit()
 
+    # 如果是第一次启动，进入初始化流程
+    if lib.file.read('General', 'is_first_startup'):
+        init()
+
     # 检测是否带有启动参数(args列表的长度≥1)
-    if len(lib.global_argv) >= 1:
+    elif len(lib.global_argv) >= 1:
+        # 如果是开机自启(带有--startup启动参数)，
+
         # 如果是更新后第一次启动
         if '--update' in lib.global_argv:
             ui.dialog(lib.TITLE,
