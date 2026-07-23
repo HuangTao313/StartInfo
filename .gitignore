@@ -1,0 +1,25 @@
+# Python缓存
+__pycache__/
+*.pyc
+
+# 虚拟环境
+.venv/
+venv/
+.python-version
+
+
+# PyCharm
+.idea/
+
+# CLI工具缓存
+./.codewhale
+./.deepseek
+
+# 日志目录
+./data/logs
+
+# 其他
+其他/
+
+# 组件缓存
+data/db/widgets_cache.db

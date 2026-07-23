@@ -1,6 +1,6 @@
 {
     "General": {
-        "is_first_startup": true,
+        "is_first_startup": false,
         "data_reset_times": "",
         "last_birthday_date": ""
     }

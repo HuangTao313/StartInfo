@@ -1,3 +1,7 @@
+# 你上次不是说
+# 要整一个类似PCL的每日人品（ 那文案呢 ui我来 去试试 去 core/widgets.py
+
+#
 import os
 import sys
 import asyncio

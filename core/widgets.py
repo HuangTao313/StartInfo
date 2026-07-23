@@ -1,5 +1,6 @@
 import datetime
 import time
+
 import zhdate
 from datetime import datetime
 from typing import Any
@@ -323,6 +324,41 @@ class StartupTimesWidget(LocalWidgetBase):
             times = self._read_value()
             return {'startup_times': times}
 
+# 6.每日人品
+class DailyCharacterWidget(LocalWidgetBase):
+    WIDGET_NAME = 'DailyCharacter'
+    NEED_CACHE = True
+    LOCAL_INTERVAL = '1d'
+
+    def _fetch_data(self) -> dict:
+        # 延迟导入
+        from random import randint
+        character = randint(0,100)
+        # 根据人品质拼接文案
+        if 0 <= character <= 10:
+            return {'character': f'{character}....是百分制哦 '}
+
+        elif 10 < character <= 30:
+            return {'character': f'{character}，也许还能将就？'}
+
+        elif 30 < character <= 60:
+            return {'character': f'{character}，加油啊下次及格'}
+
+        elif 60 < character <= 90:
+            if character == 78:
+                return {'character': f'{character}，暗广！'}
+
+            else:
+                return {'character': f'{character}'}
+
+        else:
+            if character == 91:
+                return {'character': f'{character},干什么！'}
+
+            else:
+                return {'character': f'{character}，欧皇！'}
+
+
 # ===== 联网组件 =====
 # 1.天气
 class WeatherWidget(NetworkWidgetBase):
@@ -465,12 +501,12 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
         today = time.strftime('%Y%m%d')
         self.API_URL = f'{base_url}/{today}'
 
-    def _fetch_data(self) -> dict:
+    def _fetch_data(self) -> dict | None:
         """同步获取。"""
         self._set_url()
         return self._sync_request()
 
-    async def _fetch_data_async(self) -> dict:
+    async def _fetch_data_async(self) -> dict | None:
         """异步获取。"""
         self._set_url()
         return await self._async_request()

@@ -2,7 +2,7 @@
 import sys
 
 from PySide6.QtGui import QIcon
-from qfluentwidgets import FluentWindow, FluentIcon
+from qfluentwidgets import FluentWindow, FluentIcon,NavigationItemPosition
 
 import core.ht_lib as lib
 import core.ui as ui
@@ -12,7 +12,7 @@ from core.view.basic_settings_page import BasicSettingsPage
 from core.view.custom_settings_page import CustomSettingsPage
 from core.view.ui_widgets import Notify
 
-# 常量
+# 图标
 SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'
 
 
@@ -28,7 +28,7 @@ class SettingsWindow(FluentWindow):
 
         self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, '基本设置')
         self.addSubInterface(CustomSettingsPage(self), FluentIcon.BRUSH, '个性化')
-        self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于')
+        self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于',NavigationItemPosition.BOTTOM)
 
         # 系统兼容性警告
         if lib.system != 'Windows':
