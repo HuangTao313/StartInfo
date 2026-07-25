@@ -367,7 +367,10 @@ class WeatherWidget(NetworkWidgetBase):
     NEED_CACHE = True
     LOCAL_INTERVAL = f'{cfg.weather_interval.value}m'
     API_URL = api['qweather.com']['url_weather']
-    PARAMS = {
+    # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
+    @property
+    def PARAMS(self):
+        return {
         'key': api['qweather.com']['api_key'],
         'location' : cfg.city_id.value,
     }
@@ -431,10 +434,13 @@ class AirQualityWidget(NetworkWidgetBase):
     NEED_CACHE = True
     LOCAL_INTERVAL = f'{cfg.air_quality_interval.value}m'
     API_URL = api['qweather.com']['url_air']
-    PARAMS = {
-        'key': api['qweather.com']['api_key'],
-        'location': cfg.city_id.value,
-    }
+    # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
+    @property
+    def PARAMS(self):
+        return {
+            'key': api['qweather.com']['api_key'],
+            'location': cfg.city_id.value,
+        }
 
     def _parse_data(self, raw_data: dict) -> dict | None:
         """解析数据"""
@@ -524,28 +530,58 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
             log.error('节假日和 24 节气信息：请求失败')
             return None
 
-# 5.金山词霸每日一言
+# 5.每日一言
 class EveryDayWordsWidget(NetworkWidgetBase):
     WIDGET_NAME = 'EveryDayWords'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
-    API_URL = api['open.iciba.com']
+    # 动态获取API_URL
+    @property
+    def API_URL(self):
+        return cfg.words_source.value
 
     def _parse_data(self, raw_data: dict) -> dict | None:
         """解析数据"""
         if raw_data:
-            content = raw_data.get('content', '')
-            note = raw_data.get('note', '')
+            # 如果数据源是金山词霸
+            if cfg.words_source.value == 'https://open.iciba.com/dsapi/':
+                content = raw_data.get('content', '')
+                note = raw_data.get('note', '')
 
-            return {
+                words = {
+                'source': cfg.words_source.value,
                 'every_day_words_zh': note,
                 'every_day_words_en': content
             }
+
+            # 如果数据源是一言网
+            else:
+                hitokoto = raw_data.get('hitokoto', '')
+                source = raw_data.get('from', '')
+                from_who = raw_data.get('from_who', None)
+                # 如果from_who字段为空
+                if from_who is None:
+                    from_text = f'——「{source}」'
+
+                else:
+                    from_text = f'——{from_who}「{source}」'
+
+                words = {
+                    'source': cfg.words_source.value,
+                    'every_day_words_zh': hitokoto,
+                    'every_day_words_en': from_text
+                }
+
+            # 返回
+            return words
 
         else:
             self.skip_cache()
             log.error('金山词霸每日一言：请求失败')
             return None
+
+    def get_words_source(self) -> tuple[dict, float] | None:
+        return self._read_cache_path('source')
 
 # 6.MC 服务器状态
 class MCServerStatusWidget(LocalWidgetBase):
@@ -582,11 +618,6 @@ class MCServerStatusWidget(LocalWidgetBase):
     def _fetch_data(self) -> dict | None:
         """同步获取 MC 服务器状态。"""
         from mcstatus import JavaServer
-
-        if not cfg.minecraft_server_checker_switch.value:
-            self.skip_cache()
-            log.info('MC 服务器：开关未开启，跳过检测')
-            return None
 
         ip = cfg.minecraft_server_ip.value
         port = cfg.minecraft_server_port.value

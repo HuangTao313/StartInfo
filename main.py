@@ -1,8 +1,3 @@
-#有点神秘
-# 你上次不是说
-# 要整一个类似PCL的每日人品（ 那文案呢 ui我来 去试试 去 core/widgets.py
-
-#
 import os
 import sys
 import asyncio
@@ -74,7 +69,6 @@ def init():
             init_app.create_shortcut()
             log.info('主程序-用户已添加开机启动项')
 
-    ui.dialog(lib.TITLE, '注：第一次启动时，天气、空气质量组件默认禁用，请先在设置中选择您所在的城市')
     lib.file.write('General', 'is_first_startup', value=False)
 
 

@@ -110,7 +110,6 @@ def is_shortcut_exist() -> bool:
 
     # 如果系统是MacOS
     else:
-        # 暂时留空
         try:
             if not MACOS_SHORTCUT_PATH.is_file():
                 log.info(f'macOS 开机启动项不存在: {MACOS_SHORTCUT_PATH}')
@@ -147,7 +146,6 @@ def is_shortcut_exist() -> bool:
         except (OSError, plistlib.InvalidFileException, ValueError, TypeError) as e:
             log.error(f'检查 macOS 开机启动项失败: {e}')
             return False
-    #话说我们不用写Linux的判断吧
 
 # 删除开机启动项
 def remove_shortcut() -> bool:
@@ -167,7 +165,6 @@ def remove_shortcut() -> bool:
 
         # 如果系统是MacOS
         else:
-            # 暂时留空
             if not MACOS_SHORTCUT_PATH.exists():
                 log.info(f'macOS 开机启动项不存在: {MACOS_SHORTCUT_PATH}')
                 return True

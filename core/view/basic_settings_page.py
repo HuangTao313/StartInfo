@@ -5,7 +5,8 @@ import shutil
 
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             PrimaryPushSettingCard, PushSettingCard,
-                            SettingCardGroup)
+                            SettingCardGroup, HyperlinkCard)
+from qasync import asyncSlot
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
@@ -14,6 +15,7 @@ from .ui_widgets import ExpandGroupCard
 from .. import ht_lib as lib
 from ..config import cfg, qconfig
 from ..init_app import create_shortcut, remove_shortcut
+from ..widgets import EveryDayWordsWidget
 from ..ui import log
 
 
@@ -70,7 +72,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 创建手风琴组件
         self.weatherDetailCard = ExpandGroupCard(
-            FIF.CLOUD, '天气信息详细配置', '城市、刷新间隔', parent=weatherGroup,
+            FIF.MORE, '天气信息详细配置', '城市、刷新间隔', parent=weatherGroup,
         )
 
         self.cityChooseCard = PushSettingCard(
@@ -127,7 +129,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 创建手风琴组件
         self.countdownDetailCard = ExpandGroupCard(
-            FIF.GLOBE, '倒数日详细配置', '倒数日名称、日期信息', parent=countdownGroup,
+            FIF.MORE, '倒数日详细配置', '倒数日名称、日期信息', parent=countdownGroup,
         )
 
         self.countdownTextCard = TextSettingCard(config_item=cfg.countdown_name, icon=FIF.EDIT, title='倒数日名称',
@@ -168,9 +170,8 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 手风琴：详细配置收起来
         self.mcDetailCard = ExpandGroupCard(
-            FIF.GLOBE, '服务器详细配置', '配置服务器名称、IP、端口等信息', parent=mcGroup,
+            FIF.MORE, '服务器详细配置', '配置服务器名称、IP、端口等信息', parent=mcGroup,
         )
-
         self.mcServerNameCard = TextSettingCard(config_item=cfg.minecraft_server_name, icon=FIF.GAME,
                                                 title='服务器名称', content='Minecraft Java版服务器名称',
                                                 parent=self.mcDetailCard)
@@ -211,12 +212,43 @@ class BasicSettingsPage(BaseSettingPage):
         mcGroup.addSettingCard(self.mcDetailCard)
         self.expandLayout.addWidget(mcGroup)
 
+        # ── 每日一言 ──
+        wordsGroup = SettingCardGroup('每日一言', self.scrollWidget)
+        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.MESSAGE, title='显示每日一言', content='显示每日一言信息',
+                                                   config_item=cfg.words_switch, parent=wordsGroup)
+
+        self.wordsDetailCard = ExpandGroupCard(
+            FIF.MORE, '每日一言详细配置', '配置数据来源、打开一言官网(友情链接)', parent=wordsGroup,
+        )
+
+        self.wordsSourceCard = ComboBoxSettingCard(
+            texts=['金山词霸', '一言网'], icon=FIF.SEARCH,
+            title='每日一言数据来源', content='【金山词霸每日一言】或【一言网】',
+            configItem=cfg.words_source, parent=self.wordsDetailCard
+        )
+
+        cfg.words_source.valueChanged.connect(self._onWordsSourceChanged)
+
+        self.friendlyLinksCard = HyperlinkCard(
+            url='https://hitokoto.cn/',
+            text = '一言网',
+            icon=FIF.HEART,
+            title='友情链接',
+            content='一言网(hitokoto.cn)创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务，属于公益性运营，欢迎各位捐助一言网。'
+        )
+
+        self.wordsDetailCard.addCard(self.wordsSourceCard)
+        self.wordsDetailCard.addCard(self.friendlyLinksCard)
+        wordsGroup.addSettingCard(self.wordsSwitchCard)
+        wordsGroup.addSettingCard(self.wordsDetailCard)
+        self.expandLayout.addWidget(wordsGroup)
+
         # ── 其他信息 ──
         otherGroup = SettingCardGroup('其他信息', self.scrollWidget)
 
         # 创建手风琴组件
         self.otherDetailCard = ExpandGroupCard(
-            FIF.GLOBE, '其他信息开关', '问候语、开机次数、时间和日期等信息', parent=otherGroup,
+            FIF.MORE, '其他信息开关', '问候语、开机次数、时间和日期等信息', parent=otherGroup,
         )
 
         self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='显示问候语',
@@ -231,14 +263,12 @@ class BasicSettingsPage(BaseSettingPage):
         self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='显示历史上的今天',
                                                         content='显示历史上的今天信息',
                                                         config_item=cfg.historical_switch, parent=self.otherDetailCard)
-        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.ALIGNMENT, title='显示每日一言', content='显示每日一言信息',
-                                                   config_item=cfg.words_switch, parent=self.otherDetailCard)
+
 
         self.otherDetailCard.addCard(self.greetingSwitchCard)
         self.otherDetailCard.addCard(self.startupTimesSwitchCard)
         self.otherDetailCard.addCard(self.datetimeSwitchCard)
         self.otherDetailCard.addCard(self.historicalSwitchCard)
-        self.otherDetailCard.addCard(self.wordsSwitchCard)
         otherGroup.addSettingCard(self.otherDetailCard)
         self.expandLayout.addWidget(otherGroup)
 
@@ -246,7 +276,7 @@ class BasicSettingsPage(BaseSettingPage):
         debugGroup = SettingCardGroup('调试', self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCard(
             icon=FIF.ALIGNMENT, title='日志等级', content='调整程序的日志等级，重启后生效',
-            texts=cfg.log_level_list, configItem=cfg.log_level, parent=debugGroup,
+            texts=cfg.LOG_LEVELS, configItem=cfg.log_level, parent=debugGroup,
         )
         self.openLogFolderCard = PrimaryPushSettingCard(
             text='打开日志文件夹', icon=FIF.FOLDER,
@@ -263,12 +293,13 @@ class BasicSettingsPage(BaseSettingPage):
         # ------------------------------------------------------------------
         # 禁用其他系统暂未适配的功能
         # ------------------------------------------------------------------
-        if lib.system != 'Windows':
-            # 开机自启
-            self.startupCard.setEnabled(False)
-            # 关闭设置窗口后的行为锁定为【直接退出】
-            qconfig.set(cfg.close_settings_action, 'exit', save=True)
-            self.closeSettingsAction.setEnabled(False)
+        # if lib.system != 'Windows':
+        #     # 开机自启
+        #     self.startupCard.setEnabled(False)
+        #     # 关闭设置窗口后的行为锁定为【直接退出】
+        #     if cfg.close_settings_action.value == 'restart':
+        #         qconfig.set(cfg.close_settings_action, 'exit', save=True)
+        #         self.closeSettingsAction.setEnabled(False)
 
 
     # ------------------------------------------------------------------
@@ -300,7 +331,7 @@ class BasicSettingsPage(BaseSettingPage):
         try:
             os.startfile(lib.CONFIG_FILE_PATH)
         except Exception as e:
-            lib.log.error(f'设置-打开配置文件失败: {e}')
+            log.error(f'设置-打开配置文件失败: {e}')
             Notify.error(title='打开配置文件失败', content=str(e), parent=self)
 
     # ------------------------------------------------------------------
@@ -319,8 +350,8 @@ class BasicSettingsPage(BaseSettingPage):
             else:
                 Notify.error(content='删除开机启动项失败，请查看日志', parent=self)
 
-    @action('已删除下载缓存', '删除失败')
-    def _onDeleteDownloadTempClicked(self):
+    @action('已删除下载缓存', '下载缓存删除失败')
+    def _onDeleteDownloadTempClicked(self) -> bool:
         if lib.DOWNLOAD_PATH.exists():
             shutil.rmtree(lib.DOWNLOAD_PATH)
             lib.log.info('设置-已删除下载缓存')
@@ -329,7 +360,7 @@ class BasicSettingsPage(BaseSettingPage):
             Notify.info(content='未发现下载缓存', parent=self)
             return False
 
-    def _onCityChooseClicked(self):
+    def _onCityChooseClicked(self) -> None:
         box = CitySearchBox(self)
         if box.exec():
             city_id = box.get_selected_city_id()
@@ -343,8 +374,8 @@ class BasicSettingsPage(BaseSettingPage):
                     Notify.success(title=f'已设置城市 {display_name}', content='正在获取天气信息...', parent=self)
                     self._onRefreshWeather()
 
-    @action('天气信息已更新', '获取失败')
-    async def _onRefreshWeather(self):
+    @action('天气信息已更新', '天气信息更新失败')
+    async def _onRefreshWeather(self) -> dict:
         self.weatherRefreshCard.setEnabled(False)
         try:
             from core.widgets import WeatherWidget
@@ -354,8 +385,8 @@ class BasicSettingsPage(BaseSettingPage):
         finally:
             self.weatherRefreshCard.setEnabled(True)
 
-    @action('空气质量信息已更新', '获取失败')
-    async def _onRefreshAirQuality(self):
+    @action('空气质量信息已更新', '空气质量信息更新失败')
+    async def _onRefreshAirQuality(self) -> dict:
         self.airQualityRefreshCard.setEnabled(False)
         try:
             from core.widgets import AirQualityWidget
@@ -365,8 +396,8 @@ class BasicSettingsPage(BaseSettingPage):
         finally:
             self.airQualityRefreshCard.setEnabled(True)
 
-    @action('MC 服务器信息已更新', '刷新失败')
-    async def _onRefreshMCServer(self):
+    @action('MC 服务器信息已更新', 'MC 服务器信息更新失败')
+    async def _onRefreshMCServer(self) -> dict:
         self.mcServerDataRefreshCard.setEnabled(False)
         try:
             from core.widgets import MCServerStatusWidget
@@ -375,3 +406,17 @@ class BasicSettingsPage(BaseSettingPage):
 
         finally:
             self.mcServerDataRefreshCard.setEnabled(True)
+
+    @action('每日一言信息更新成功', '每日一言信息更新失败')
+    async def _onWordsSourceChanged(self) -> dict | None:
+        w = EveryDayWordsWidget()
+        cache_source = w.get_words_source()[0]
+        # 如果选择的数据源和缓存的数据源不一致
+        if cfg.words_source.value != cache_source:
+            self.wordsSourceCard.setEnabled(False)
+            # 开始刷新每日一言信息
+            try:
+                return await w.get_data_async(force_refresh=True)
+
+            finally:
+                self.wordsSourceCard.setEnabled(True)

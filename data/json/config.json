@@ -4,25 +4,25 @@
         "switch": false
     },
     "General": {
-        "auto_close_switch": true,
+        "auto_close_switch": false,
         "auto_close_time": 60,
-        "close_settings_action": "restart",
+        "close_settings_action": "exit",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
         "theme": "dynamic",
-        "theme_color": "#ff29f4ff",
+        "theme_color": "#ff009faa",
         "use_win_theme_color": true
     },
     "BirthdayWishes": {
         "birthday_dict": {
             "黄桃": "20100403"
         },
-        "switch": true
+        "switch": false
     },
     "Weather": {
-        "city_id": "",
-        "city_name": "",
-        "interval": 60,
+        "city_id": "101201009",
+        "city_name": "恩施",
+        "interval": 30,
         "switch": false
     },
     "Countdown": {
@@ -33,10 +33,9 @@
     "InformationSwitch": {
         "datetime": true,
         "greeting": true,
-        "historical": false,
+        "historical": true,
         "holiday_solar_term": true,
-        "startup_times": true,
-        "words": true
+        "startup_times": true
     },
     "QFluentWidgets": {
         "FontFamilies": [
@@ -54,5 +53,9 @@
         "server_ip": "",
         "server_name": "",
         "server_port": "25565"
+    },
+    "EveryDayWords": {
+        "words_source": "https://v1.hitokoto.cn/",
+        "switch": true
     }
 }

@@ -16,6 +16,5 @@
       "app_secret": "aZQ3dLKVODHn1VC4wBBcIzTHQa3aoZlz"
     }
   },
-  "open.iciba.com": "https://open.iciba.com/dsapi/",
   "check_update_url": "https://startinfo.oss-cn-wuhan-lr.aliyuncs.com/version.json"
 }

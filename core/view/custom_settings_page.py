@@ -10,7 +10,7 @@ from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
 from .. import ht_lib as lib
 from .. import ui
-from ..config import cfg, qconfig
+from ..config import cfg, qconfig, get_template_files
 
 
 class CustomSettingsPage(BaseSettingPage):
@@ -45,7 +45,7 @@ class CustomSettingsPage(BaseSettingPage):
         # ── 模板 ──
         self.templateGroup = SettingCardGroup('模板', self.scrollWidget)
 
-        template_files = cfg.get_template_files()
+        template_files = get_template_files()
         self.templateCard = ComboBoxSettingCard(
             configItem=cfg.template_file, icon=FIF.LABEL, title='模板',
             content='选择主程序使用的模板', texts=template_files,
