@@ -6,6 +6,7 @@ import ctypes
 import json
 import os
 import platform
+import shlex
 import shutil
 import socket
 import subprocess
@@ -434,8 +435,65 @@ def restart_program(args: str = ""):
 
     # MacOS打包环境
     else:
-        log.warning('暂不支持MacOS系统，请自行重启')
-        sys.exit()
+        current_pid = os.getpid()
+        extra_args = shlex.split(args) if args else []
+        # 保留虚拟环境中的解释器路径；resolve() 会把 .venv/bin/python
+        # 解析为基础 Python，导致重启后找不到项目依赖。
+        executable_path = Path(sys.executable).absolute()
+
+        # Nuitka 的 macOS GUI 程序位于 xxx.app/Contents/MacOS/ 中。
+        # 找到 .app 后使用 open 交给 Launch Services 正确拉起应用。
+        app_path = next(
+            (path for path in executable_path.parents if path.suffix == '.app'),
+            None
+        )
+        if app_path:
+            restart_command = ['/usr/bin/open', '-n', str(app_path)]
+            if extra_args:
+                restart_command.extend(['--args', *extra_args])
+        elif getattr(sys, 'frozen', False) or '__compiled__' in globals():
+            # 兼容 Nuitka/PyInstaller 生成的独立可执行文件。
+            restart_command = [str(executable_path), *extra_args]
+        else:
+            # 开发环境中的 sys.executable 是 Python，需要明确启动 main.py。
+            restart_command = [
+                str(executable_path),
+                str((MAIN_PATH / 'main.py').resolve()),
+                *extra_args
+            ]
+
+        # 辅助进程等待当前程序退出后再启动新实例。等待时间设置上限，
+        # 避免 Nuitka 外层进程暂未退出时一直阻塞重启。
+        restart_script = '''
+old_pid="$1"
+shift
+wait_count=0
+while kill -0 "$old_pid" 2>/dev/null && [ "$wait_count" -lt 30 ]; do
+    sleep 0.1
+    wait_count=$((wait_count + 1))
+done
+exec "$@"
+'''
+        subprocess.Popen(
+            [
+                '/bin/sh',
+                '-c',
+                restart_script,
+                'StartInfo-restart',
+                str(current_pid),
+                *restart_command
+            ],
+            cwd=str(MAIN_PATH),
+            start_new_session=True,
+            close_fds=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+        log.info(f'MacOS程序正在重启，启动参数: {args or "无"}')
+        # Qt 的槽函数可能拦截 SystemExit，直接结束旧进程才能确保辅助进程继续。
+        os._exit(0)
 
 # 重试装饰器
 # def async_retry_on_value(fail_value='获取失败'):
