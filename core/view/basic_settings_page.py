@@ -10,7 +10,8 @@ from qasync import asyncSlot
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
-                         TextSettingCard, ZhSwitchSettingCard, action)
+                         TextSettingCard, ZhSwitchSettingCard, action,
+                         ListEditingBox)
 from .ui_widgets import ExpandGroupCard
 from .. import ht_lib as lib
 from ..config import cfg, qconfig
@@ -192,10 +193,10 @@ class BasicSettingsPage(BaseSettingPage):
         )
         self.mcFriendsListCard = PrimaryPushSettingCard(
             text='编辑朋友列表', icon=FIF.PEOPLE, title='编辑朋友列表',
-            content=r'编辑朋友列表(目前仅支持手动修改.\data\json\config.json的MinecraftJavaServerChecker\friends_list列表)',
+            content=r'编辑朋友列表',
             parent=self.mcDetailCard,
         )
-        self.mcFriendsListCard.clicked.connect(self._openConfigFile)
+        self.mcFriendsListCard.clicked.connect(self._onEditFriendsList)
         self.mcServerDataRefreshCard = PrimaryPushSettingCard(
             text='立即刷新', icon=FIF.SYNC, title='立即刷新',
             content='立即刷新Minecraft Java服务器信息', parent=self.mcDetailCard,
@@ -406,6 +407,19 @@ class BasicSettingsPage(BaseSettingPage):
 
         finally:
             self.mcServerDataRefreshCard.setEnabled(True)
+
+    def _onEditFriendsList(self) -> None:
+        friends_list = cfg.minecraft_server_friends_list.value
+        box = ListEditingBox(title='编辑朋友列表', items=friends_list, parent=self)
+        # 如果用户点击保存
+        if box.exec():
+            # 如果新列表不与原列表相等
+            if box.result != friends_list:
+                # 执行保存逻辑
+                qconfig.set(cfg.minecraft_server_friends_list, box.result, save=True)
+                Notify.success('已保存新的朋友列表', parent=self)
+                log.info(f'设置-已保存新的朋友列表：{box.result}')
+
 
     @action('每日一言信息更新成功', '每日一言信息更新失败')
     async def _onWordsSourceChanged(self) -> dict | None:

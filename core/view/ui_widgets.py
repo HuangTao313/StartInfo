@@ -1,17 +1,21 @@
+from gc import isenabled
+
 from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
                               SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
                             SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
-                            ExpandGroupSettingCard)
-from PySide6.QtWidgets import QListWidgetItem
-from PySide6.QtCore import Qt, Signal, QDate, QLocale
+                            ExpandGroupSettingCard, ToolButton, Action, CommandBar, FluentIcon)
+
+from PySide6.QtWidgets import QListWidgetItem, QLabel, QLineEdit
+from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize
 
 from typing import Union
 from PySide6.QtGui import QIcon
 import sqlite3
 from qasync import asyncSlot
 import functools
-from core.paths import DB_FOLDER_PATH
-from core.ht_lib import log
+from .switch_button import IndicatorPosition, SwitchButton
+from ..paths import DB_FOLDER_PATH
+from ..ht_lib import log
 
 
 class ZhSwitchSettingCard(SwitchSettingCard):
@@ -20,8 +24,29 @@ class ZhSwitchSettingCard(SwitchSettingCard):
     """
     def __init__(self, icon, title, content=None, config_item=None, parent=None):
         super().__init__(icon, title, content, config_item, parent)
+        # 用新的 SwitchButton 替换父类创建的开关
+        self._replaceSwitchButton()
         # 初始化时强制同步一次中文
         self._updateText(self.isChecked())
+
+    def _replaceSwitchButton(self):
+        """ 把父类创建的 SwitchButton 从布局中移除，换成新的 SwitchButton """
+        old_button = self.switchButton
+        index = self.hBoxLayout.indexOf(old_button)
+        self.hBoxLayout.removeWidget(old_button)
+        old_button.deleteLater()
+
+        # 创建新开关并插回原位置
+        self.switchButton = SwitchButton(
+            self.tr('Off'), self, IndicatorPosition.RIGHT)
+        self.hBoxLayout.insertWidget(index, self.switchButton, 0, Qt.AlignRight)
+
+        # 复刻父类的信号连接（父类的 __onCheckedChanged 是私有方法，无法直接引用）
+        self.switchButton.checkedChanged.connect(self._onSwitchCheckedChanged)
+
+    def _onSwitchCheckedChanged(self, is_checked: bool):
+        self.setValue(is_checked)
+        self.checkedChanged.emit(is_checked)
 
     def _updateText(self, is_checked: bool):
         # 核心：直接绕过原本的 tr('On')，强制写入中文
@@ -43,8 +68,8 @@ class CitySearchBox(MessageBoxBase):
         self._db_path = str(DB_FOLDER_PATH / 'China_cities.db')
 
         # 1. 初始化 UI 组件
-        self.titleLabel = SubtitleLabel('搜索城市', self)
-        self.hintLabel = BodyLabel('请输入城市名进行搜索(支持输入省份)', self)
+        self.titleLabel = SubtitleLabel('搜索城市')
+        self.hintLabel = BodyLabel('请输入城市名进行搜索(支持输入省份)')
         self.searchEdit = SearchLineEdit(self)
         self.cityList = ListWidget(self)
 
@@ -313,7 +338,6 @@ class Notify:
             parent=parent
         )
 
-
 class ExpandGroupCard(ExpandGroupSettingCard):
     """手风琴卡片——展开区域背景自动跟随主题，无需手动设透明。
 
@@ -333,6 +357,233 @@ class ExpandGroupCard(ExpandGroupSettingCard):
     def addCard(self, card: SettingCard):
         """添加一张标准设置卡到手风琴展开区域。"""
         self.addGroupWidget(card)
+
+class ListEditingBox(MessageBoxBase):
+
+    def __init__(self, title: str = '编辑列表', items: list = None, parent=None):
+        super().__init__(parent)
+
+        # 设置弹窗宽高
+        self.widget.setMinimumWidth(500)
+        self.widget.setFixedHeight(600)
+
+        # 设置弹窗底部按钮
+        self.yesButton.setText('保存')
+        self.cancelButton.setText('取消')
+
+        # 标题
+        self.titleLabel = SubtitleLabel(title)
+        self.hintLabel = BodyLabel('不可添加重复元素')
+
+        # 工具栏
+        self.commandBar = CommandBar()
+        self.commandBar.setToolButtonStyle(
+            Qt.ToolButtonTextBesideIcon
+        )
+
+        self.commandBar.setIconSize(
+            QSize(18, 18)
+        )
+
+
+        # 元素输入框
+        self.lineEdit = LineEdit()
+        # 设置提示文本
+        self.lineEdit.setPlaceholderText('添加或编辑元素')
+        # 启用清空按钮
+        self.lineEdit.setClearButtonEnabled(True)
+
+        self.commandBar.addWidget(self.lineEdit)
+
+        self.addButton = Action(
+            FluentIcon.ADD,
+            '添加',
+            triggered=self.addItem
+        )
+
+        self.editButton = Action(
+            FluentIcon.EDIT,
+            '编辑',
+            enabled=False,
+            triggered=self.editItem
+        )
+
+        self.commandBar.addActions(
+            [
+                self.addButton,
+                self.editButton,
+            ]
+        )
+
+        # 分隔符
+        self.commandBar.addSeparator()
+
+        # 删除
+        self.deleteButton = Action(
+            FluentIcon.DELETE,
+            '删除',
+            enabled=False,
+            triggered=self.deleteItem
+        )
+
+        self.commandBar.addAction(self.deleteButton)
+
+        # 列表组件
+        self.listWidget = ListWidget()
+        # 启用右键选中
+        self.listWidget.setSelectRightClickedRow(True)
+
+        # 添加列表项
+        if items:
+            for i in items:
+                item = QListWidgetItem(i)
+                self.listWidget.addItem(item)
+
+        # 添加布局
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.hintLabel)
+        self.viewLayout.addWidget(self.commandBar)
+        self.viewLayout.addWidget(self.listWidget)
+
+        # 绑定信号与槽
+        # 改变选中的元素
+        self.listWidget.currentItemChanged.connect(self._onItemChanged)
+
+        # 编辑元素输入框
+        self.lineEdit.textEdited.connect(self._onLineEdited)
+
+    # 槽函数
+    def _updateButtonState(self):
+        """根据当前选中状态更新按钮"""
+
+        item = self.listWidget.currentItem()
+
+        hasItem = item is not None
+
+        self.editButton.setEnabled(hasItem)
+        self.deleteButton.setEnabled(hasItem)
+
+        if item:
+            self.lineEdit.setText(item.text())
+
+    def _onItemChanged(self, current, previous):
+        """将选中的列表元素添加到元素输入框"""
+
+        if current:
+            self.lineEdit.setText(current.text())
+
+        self._updateButtonState()
+
+    def _onLineEdited(self, text: str) -> None:
+        """当输入框内存在列表内已有元素时，禁止重复添加"""
+
+        text = text.strip()
+
+        # 空文本禁止添加
+        if not text:
+            self.addButton.setEnabled(False)
+            return
+
+        # 获取当前选中的元素
+        current = self.listWidget.currentItem()
+
+        # 如果元素重复
+        if self._isDuplicate(text, current):
+            self.addButton.setEnabled(False)
+
+        else:
+            self.addButton.setEnabled(True)
+
+    def _isDuplicate(self, text: str, exclude_item=None) -> bool:
+        """检测列表中是否存在重复元素"""
+
+        for i in range(self.listWidget.count()):
+            item = self.listWidget.item(i)
+
+            # 跳过当前正在编辑的元素
+            if item == exclude_item:
+                continue
+
+            if item.text() == text:
+                return True
+
+        return False
+
+    def addItem(self, checked=False) -> None:
+        """添加列表元素"""
+
+        text = self.lineEdit.text().strip()
+
+        if not text:
+            return
+
+        if self._isDuplicate(text):
+            return
+
+        item = QListWidgetItem(text)
+
+        self.listWidget.addItem(item)
+
+        # 自动选中新添加的元素
+        self.listWidget.setCurrentItem(item)
+
+        self.lineEdit.clear()
+
+    def editItem(self, checked=False) -> None:
+        """编辑列表元素"""
+
+        item = self.listWidget.currentItem()
+
+        if item is None:
+            return
+
+        text = self.lineEdit.text().strip()
+
+        if not text:
+            return
+
+        # 防止修改成其他已有元素
+        for i in range(self.listWidget.count()):
+            other = self.listWidget.item(i)
+
+            if other != item and other.text() == text:
+                return
+
+        item.setText(text)
+
+    def deleteItem(self, checked=False) -> None:
+        """删除列表元素"""
+
+        row = self.listWidget.currentRow()
+
+        if row < 0:
+            return
+
+        self.listWidget.takeItem(row)
+
+        # 删除后手动恢复选择状态
+        if self.listWidget.count() > 0:
+
+            # 优先选择原位置
+            new_row = min(row, self.listWidget.count() - 1)
+
+            self.listWidget.setCurrentRow(new_row)
+
+        else:
+            self.listWidget.clearSelection()
+            self.lineEdit.clear()
+
+        self._updateButtonState()
+
+    def accept(self):
+        """保存并关闭"""
+
+        self.result = [
+            self.listWidget.item(i).text()
+            for i in range(self.listWidget.count())
+        ]
+
+        super().accept()
 
 def action(success_msg: str = '', fail_msg: str = '操作失败'):
     """装饰器：自动包装异步方法 → asyncSlot → InfoBar 反馈。

@@ -211,7 +211,7 @@ async def main() -> None:
 
     # ── 生日已显示过 → 移除生日字段，不走生日模板 ──
     last_birthday_date = lib.file.read('General', 'last_birthday_date') or ''
-    today_str = time.strftime('%Y%m%d', time.localtime())
+    today_str = time.strftime('%Y%m%d', global_time)
     if last_birthday_date == today_str:
         jinja2_data.pop('birthday_star', None)
         jinja2_data.pop('age', None)
@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     # 禁止多开-Windows下
     if lib.system == 'Windows':
-        checker = lib.WinSingleInstance(name='Local\\StartInfo-main')
+        checker = lib.WinSingleInstance(name='Local\\StartInfo')
         if checker.is_running:
             # 显示提示
             ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
         # 如果是从jinja2模板文件启动
         else:
-            j2_file_path: Path = next(
+            j2_file_path = next(
                 (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
                 None
             )
