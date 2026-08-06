@@ -1,6 +1,6 @@
 {
-  "version": "V20260722-Beta",
-  "release_date": "2026年7月22日",
-  "release_timestamp": 1784687422,
-  "changelog": "===== 重大更新 =====\n（注：本次更新不支持增量更新）\n一、重构和优化：\n1.重构组件系统，提升代码整洁度。\n2.本地城市数据库从JSON文件改为SQLite数据库，改善城市选择界面的性能，在一定程度上减少内存占用。\n3.更新Python解释器到3.13.13、改用MSVC编译器、禁用UPX压缩，提高运行流畅度，避免杀软误报。\n\n二、新增功能和问题修复：\n1.设置页面新增手风琴设置组卡片，查找设置更方便。\n2.天气组件与空气质量组件独立。\n3.修复了一些城市名称显示错误的问题。\n\n===== 说明 =====\n本项目目前处于个人开发与测试阶段，仅用于技术学习与交流。\n本程序基于 QFluentWidgets（GPLv3）开发：\nhttps://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n因此本项目在正式发布时将遵循 GPLv3 开源协议。\n本程序的 .ico 图标文件来自 icons8.com\n本程序部分设计思路参考 ClassWidgets：\nhttps://github.com/Class-Widgets/Class-Widgets\n本项目不隶属任何商业组织。"
+  "version": "V2.4.0",
+  "release_date": "2026年8月6日",
+  "release_timestamp": 1785996445,
+  "changelog": "===== 重大更新 =====\n（注：本次更新仅支持从测试版增量更新）\n一、重构和优化：\n1.重构组件系统，提升代码整洁度。\n2.本地城市数据库从JSON文件改为SQLite数据库，改善城市选择界面的性能，在一定程度上减少内存占用。\n3.更新Python解释器到3.13.13、改用MSVC编译器、禁用UPX压缩，提高运行流畅度，避免杀软误报。\n\n二、新增功能和问题修复：\n1.设置页面新增手风琴设置组卡片，查找设置更方便。\n2.天气组件与空气质量组件独立。\n3.新增朋友列表编辑界面。\n4.新增SwitchButton按钮动画，基于https://github.com/Aegisir/QWidgetSekai/blob/main/pyqt_project/SwitchButton/src/switch_button.py\n5.修复了一些城市名称显示错误的问题。\n\n===== 说明 =====\n本项目目前处于个人开发与测试阶段，仅用于技术学习与交流。\n本程序基于 QFluentWidgets（GPLv3）开发：\nhttps://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6\n因此本项目在正式发布时将遵循 GPLv3 开源协议。\n本程序的 .ico 图标文件来自 icons8.com\n本程序部分设计思路参考 ClassWidgets：\nhttps://github.com/Class-Widgets/Class-Widgets\n本项目不隶属任何商业组织。"
 }

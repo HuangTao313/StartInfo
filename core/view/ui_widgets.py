@@ -1,23 +1,22 @@
-from gc import isenabled
-
-from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
-                              SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
-                            SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
-                            ExpandGroupSettingCard, ToolButton, Action, CommandBar, FluentIcon)
-
-from PySide6.QtWidgets import QListWidgetItem, QLabel, QLineEdit
-from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize
-
-from typing import Union
-from PySide6.QtGui import QIcon
-import sqlite3
-from qasync import asyncSlot
 import functools
+import sqlite3
+from typing import Union
+
+from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QListWidgetItem
+from qasync import asyncSlot
+from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
+                            SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
+                            SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
+                            ExpandGroupSettingCard, Action, CommandBar, FluentIcon)
+
 from .switch_button import IndicatorPosition, SwitchButton
-from ..paths import DB_FOLDER_PATH
 from ..ht_lib import log
+from ..paths import DB_FOLDER_PATH
 
 
+# 新版有bug
 class ZhSwitchSettingCard(SwitchSettingCard):
     """
     支持中文状态文字的开关设置卡片
@@ -39,6 +38,9 @@ class ZhSwitchSettingCard(SwitchSettingCard):
         # 创建新开关并插回原位置
         self.switchButton = SwitchButton(
             self.tr('Off'), self, IndicatorPosition.RIGHT)
+        # 继承旧开关的选中状态（父类构造时已从 config 同步到旧开关上）
+        # 注意：必须在连接 checkedChanged 之前设置，避免触发多余的信号链
+        self.switchButton.setChecked(old_button.isChecked())
         self.hBoxLayout.insertWidget(index, self.switchButton, 0, Qt.AlignRight)
 
         # 复刻父类的信号连接（父类的 __onCheckedChanged 是私有方法，无法直接引用）
