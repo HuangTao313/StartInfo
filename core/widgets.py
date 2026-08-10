@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from . import ht_lib as lib
-from .widgets_core import LocalWidgetBase, NetworkWidgetBase
+from .widgets_core import LocalWidgetBase, NetworkWidgetBase, MultiSourceWidgetBase
 from .config import cfg
 
 # StartInfo默认组件
@@ -531,57 +531,48 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
             return None
 
 # 5.每日一言
-class EveryDayWordsWidget(NetworkWidgetBase):
+class EveryDayWordsWidget(MultiSourceWidgetBase):
     WIDGET_NAME = 'EveryDayWords'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
-    # 动态获取API_URL
-    @property
-    def API_URL(self):
-        return cfg.words_source.value
+    CONFIG_ITEM = cfg.words_source
+    SOURCES = {
+        'iciba': {
+            'url': 'https://open.iciba.com/dsapi/',
+            'parse_func': '_parse_iciba',
+        },
+        'hitokoto':{
+            'url': 'https://v1.hitokoto.cn/',
+            'parse_func': '_parse_hitokoto',
+        }
+    }
 
-    def _parse_data(self, raw_data: dict) -> dict | None:
-        """解析数据"""
+    # 解析函数
+    def _parse_iciba(self, raw_data) -> dict | None:
         if raw_data:
-            # 如果数据源是金山词霸
-            if cfg.words_source.value == 'https://open.iciba.com/dsapi/':
-                content = raw_data.get('content', '')
-                note = raw_data.get('note', '')
-
-                words = {
-                'source': cfg.words_source.value,
-                'every_day_words_zh': note,
-                'every_day_words_en': content
+            content = raw_data.get('content', '')
+            note = raw_data.get('note', '')
+            return {
+                'words_primary': note,
+                'words_secondary': content
             }
 
-            # 如果数据源是一言网
+    def _parse_hitokoto(self, raw_data: dict) -> dict | None:
+        if raw_data:
+            hitokoto = raw_data.get('hitokoto', '')
+            source = raw_data.get('from', '')
+            from_who = raw_data.get('from_who', None)
+            # 如果from_who字段为空
+            if from_who is None:
+                from_text = f'——「{source}」'
+
             else:
-                hitokoto = raw_data.get('hitokoto', '')
-                source = raw_data.get('from', '')
-                from_who = raw_data.get('from_who', None)
-                # 如果from_who字段为空
-                if from_who is None:
-                    from_text = f'——「{source}」'
+                from_text = f'——{from_who}「{source}」'
 
-                else:
-                    from_text = f'——{from_who}「{source}」'
-
-                words = {
-                    'source': cfg.words_source.value,
-                    'every_day_words_zh': hitokoto,
-                    'every_day_words_en': from_text
-                }
-
-            # 返回
-            return words
-
-        else:
-            self.skip_cache()
-            log.error('金山词霸每日一言：请求失败')
-            return None
-
-    def get_words_source(self) -> tuple[dict, float] | None:
-        return self._read_cache_path('source')
+            return {
+                'words_primary': hitokoto,
+                'words_secondary': from_text
+            }
 
 # 6.MC 服务器状态
 class MCServerStatusWidget(LocalWidgetBase):

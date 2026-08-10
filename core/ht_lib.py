@@ -24,7 +24,13 @@ TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
 WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 
 # 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
-logger.add(LOG_PATH, rotation='1 day', retention='3 days', encoding='utf-8', level=cfg.log_level.value)
+logger.add(
+    LOG_PATH,
+    enqueue=True,
+    rotation='1 day',
+    retention='3 days',
+    encoding='utf-8',
+    level=cfg.log_level.value)
 log = logger
 
 # 获取全局启动参数
@@ -44,9 +50,11 @@ def read_json(file_path: Union[str, Path]) -> dict:
         # 使用 with open 配合 json.load，内存效率更高
         with path.open('r', encoding='utf-8') as f:
             return json.load(f)
+
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         log.error(f'解析文件 {path.name} 失败: {e}')
         return {}
+
     except Exception as e:
         log.error(f'读取文件 {path.name} 时发生未知错误: {e}')
         return {}
@@ -56,8 +64,8 @@ def read_json(file_path: Union[str, Path]) -> dict:
 # =============================================================================
 CURRENT_VERSION_JSON = read_json(CURRENT_VERSION_PATH)
 VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败') # 版本号
-TITLE: str = f'开机速览({VERSION})'                         # 全局标题
-SHORTCUT_NAME: str = '开机速览'                             # 开机启动项名称
+TITLE: str = '开机速览'                         # 全局标题
+SHORTCUT_NAME: str = TITLE                            # 开机启动项名称
 SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'  # 开机启动项路径
 
 # 检查网络连接情况

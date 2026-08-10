@@ -143,8 +143,8 @@ class MyConfig(QConfig):
     # =========================== 每日一言 ===========================
     words_switch = ConfigItem('EveryDayWords', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
-        'EveryDayWords', 'words_source', 'https://open.iciba.com/dsapi/',
-        OptionsValidator(['https://open.iciba.com/dsapi/', 'https://v1.hitokoto.cn/']),
+        'EveryDayWords', 'words_source', 'hitokoto',
+        OptionsValidator(['hitokoto', 'iciba']),
     )
 
     # =========================== InformationSwitch (组件开关) ===========================

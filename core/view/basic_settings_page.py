@@ -380,8 +380,8 @@ class BasicSettingsPage(BaseSettingPage):
         self.weatherRefreshCard.setEnabled(False)
         try:
             from core.widgets import WeatherWidget
-            w = WeatherWidget()
-            return await w.get_data_async(force_refresh=True)
+            widget = WeatherWidget()
+            return await widget.get_data_async(force_refresh=True)
 
         finally:
             self.weatherRefreshCard.setEnabled(True)
@@ -391,8 +391,8 @@ class BasicSettingsPage(BaseSettingPage):
         self.airQualityRefreshCard.setEnabled(False)
         try:
             from core.widgets import AirQualityWidget
-            w = AirQualityWidget()
-            return await w.get_data_async(force_refresh=True)
+            widget = AirQualityWidget()
+            return await widget.get_data_async(force_refresh=True)
 
         finally:
             self.airQualityRefreshCard.setEnabled(True)
@@ -423,14 +423,14 @@ class BasicSettingsPage(BaseSettingPage):
 
     @action('每日一言信息更新成功', '每日一言信息更新失败')
     async def _onWordsSourceChanged(self) -> dict | None:
-        w = EveryDayWordsWidget()
-        cache_source = w.get_words_source()[0]
+        widget = EveryDayWordsWidget()
+        cache_source = widget.get_cached_source()
         # 如果选择的数据源和缓存的数据源不一致
-        if cfg.words_source.value != cache_source:
+        if widget.API_NAME != cache_source:
             self.wordsSourceCard.setEnabled(False)
             # 开始刷新每日一言信息
             try:
-                return await w.get_data_async(force_refresh=True)
+                return await widget.get_data_async(force_refresh=True)
 
             finally:
                 self.wordsSourceCard.setEnabled(True)

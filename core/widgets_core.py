@@ -28,12 +28,13 @@ import asyncio
 import json
 import sqlite3
 import time
-from typing import Any
+from typing import Any, TypedDict, Callable
 
 import httpx
 
 from .ht_lib import log
 from .paths import DB_FOLDER_PATH
+from .config import cfg, ConfigItem
 
 
 # =============================================================================
@@ -421,6 +422,7 @@ class WidgetBase:
         data = self._fetch_data()
         if not self._skip_cache_flag:
             self._save_cache(data, cache_key)
+
         self._skip_cache_flag = False
         return data
 
@@ -672,3 +674,76 @@ class NetworkWidgetBase(WidgetBase):
     async def _fetch_data_async(self) -> dict:
         """默认使用短连接（用完即关）。高频场景请覆写此方法改用 _async_request_persistent()。"""
         return await self._async_request()
+
+# 多数据源组件的数据源配置注解
+class SourceConfig(TypedDict, total=False):
+    url: str
+    params: dict | None
+    headers: dict | None
+    parse_func: Callable
+
+class MultiSourceWidgetBase(NetworkWidgetBase):
+    """支持多数据源的联网组件基类"""
+    SOURCES: dict[str, SourceConfig] = {}
+    CONFIG_ITEM: ConfigItem | None = None
+
+    @property
+    def API_NAME(self) -> str:
+        return self.CONFIG_ITEM.value
+
+    @property
+    def API_DATA(self) -> SourceConfig | None:
+        if self.CONFIG_ITEM is None:
+            return None
+
+        return self.SOURCES.get(self.API_NAME)
+
+    @property
+    def API_URL(self) -> str | None:
+        if self.API_DATA is None:
+            return None
+
+        return self.API_DATA.get('url', '')
+
+    @property
+    def PARAMS(self) -> dict | None:
+        if self.API_DATA is None:
+            return None
+
+        return self.API_DATA.get('params', {})
+
+    @property
+    def HEADERS(self) -> dict | None:
+        if self.API_DATA is None:
+            return None
+
+        return self.API_DATA.get('headers', {})
+
+    @property
+    def PARSE_FUNC(self) -> None | bool | list[Any] | dict[Any, Any] | Any:
+        func_name = self.API_DATA.get('parse_func')
+
+        if func_name is None:
+            return None
+
+        return getattr(self, func_name)
+
+    def _parse_data(self, raw_data: dict) -> dict | None:
+        """根据用户选择的数据源解析数据"""
+        try:
+            parsed_data = {'source': self.API_NAME}
+            data = self.PARSE_FUNC(raw_data)
+            if data:
+                parsed_data.update(data)
+                return parsed_data
+
+            return None
+
+        except Exception as e:
+            log.error(f'{self.WIDGET_NAME}解析数据失败: {e}')
+            self._skip_cache()
+            return None
+
+    def get_cached_source(self) -> str | Any:
+        """获取已缓存内容的数据源名称"""
+        return self._read_cache_path('source')[0]
