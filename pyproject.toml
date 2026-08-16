@@ -1,6 +1,6 @@
 [project]
 name = "StartInfo"
-version = "2.3.1"
+version = "2.4.1"
 description = "开机速览"
 readme = "README.md"
 requires-python = "==3.13.13"
@@ -12,8 +12,6 @@ dependencies = [
     "asyncio-dgram>=3.0.0",
     "attrs>=26.1.0",
     "backports-zstd>=1.5.0",
-    "bottle>=0.13.4",
-    "bottle-websocket>=0.2.9",
     "brotli>=1.2.0",
     "certifi>=2026.5.20",
     "cffi>=2.0.0",
@@ -21,10 +19,8 @@ dependencies = [
     "colorama>=0.4.6",
     "darkdetect>=0.8.0",
     "dnspython>=2.8.0",
-    "eel>=0.18.2",
     "frozenlist>=1.8.0",
     "future>=1.0.0",
-    "gevent>=26.5.0",
     "gevent-websocket>=0.10.1",
     "greenlet>=3.5.1",
     "h2>=4.3.0",

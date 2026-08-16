@@ -65,8 +65,7 @@ def read_json(file_path: Union[str, Path]) -> dict:
 CURRENT_VERSION_JSON = read_json(CURRENT_VERSION_PATH)
 VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败') # 版本号
 TITLE: str = '开机速览'                         # 全局标题
-SHORTCUT_NAME: str = TITLE                            # 开机启动项名称
-SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{SHORTCUT_NAME}.lnk'  # 开机启动项路径
+SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{TITLE}.lnk'  # 开机启动项路径
 
 # 检查网络连接情况
 # 模块级缓存变量（所有导入此模块的文件共享同一个缓存）
@@ -293,33 +292,6 @@ class WinSingleInstance:
         """返回检测结果：True表示已有实例运行"""
         return not self.is_first
 
-# # 加密
-# def encrypt(plaintext) -> str:
-#     """加密字符串"""
-#     cipher = AES.new(KEY.encode(), AES.MODE_CBC)
-#     ciphertext = cipher.encrypt(pad(plaintext.encode(), AES.block_size))
-#     return base64.b64encode(cipher.iv + ciphertext).decode('utf-8')
-#
-# # 解密
-# def decrypt(ciphertext) -> str:
-#     try:
-#         if not ciphertext:
-#             return ''
-#
-#         data = base64.b64decode(ciphertext)
-#         if len(data) < AES.block_size:
-#             raise ValueError('加密数据长度不足')
-#
-#         iv = data[:AES.block_size]
-#         cipher = AES.new(KEY.encode(), AES.MODE_CBC, iv)
-#         plaintext = unpad(cipher.decrypt(data[AES.block_size:]), AES.block_size)
-#         return plaintext.decode('utf-8')
-#
-#     except Exception as e:
-#         log.error(f'解密失败: {str(e)}, 数据: {ciphertext}')
-#         return ciphertext  # 返回默认值而不是抛出异常
-
-
 # 次数自增函数
 def times(mode: str) -> int | None:
     try:
@@ -502,88 +474,3 @@ exec "$@"
         log.info(f'MacOS程序正在重启，启动参数: {args or "无"}')
         # Qt 的槽函数可能拦截 SystemExit，直接结束旧进程才能确保辅助进程继续。
         os._exit(0)
-
-# 重试装饰器
-# def async_retry_on_value(fail_value='获取失败'):
-#     """
-#     专门适配 aiohttp 异步函数的重试装饰器
-#     """
-#     retries = 2
-#     delay = 1
-#
-#     def decorator(func):
-#         @wraps(func)
-#         async def wrapper(*args, **kwargs):
-#             attempt = 0
-#             # 这里的 result 初始值可以设为你预期的失败值
-#             result = fail_value
-#
-#             while attempt < retries:
-#                 # 执行异步网络请求
-#                 result = await func(*args, **kwargs)
-#
-#                 # 判断逻辑：如果是字典且包含数据，或者不是失败字符串
-#                 if result != fail_value:
-#                     return result
-#
-#                 attempt += 1
-#                 log.warning(f'⚠️ {func.__name__} 请求异常，正在进行第 {attempt} 次异步重试...')
-#
-#                 if attempt < retries:
-#                     # 使用异步等待，确保 UI 不卡顿
-#                     await asyncio.sleep(delay)
-#
-#             log.error(f'❌ {func.__name__} 在 {retries} 次重试后最终失败。')
-#             return result
-#
-#         return wrapper
-#
-#     return decorator
-
-# # =============================================================================
-# # 全局异步上下文管理器
-# # =============================================================================
-# class AsyncSessionManager:
-#     '''
-#     全局异步会话管理器，用于共享 aiohttp.ClientSession
-#     减少连接创建开销，提升异步网络请求性能
-#     '''
-#     _instance = None
-#     _session = None
-#     _initialized = False
-#
-#     def __new__(cls):
-#         if cls._instance is None:
-#             cls._instance = super().__new__(cls)
-#         return cls._instance
-#
-#     async def __aenter__(self):
-#         '''异步上下文管理器入口，创建共享的 ClientSession'''
-#         if not self._initialized or self._session is None or self._session.closed:
-#             import aiohttp
-#             self._session = aiohttp.ClientSession()
-#             self._initialized = True
-#             log.debug('已创建全局共享的 aiohttp.ClientSession')
-#         return self._session
-#
-#     async def __aexit__(self, exc_type, exc_val, exc_tb):
-#         '''异步上下文管理器出口，不关闭 session 以保持全局共享'''
-#         # 不关闭 session，保持全局共享
-#         # 只在程序退出时通过 close() 方法手动关闭
-#         pass
-#
-#     @property
-#     def session(self):
-#         '''获取当前的 ClientSession 实例'''
-#         if not self._initialized or self._session is None or self._session.closed:
-#             raise RuntimeError('ClientSession 未初始化或已关闭，请使用 async with 语句')
-#         return self._session
-#
-#     async def close(self):
-#         '''手动关闭会话（用于清理）'''
-#         if self._session and not self._session.closed:
-#             await self._session.close()
-#             self._initialized = False
-#
-# # 创建全局实例
-# async_session = AsyncSessionManager()
