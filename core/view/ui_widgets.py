@@ -1,5 +1,6 @@
 import functools
 import sqlite3
+from pathlib import Path
 from typing import Union
 
 from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize
@@ -14,6 +15,7 @@ from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageB
 from .switch_button import IndicatorPosition, SwitchButton
 from ..ht_lib import log
 from ..paths import DB_FOLDER_PATH
+from ..config import cfg
 
 
 # 新版有bug
@@ -66,12 +68,15 @@ class ZhSwitchSettingCard(SwitchSettingCard):
 class CitySearchBox(MessageBoxBase):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 从数据库加载城市数据
-        self._db_path = str(DB_FOLDER_PATH / 'China_cities.db')
 
         # 1. 初始化 UI 组件
         self.titleLabel = SubtitleLabel('搜索城市')
-        self.hintLabel = BodyLabel('请输入城市名进行搜索(支持输入省份)')
+        self.text = '请输入城市名进行搜索'
+        # 仅有和风天气城市数据库支持搜索省份
+        if self.weather_source == 'qweather':
+            self.text += '(支持搜索省份)'
+
+        self.hintLabel = BodyLabel(self.text)
         self.searchEdit = SearchLineEdit(self)
         self.cityList = ListWidget(self)
 
@@ -97,26 +102,54 @@ class CitySearchBox(MessageBoxBase):
         # 初始显示全部
         self._onSearchChanged('')
 
+    @property
+    def weather_source(self) -> str:
+        """当前选中的数据提供方(qweather / xiaomi_weather)，实时读取配置"""
+        return cfg.weather_source.value
+
+    @property
+    def _db_path(self) -> str:
+        """根据当前数据提供方动态拼接城市数据库路径"""
+        return str(DB_FOLDER_PATH / f'{self.weather_source}.db')
+
     def _onSearchChanged(self, text):
-        """使用 SQL LIKE 查询过滤城市"""
+        """使用 SQL LIKE 查询过滤城市(按数据提供方使用各自的数据库)"""
         self.cityList.clear()
         search_key = text.strip()
 
+        if not Path(self._db_path).exists():
+            log.error(f'城市搜索-城市数据库不存在: {self._db_path}')
+            return
+
         conn = sqlite3.connect(self._db_path)
         cursor = conn.cursor()
+        like_pattern = f'%{search_key}%'
 
-        if search_key:
-            # 搜索 name 或 full 字段
-            like_pattern = f'%{search_key}%'
-            cursor.execute(
-                'SELECT name, city_id, full, display FROM cities WHERE name LIKE ? OR full LIKE ? LIMIT 100',
-                (like_pattern, like_pattern)
-            )
+        if self.weather_source == 'qweather':
+            # 和风库：cities(name, city_id, full, display)，支持按省份全称搜索
+            if search_key:
+                cursor.execute(
+                    'SELECT name, city_id, full, display FROM cities '
+                    'WHERE name LIKE ? OR full LIKE ? LIMIT 100',
+                    (like_pattern, like_pattern)
+                )
+            else:
+                cursor.execute('SELECT name, city_id, full, display FROM cities LIMIT 100')
+            rows = cursor.fetchall()
+
         else:
-            cursor.execute('SELECT name, city_id, full, display FROM cities LIMIT 100')
+            # 小米库：citys(name, city_num)，无 full/display 之分，两者均使用 name
+            if search_key:
+                cursor.execute(
+                    'SELECT city_num, name FROM citys WHERE name LIKE ? LIMIT 100',
+                    (like_pattern,)
+                )
+            else:
+                cursor.execute('SELECT city_num, name FROM citys LIMIT 100')
+            rows = [(name, city_num, name, name) for city_num, name in cursor.fetchall()]
 
-        for row in cursor.fetchall():
-            name, city_id, full, display = row
+        for row in rows:
+            _, city_id, full, display = row
             item = QListWidgetItem(full)
             item.setData(Qt.UserRole, {'city_id': city_id, 'full': full, 'display': display})
             self.cityList.addItem(item)
@@ -285,7 +318,7 @@ class Notify:
     """弹窗提醒工具类"""
 
     @staticmethod
-    def info(content: str, title: str = '信息', duration: int = 2000, parent=None):
+    def info(content: str, title: str = '提示', duration: int = 2000, parent=None):
         """显示普通信息提示"""
         # 如果调用时没传 parent，尝试从 AppManager 获取主窗口（假设你存了）
         # 或者在调用时手动传 self
