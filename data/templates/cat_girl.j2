@@ -16,7 +16,8 @@
 今天是{{ date }}  ՞•･•՞🐾（{{ lunar_date }}星期{{ weekday }}喵✨！
 今年的第{{ week_num }}周，是喜欢主人的第{{ day_num }}天呐ฅ( •̥ ̫ •̥ )ฅ喵✨~
 ฅ我们还有多久见到彼此呢 ٨ـﮩﮩ٨ـ♡‎‎ﮩ٨ـﮩﮩ٨喵~ฅ
-节假日：{{ holiday }} | 24节气：{{ solar_term }}哦喵✨！
+节假日：{{ holiday }} | 24节气：{{ solar_term }}哦喵✨！{% if daily_character_switch %}
+🎲今日人品：{{ character }}喵✨~{% endif %}
 {{ "\n" }}
 {%- endif -%}
 

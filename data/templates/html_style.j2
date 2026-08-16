@@ -168,15 +168,18 @@
         </div>
         {%- endif -%}
 
-        {# --- 5.2 启动次数 & 节日组件 --- #}
-        {%- if startup_times_switch or datetime_switch -%}
+        {# --- 5.2 启动次数 & 节日 & 今日人品 --- #}
+        {%- if startup_times_switch or datetime_switch or daily_character_switch -%}
         <div class="section">
             <div class="section-content">
                 {%- if startup_times_switch -%}
-                    今天已开机 <b>{{startup_times}}</b> 次<br>
+                    今天已开机 <b>{{startup_times}}</b> 次{% if datetime_switch or daily_character_switch %}<br>{% endif %}
                 {%- endif -%}
                 {%- if datetime_switch -%}
-                    节假日：{{holiday}} · 24 节气：{{solar_term}}
+                    节假日：{{holiday}} · 24 节气：{{solar_term}}{% if daily_character_switch %}<br>{% endif %}
+                {%- endif -%}
+                {%- if daily_character_switch -%}
+                    🎲 今日人品：{{character}}
                 {%- endif -%}
             </div>
         </div>

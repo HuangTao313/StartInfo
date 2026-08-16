@@ -1,5 +1,5 @@
 {% if is_all_off -%}
-★ 开机速览 V2.4.0 ★
+★ 开机速览 ★
 提示：当前未开启任何信息展示模块。
 您可以点击下方“设置”按钮进行配置。
 {% else -%}
@@ -12,7 +12,8 @@
 {# --- 日期时间 --- #}
 {%- if datetime_switch -%}
 ★今天是{{ date }} 农历{{ lunar_date }} {{ weekday }} 第{{ week_num }}周 第{{ day_num }}天
-节假日：{{ holiday }} | 24节气：{{ solar_term }}
+节假日：{{ holiday }} | 24节气：{{ solar_term }}{% if daily_character_switch %}
+🎲今日人品：{{ character }}{% endif %}
 今年已过{{ year_progress }} 还剩{{ year_remain }}
 {{ time_emoji }}当前时间：{{ time }}
 {%- if is_countdown_available -%}
