@@ -120,12 +120,18 @@ class MyConfig(QConfig):
 
     weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
     city_name = ConfigItem('Weather', 'city_name', '北京市', StringValidator(default='北京市'))
-    city_id = ConfigItem('Weather', 'city_id', '101010100', StringValidator(default='101010100'))
+    city_id = ConfigItem('Weather', 'city_id', {'qweather': '101010100', 'xiaomi_weather': '101010100'})
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
 
-    air_quality_switch = ConfigItem('AirQuality', 'switch', False, BoolValidator())
-    air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
+    # air_quality_switch = ConfigItem('AirQuality', 'switch', False, BoolValidator())
+    # air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
 
+    weather_source = OptionsConfigItem(
+        'Weather', 'source', 'xiaomi_weather',
+        OptionsValidator(['xiaomi_weather', 'qweather'])
+    )
+
+    qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
     # =========================== 生日祝福 ===========================
 
     birthday_wishes_switch = ConfigItem('BirthdayWishes', 'switch', False, BoolValidator())
@@ -143,8 +149,8 @@ class MyConfig(QConfig):
     # =========================== 每日一言 ===========================
     words_switch = ConfigItem('EveryDayWords', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
-        'EveryDayWords', 'words_source', 'hitokoto',
-        OptionsValidator(['hitokoto', 'iciba']),
+        'EveryDayWords', 'source', 'hitokoto',
+        OptionsValidator(['hitokoto', 'iciba'])
     )
 
     # =========================== InformationSwitch (组件开关) ===========================
@@ -153,8 +159,8 @@ class MyConfig(QConfig):
     startup_times_switch = ConfigItem('InformationSwitch', 'startup_times', True, BoolValidator())
     datetime_switch = ConfigItem('InformationSwitch', 'datetime', True, BoolValidator())
     holiday_solar_term_switch = ConfigItem('InformationSwitch', 'holiday_solar_term', True, BoolValidator())
-    historical_switch = ConfigItem('InformationSwitch', 'historical', True, BoolValidator())
-
+    historical_switch = ConfigItem('InformationSwitch', 'historical', False, BoolValidator())
+    daily_character_switch = ConfigItem('InformationSwitch', 'daily_character', False, BoolValidator())
 
 cfg = MyConfig()
 qconfig.load(lib.CONFIG_FILE_PATH, cfg)

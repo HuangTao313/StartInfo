@@ -6,7 +6,8 @@ from datetime import datetime
 from typing import Any
 
 from . import ht_lib as lib
-from .widgets_core import LocalWidgetBase, NetworkWidgetBase, MultiSourceWidgetBase
+from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
+                           register, registered_widgets)
 from .config import cfg
 
 # StartInfo默认组件
@@ -28,6 +29,7 @@ global_time = time.localtime()
 
 # ===== 本地组件 =====
 # 1.日期和时间组件
+@register(cfg.datetime_switch, 'datetime_switch')
 class DateTimeWidget(LocalWidgetBase):
     WIDGET_NAME = 'DateTime'
     NEED_CACHE = False
@@ -157,6 +159,7 @@ class DateTimeWidget(LocalWidgetBase):
         return data
 
 # 2.倒数日
+@register(cfg.countdown_switch, 'countdown_switch')
 class CountDownDayWidget(LocalWidgetBase):
     WIDGET_NAME = 'CountDownDay'
     NEED_CACHE = False
@@ -200,6 +203,7 @@ class CountDownDayWidget(LocalWidgetBase):
             return {'is_countdown_available': False}
 
 # 3.生日
+@register(cfg.birthday_wishes_switch)  # 生日无模板开关，不注入
 class BirthdayWidget(LocalWidgetBase):
     WIDGET_NAME = 'Birthday'
     NEED_CACHE = True
@@ -262,17 +266,19 @@ class BirthdayWidget(LocalWidgetBase):
         # 没有人今天生日，返回None
         return None
 
-# 4.问候语(暂定)
+# 4.问候语
+@register(cfg.greeting_switch, 'greeting_switch')
 class GreetingWidget(LocalWidgetBase):
     WIDGET_NAME = 'Greeting'
     NEED_CACHE = False
     
     def _fetch_data(self) -> dict:
         hour = int(time.strftime('%H', global_time))
-        greeting = '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 17 else '晚上好！'
+        greeting = '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 18 else '晚上好！'
         return {'greeting': greeting}
 
 # 5.开机次数
+@register(cfg.startup_times_switch, 'startup_times_switch')
 class StartupTimesWidget(LocalWidgetBase):
     """开机次数组件
 
@@ -324,7 +330,8 @@ class StartupTimesWidget(LocalWidgetBase):
             times = self._read_value()
             return {'startup_times': times}
 
-# 6.每日人品
+# 6.今日人品
+@register(cfg.daily_character_switch, 'daily_character_switch')
 class DailyCharacterWidget(LocalWidgetBase):
     WIDGET_NAME = 'DailyCharacter'
     NEED_CACHE = True
@@ -361,19 +368,57 @@ class DailyCharacterWidget(LocalWidgetBase):
 
 # ===== 联网组件 =====
 # 1.天气
-class WeatherWidget(NetworkWidgetBase):
+@register(cfg.weather_switch, 'weather_switch')
+class WeatherWidget(ExtNetworkWidgetBase):
     # 基本信息
     WIDGET_NAME = 'Weather'
     NEED_CACHE = True
     LOCAL_INTERVAL = f'{cfg.weather_interval.value}m'
-    API_URL = api['qweather.com']['url_weather']
+    CONFIG_ITEM = cfg.weather_source
+    # city_id旧值迁移
+    if isinstance(cfg.city_id.value, str):
+        cfg.set(cfg.city_id, {'qweather': cfg.city_id.value, 'xiaomi_weather': ''})
+
     # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
     @property
-    def PARAMS(self):
+    def API_DATA(self) -> dict:
         return {
-        'key': api['qweather.com']['api_key'],
-        'location' : cfg.city_id.value,
-    }
+            'qweather':{
+                'weather':{
+                    'url': api['qweather']['url_weather'],
+                    'params': {
+                        'key': api['qweather']['api_key'],
+                        'location' : cfg.city_id.value[cfg.weather_source.value],
+                    },
+                    'parse_func': '_parse_qweather_weather',
+                },
+                'air_quality':{
+                    'url': api['qweather']['url_air'],
+                    'params':  {
+                        'key': api['qweather']['api_key'],
+                        'location' : cfg.city_id.value[cfg.weather_source.value],
+                    },
+                    'parse_func': '_parse_qweather_air_quality',
+                }
+            },
+            'xiaomi_weather':{
+                'all':{
+                    'url': api['xiaomi_weather']['url'],
+                    'params': {
+                        'latitude': 0,
+                        'longitude': 0,
+                        'locationKey': f'weathercn:{cfg.city_id.value[cfg.weather_source.value]}',
+                        'days': 1,
+                        # 小米天气无需个人API Key，以下为接口要求的固定参数
+                        'appKey': 'weather20151024',
+                        'sign': 'zUFJoAR2ZVrDy1vF3D07',
+                        'isGlobal': 'false',
+                        'locale': 'zh_cn',
+                    },
+                    'parse_func': '_parse_xiaomi_weather',
+                }
+            }
+        }
 
     def _get_weather_emoji(self,weather_type) -> str:
         """获取天气emoji"""
@@ -405,50 +450,73 @@ class WeatherWidget(NetworkWidgetBase):
         # 3. 完全未知类型：返回默认天气（阴天）
         return '☁️'
 
-    def _parse_data(self, raw_data: dict) -> dict | None:
-        """解析 API 返回的完整响应，提取 now 对象中的字段。"""
+    def _convert_wind_direction(self, value) -> str:
+        """将风向角度转为中文风向（如 141.0 → 东南风），与和风天气的风向格式统一"""
+        try:
+            angle = float(value) % 360
+        except (TypeError, ValueError):
+            # 非法值原样返回
+            return str(value) if value else ''
+
+        # 8 方位：从北(0°)起顺时针每 45° 一档
+        directions = ['北风', '东北风', '东风', '东南风', '南风', '西南风', '西风', '西北风']
+        index = int((angle + 22.5) // 45) % 8
+        return directions[index]
+
+    def _aqi_to_level(self, aqi: int) -> str:
+        """按 AQI 指数划分等级(与和风天气的 category 一致)"""
+        if aqi <= 50:
+            return '优'
+
+        if aqi <= 100:
+            return '良'
+
+        if aqi <= 150:
+            return '轻度污染'
+
+        if aqi <= 200:
+            return '中度污染'
+
+        if aqi <= 300:
+            return '重度污染'
+
+        return '严重污染'
+
+    def _parse_qweather_weather(self, raw_data: dict) -> dict | None:
+        """解析和风天气的天气数据"""
         now = raw_data.get('now')
         if now:
-            weather = now.get('text', '')
-            weather_emoji = self._get_weather_emoji(weather)
+            try:
+                weather = now['text']
+                weather_emoji = self._get_weather_emoji(weather)
 
-            return {
-                'city_name': cfg.city_name.value,
-                'weather': weather,
-                'temperature': f'{now.get('temp', '')}℃',
-                'feels_like': f'{now.get('feelsLike', '')}℃',
-                'humidity': f'{now.get('humidity', '')}%',
-                'wind_direction': now.get('windDir', ''),
-                'wind_speed': f'{now.get('windSpeed', '')}km/h',
-                'weather_emoji': weather_emoji,
-            }
+                return {
+                    'city_name': cfg.city_name.value,
+                    'weather': weather,
+                    'temperature': f'{now['temp']}℃',
+                    'feels_like': f'{now['feelsLike']}℃',
+                    'humidity': f'{now['humidity']}%',
+                    'wind_direction': now['windDir'],
+                    'wind_speed': f'{now['windSpeed']}km/h',
+                    'weather_emoji': weather_emoji,
+                }
+
+            except Exception as e:
+                log.error(f'天气：解析失败:{e}')
+                return {'city_name': cfg.city_name.value}
 
         else:
             self.skip_cache()
             log.error('天气：获取失败')
             return None
 
-# 2.空气质量
-class AirQualityWidget(NetworkWidgetBase):
-    WIDGET_NAME = 'AirQuality'
-    NEED_CACHE = True
-    LOCAL_INTERVAL = f'{cfg.air_quality_interval.value}m'
-    API_URL = api['qweather.com']['url_air']
-    # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
-    @property
-    def PARAMS(self):
-        return {
-            'key': api['qweather.com']['api_key'],
-            'location': cfg.city_id.value,
-        }
-
-    def _parse_data(self, raw_data: dict) -> dict | None:
-        """解析数据"""
+    def _parse_qweather_air_quality(self, raw_data: dict) -> dict | None:
+        """解析和风天气的空气质量数据"""
         now = raw_data.get('now')
         if now:
-            air_quality = now.get('aqi', '')
-            air_level = now.get('category', '')
-            air_quality_text = f'{air_level}(PM2.5 指数:{air_quality})'
+            air_level = now['category']
+            pm25 = now.get('pm2p5', '')
+            air_quality_text = f'{air_level}(PM2.5 指数:{pm25})'
 
             return {'air_quality': air_quality_text}
 
@@ -457,16 +525,56 @@ class AirQualityWidget(NetworkWidgetBase):
             log.error('空气质量：获取失败')
             return None
 
-# 3.历史上的今天
+    def _parse_xiaomi_weather(self, raw_data: dict) -> dict | None:
+        current = raw_data.get('current')
+        if current:
+            # 小米天气API返回的天气是代码，需要另外解析
+            weather = api['xiaomi_weather']['weather_status'].get(current['weather'])
+            weather_emoji = self._get_weather_emoji(weather)
+            temp_data = current['temperature']
+            feels_data = current['feelsLike']
+            wind_data = current['wind']
+
+            result = {
+                'city_name': cfg.city_name.value,
+                'weather': weather,
+                'temperature': f'{temp_data['value']}{temp_data['unit']}',
+                'feels_like': f'{feels_data['value']}{feels_data['unit']}',
+                'humidity': f'{current['humidity']['value']}%',
+                'wind_direction': self._convert_wind_direction(wind_data['direction']['value']),
+                'wind_speed': f'{wind_data['speed']['value']}km/h',
+                'weather_emoji': weather_emoji,
+            }
+
+            # 空气质量：小米接口无 category 字段，按 AQI 指数换算等级
+            try:
+                aqi_data = raw_data['aqi']
+                if aqi_data and aqi_data['aqi']:
+                    aqi = int(aqi_data['aqi'])
+                    pm25 = aqi_data.get('pm25', '')
+                    result['air_quality'] = f'{self._aqi_to_level(aqi)}(PM2.5 指数:{pm25})'
+
+            except (TypeError, ValueError) as e:
+                log.error(f'空气质量：解析失败:{e}')
+
+            return result
+
+        else:
+            self.skip_cache()
+            log.error('天气：获取失败')
+            return None
+
+# 2.历史上的今天
+@register(cfg.historical_switch, 'historical_switch')
 class TodayInHistoryWidget(NetworkWidgetBase):
     WIDGET_NAME = 'TodayInHistory'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
-    API_URL = api['www.mxnzp.com']['today_in_history']['url']
+    API_URL = api['mxnzp']['today_in_history']['url']
     PARAMS = {
         'args': 1,
-        'app_id': api['www.mxnzp.com']['today_in_history']['app_id'],
-        'app_secret': api['www.mxnzp.com']['today_in_history']['app_secret']
+        'app_id': api['mxnzp']['today_in_history']['app_id'],
+        'app_secret': api['mxnzp']['today_in_history']['app_secret']
     }
 
     def _parse_data(self, raw_data: dict) -> dict | None:
@@ -488,7 +596,8 @@ class TodayInHistoryWidget(NetworkWidgetBase):
             log.error('历史上的今天：请求失败')
             return None
 
-# 4.节假日和24节气
+# 3.节假日和24节气
+@register(cfg.holiday_solar_term_switch, 'holiday_solar_term_switch')
 class HolidayAndSolarTermWidget(NetworkWidgetBase):
     WIDGET_NAME = 'HolidayAndSolarTerm'
     NEED_CACHE = True
@@ -497,13 +606,13 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
     API_URL = ''
     PARAMS = {
         'args': 1,
-        'app_id': api['www.mxnzp.com']['holiday_solar_term']['app_id'],
-        'app_secret': api['www.mxnzp.com']['holiday_solar_term']['app_secret'],
+        'app_id': api['mxnzp']['holiday_solar_term']['app_id'],
+        'app_secret': api['mxnzp']['holiday_solar_term']['app_secret'],
     }
 
     def _set_url(self) -> None:
         """拼接当天日期到 URL 上。"""
-        base_url = api['www.mxnzp.com']['holiday_solar_term']['url']
+        base_url = api['mxnzp']['holiday_solar_term']['url']
         today = time.strftime('%Y%m%d')
         self.API_URL = f'{base_url}/{today}'
 
@@ -530,20 +639,25 @@ class HolidayAndSolarTermWidget(NetworkWidgetBase):
             log.error('节假日和 24 节气信息：请求失败')
             return None
 
-# 5.每日一言
-class EveryDayWordsWidget(MultiSourceWidgetBase):
+# 4.每日一言
+@register(cfg.words_switch, 'words_switch')
+class EveryDayWordsWidget(ExtNetworkWidgetBase):
     WIDGET_NAME = 'EveryDayWords'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
     CONFIG_ITEM = cfg.words_source
-    SOURCES = {
+    API_DATA = {
         'iciba': {
-            'url': 'https://open.iciba.com/dsapi/',
-            'parse_func': '_parse_iciba',
+            'words': {
+                'url': 'https://open.iciba.com/dsapi/',
+                'parse_func': '_parse_iciba',
+            }
         },
         'hitokoto':{
-            'url': 'https://v1.hitokoto.cn/',
-            'parse_func': '_parse_hitokoto',
+            'words': {
+                'url': 'https://v1.hitokoto.cn/',
+                'parse_func': '_parse_hitokoto',
+            }
         }
     }
 
@@ -556,6 +670,11 @@ class EveryDayWordsWidget(MultiSourceWidgetBase):
                 'words_primary': note,
                 'words_secondary': content
             }
+
+        else:
+            self.skip_cache()
+            log.error('每日一言：获取失败')
+            return None
 
     def _parse_hitokoto(self, raw_data: dict) -> dict | None:
         if raw_data:
@@ -574,7 +693,13 @@ class EveryDayWordsWidget(MultiSourceWidgetBase):
                 'words_secondary': from_text
             }
 
-# 6.MC 服务器状态
+        else:
+            self.skip_cache()
+            log.error('每日一言：获取失败')
+            return None
+
+# 5.MC 服务器状态
+@register(cfg.minecraft_server_checker_switch, 'mc_server_check_switch')
 class MCServerStatusWidget(LocalWidgetBase):
     WIDGET_NAME = 'MCServerStatus'
     NEED_CACHE = True

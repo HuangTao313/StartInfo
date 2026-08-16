@@ -2,12 +2,16 @@ import os
 import sys
 import asyncio
 import subprocess
+import time
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
-from core.ht_lib import log
+import core.ht_lib as lib
 import core.init_app as init_app
 import core.ui as ui
-from core.widgets import *
+from core.config import cfg
+from core.ht_lib import log
+from core.widgets import (BirthdayWidget, ExtNetworkWidgetBase, MCServerStatusWidget,
+                          NetworkWidgetBase, registered_widgets)
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
@@ -70,21 +74,6 @@ def init():
             log.info('主程序-用户已添加开机启动项')
 
     lib.file.write('General', 'is_first_startup', value=False)
-
-
-    # # 检查网络连接情况
-    # if lib.is_internet():
-    #     # 开始初始化流程
-    #     log.info('主程序-检测到第一次启动，开始执行程序初始化')
-    #
-    #     # IP定位并获取city_id
-    #     if init_app.init_app():
-    #         file.write('General', 'is_first_startup', value=False)
-    #         log.info('主程序-程序初始化完成')
-    #
-    #     else:
-    #         ui.dialog(lib.TITLE, '未检测到网络连接，请检查网络连接并重新启动程序！\n╥﹏╥...')
-    #         log.warning('主程序-程序初始化失败：当前未联网')
 
 def handle_j2_template(j2_file_path: Path):
     """处理 .j2 模板文件的逻辑"""
@@ -153,31 +142,17 @@ def handle_j2_template(j2_file_path: Path):
 
 async def main() -> None:
     """程序主函数"""
-    # 创建所有已启用的组件实例
-    component_config = [
-        (cfg.datetime_switch, DateTimeWidget),
-        (cfg.countdown_switch, CountDownDayWidget),
-        (cfg.birthday_wishes_switch, BirthdayWidget),
-        (cfg.greeting_switch, GreetingWidget),
-        (cfg.startup_times_switch, StartupTimesWidget),
-        (cfg.weather_switch, WeatherWidget),
-        (cfg.air_quality_switch, AirQualityWidget),
-        (cfg.historical_switch, TodayInHistoryWidget),
-        (cfg.holiday_solar_term_switch, HolidayAndSolarTermWidget),
-        (cfg.words_switch, EveryDayWordsWidget),
-        (cfg.minecraft_server_checker_switch, MCServerStatusWidget)
-    ]
-
-    active = []
-    for switch, cls in component_config:
-        if switch.value:
-            active.append(cls())
+    # 创建所有已启用的组件实例（组件在 core/widgets.py 中用 @register 注册）
+    active = [info.cls() for info in registered_widgets if info.switch.value]
 
     results = {}
     # ── 联网组件并发，本地组件同步 ──
-    async_tasks, sync_widgets = [], []
+    # 特例：ExtNetworkWidgetBase 直接继承 WidgetBase(非 NetworkWidgetBase)，但也支持异步；
+    #       MCServerStatus 基于 mcstatus 库(非 HTTP)，库本身支持异步
+    async_tasks, async_widgets, sync_widgets = [], [], []
     for widget in active:
-        if isinstance(widget, NetworkWidgetBase):
+        if isinstance(widget, (NetworkWidgetBase, ExtNetworkWidgetBase, MCServerStatusWidget)):
+            async_widgets.append(widget)
             async_tasks.append(widget.get_data_async())
 
         else:
@@ -186,8 +161,7 @@ async def main() -> None:
     # ── 并发获取 ──
     if async_tasks:
         async_values = await asyncio.gather(*async_tasks, return_exceptions=True)
-        net_widgets = [w for w in active if isinstance(w, NetworkWidgetBase)]
-        for comp, val in zip(net_widgets, async_values):
+        for comp, val in zip(async_widgets, async_values):
             if isinstance(val, Exception):
                 log.error(f'{comp.WIDGET_NAME} 获取失败: {val}')
             elif val is not None:
@@ -211,7 +185,7 @@ async def main() -> None:
 
     # ── 生日已显示过 → 移除生日字段，不走生日模板 ──
     last_birthday_date = lib.file.read('General', 'last_birthday_date') or ''
-    today_str = time.strftime('%Y%m%d', global_time)
+    today_str = time.strftime('%Y%m%d', time.localtime())
     if last_birthday_date == today_str:
         jinja2_data.pop('birthday_star', None)
         jinja2_data.pop('age', None)
@@ -219,15 +193,8 @@ async def main() -> None:
 
     # ── 注入开关状态 ──
     switch_keys = {
-        'greeting_switch': cfg.greeting_switch.value,
-        'startup_times_switch': cfg.startup_times_switch.value,
-        'datetime_switch': cfg.datetime_switch.value,
-        'countdown_switch': cfg.countdown_switch.value,
-        'weather_switch': cfg.weather_switch.value,
-        'air_quality_switch': cfg.air_quality_switch.value,
-        'historical_switch': cfg.historical_switch.value,
-        'words_switch': cfg.words_switch.value,
-        'mc_server_check_switch': cfg.minecraft_server_checker_switch.value,
+        info.template_key: info.switch.value
+        for info in registered_widgets if info.template_key
     }
 
     jinja2_data.update(switch_keys)
