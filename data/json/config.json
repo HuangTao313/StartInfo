@@ -1,14 +1,10 @@
 {
-    "AirQuality": {
-        "interval": 120,
-        "switch": false
-    },
     "General": {
-        "auto_close_switch": false,
+        "auto_close_switch": true,
         "auto_close_time": 60,
         "close_settings_action": "exit",
         "log_level": "WARNING",
-        "template_file": "html_style.j2",
+        "template_file": "default.j2",
         "theme": "dynamic",
         "theme_color": "#ff009faa",
         "use_win_theme_color": true
@@ -17,13 +13,18 @@
         "birthday_dict": {
             "黄桃": "20100403"
         },
-        "switch": false
+        "switch": true
     },
     "Weather": {
-        "city_id": "101201009",
+        "city_id": {
+            "qweather": "101201009",
+            "xiaomi_weather": "101201001"
+        },
         "city_name": "恩施",
+        "qweather_api_key": "",
         "interval": 30,
-        "switch": false
+        "source": "qweather",
+        "switch": true
     },
     "Countdown": {
         "date": "",
@@ -31,6 +32,7 @@
         "switch": false
     },
     "InformationSwitch": {
+        "daily_character": true,
         "datetime": true,
         "greeting": true,
         "historical": true,
@@ -55,7 +57,7 @@
         "server_port": "25565"
     },
     "EveryDayWords": {
-        "words_source": "https://v1.hitokoto.cn/",
+        "source": "hitokoto",
         "switch": true
     }
 }

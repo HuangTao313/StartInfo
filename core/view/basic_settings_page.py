@@ -6,7 +6,6 @@ import shutil
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             PrimaryPushSettingCard, PushSettingCard,
                             SettingCardGroup, HyperlinkCard)
-from qasync import asyncSlot
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
@@ -15,8 +14,7 @@ from .ui_widgets import (CalendarSettingCard, CitySearchBox, Notify,
 from .ui_widgets import ExpandGroupCard
 from .. import ht_lib as lib
 from ..config import cfg, qconfig
-from ..init_app import create_shortcut, remove_shortcut
-from ..widgets import EveryDayWordsWidget
+from ..init_app import create_shortcut, remove_shortcut, is_shortcut_exist
 from ..ui import log
 
 
@@ -29,7 +27,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.startupCard = ZhSwitchSettingCard(FIF.POWER_BUTTON, '开机自启', '是否开机启动', config_item=None,
                                                parent=generalGroup)
-        self.startupCard.setChecked(False)
+        self.startupCard.setChecked(True if is_shortcut_exist() else False)
         self.startupCard.checkedChanged.connect(self._onStartupChanged)
 
         self.autoCloseCard = ZhSwitchSettingCard(FIF.CLOSE, '主窗口自动关闭', '主窗口在一段后自动关闭，程序结束运行',
@@ -63,18 +61,28 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(generalGroup)
 
         # ── 天气 ──
-        weatherGroup = SettingCardGroup('天气&空气质量(请先选择您所在的城市)', self.scrollWidget)
+        weatherGroup = SettingCardGroup('天气(需选择城市)', self.scrollWidget)
 
-        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='显示天气', content='显示当前城市的天气信息',
+        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='启用天气组件', content='显示当前城市的天气信息',
                                                      config_item=cfg.weather_switch, parent=weatherGroup)
-
-        self.airQualitySwitchCard = ZhSwitchSettingCard(icon=FIF.LEAF, title='显示空气质量', content='显示当前城市的空气质量信息',
-                                                        config_item=cfg.air_quality_switch, parent=weatherGroup)
 
         # 创建手风琴组件
         self.weatherDetailCard = ExpandGroupCard(
-            FIF.MORE, '天气信息详细配置', '城市、刷新间隔', parent=weatherGroup,
+            FIF.MORE, '天气信息详细配置', '数据源、城市、刷新间隔', parent=weatherGroup,
         )
+
+        self.weatherSourceCard = ComboBoxSettingCard(
+            icon=FIF.CLOUD_DOWNLOAD, title='数据源', content='设置天气数据源',
+            texts=['小米天气', '和风天气(需API Key)'], configItem=cfg.weather_source, parent=self.weatherDetailCard,
+        )
+
+        cfg.weather_source.valueChanged.connect(self._onWeatherSourceChanged)
+
+        # self.qweatherApiKeyCard = TextSettingCard(
+        #     icon=FIF.VPN, title='和风天气API Key',
+        #     content='设置和风天气API Key', config_item=cfg.qweather_api_key,
+        #     parent=self.weatherDetailCard,
+        # )
 
         self.cityChooseCard = PushSettingCard(
             text='选择城市', icon=FIF.SEARCH,
@@ -91,13 +99,6 @@ class BasicSettingsPage(BaseSettingPage):
             lambda text: self._check_input(text, 15, 60, cfg.weather_interval, self.weatherRefreshTimeCard)
         )
 
-        self.airQualityRefreshTimeCard = TextSettingCard(config_item=cfg.air_quality_interval, icon=FIF.STOP_WATCH,
-                                                         title='空气质量信息刷新间隔(单位：分钟/m)',
-                                                         content='天气信息自动刷新时间(范围：15~240分钟，默认120分钟)')
-        self.airQualityRefreshTimeCard.textChanged.connect(
-            lambda text: self._check_input(text, 15, 240, cfg.air_quality_interval, self.airQualityRefreshTimeCard)
-        )
-
 
         self.weatherRefreshCard = PrimaryPushSettingCard(
             text='刷新天气信息', icon=FIF.SYNC,
@@ -105,26 +106,18 @@ class BasicSettingsPage(BaseSettingPage):
         )
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
 
-        self.airQualityRefreshCard = PrimaryPushSettingCard(
-            text='刷新空气质量信息', icon=FIF.SYNC,
-            title='刷新空气质量信息', content='刷新空气质量信息', parent=self.weatherDetailCard,
-        )
-
-        self.airQualityRefreshCard.clicked.connect(self._onRefreshAirQuality)
-
+        self.weatherDetailCard.addCard(self.weatherSourceCard)
+        # self.weatherDetailCard.addCard(self.qweatherApiKeyCard)
         self.weatherDetailCard.addCard(self.cityChooseCard)
         self.weatherDetailCard.addCard(self.weatherRefreshTimeCard)
-        self.weatherDetailCard.addCard(self.airQualityRefreshTimeCard)
         self.weatherDetailCard.addCard(self.weatherRefreshCard)
-        self.weatherDetailCard.addCard(self.airQualityRefreshCard)
         weatherGroup.addSettingCard(self.weatherSwitchCard)
-        weatherGroup.addSettingCard(self.airQualitySwitchCard)
         weatherGroup.addSettingCard(self.weatherDetailCard)
         self.expandLayout.addWidget(weatherGroup)
 
         # ── 倒数日 ──
         countdownGroup = SettingCardGroup('倒数日', self.scrollWidget)
-        self.countdownCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用倒数日',
+        self.countdownCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用倒数日组件',
                                                  content='在主窗口显示："距离【xx】还有xx天"',
                                                  config_item=cfg.countdown_switch, parent=countdownGroup)
 
@@ -147,7 +140,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 生日祝福 ──
         birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.scrollWidget)
-        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用生日祝福',
+        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用生日祝福功能',
                                                             content='在生日当天显示生日祝福',
                                                             config_item=cfg.birthday_wishes_switch,
                                                             parent=birthdayGroup)
@@ -164,7 +157,7 @@ class BasicSettingsPage(BaseSettingPage):
         # ── Minecraft 服务器检测器 ──
         mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.scrollWidget)
         self.mcServerCheckSwitchCard = ZhSwitchSettingCard(icon=FIF.GLOBE,
-                                                           title='启用Minecraft Java版服务器玩家在线情况检测',
+                                                           title='启用Minecraft Java版服务器玩家在线情况检测组件',
                                                            content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
                                                            config_item=cfg.minecraft_server_checker_switch,
                                                            parent=mcGroup)
@@ -215,7 +208,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 每日一言 ──
         wordsGroup = SettingCardGroup('每日一言', self.scrollWidget)
-        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.MESSAGE, title='显示每日一言', content='显示每日一言信息',
+        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.MESSAGE, title='启用每日一言组件', content='显示每日一言信息',
                                                    config_item=cfg.words_switch, parent=wordsGroup)
 
         self.wordsDetailCard = ExpandGroupCard(
@@ -223,7 +216,7 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
         self.wordsSourceCard = ComboBoxSettingCard(
-            texts=['金山词霸', '一言网'], icon=FIF.SEARCH,
+            texts=['一言网', '金山词霸'], icon=FIF.SEARCH,
             title='每日一言数据来源', content='【金山词霸每日一言】或【一言网】',
             configItem=cfg.words_source, parent=self.wordsDetailCard
         )
@@ -252,24 +245,41 @@ class BasicSettingsPage(BaseSettingPage):
             FIF.MORE, '其他信息开关', '问候语、开机次数、时间和日期等信息', parent=otherGroup,
         )
 
-        self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='显示问候语',
+        self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='启用问候语组件',
                                                       content='显示当前时间对应的问候语',
                                                       config_item=cfg.greeting_switch, parent=self.otherDetailCard)
-        self.startupTimesSwitchCard = ZhSwitchSettingCard(icon=FIF.POWER_BUTTON, title='显示开机次数',
+
+        self.startupTimesSwitchCard = ZhSwitchSettingCard(icon=FIF.POWER_BUTTON, title='启用开机次数组件',
                                                           content='显示开机次数', config_item=cfg.startup_times_switch,
                                                           parent=self.otherDetailCard)
-        self.datetimeSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='显示时间和日期',
+
+        self.datetimeSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='启用时间和日期组件',
                                                       content='显示当前时间、日期', config_item=cfg.datetime_switch,
                                                       parent=self.otherDetailCard)
-        self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='显示历史上的今天',
+
+        self.holidaySolarTermSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='启用节假日和24节气组件',
+                                                              content='显示节假日和24节气信息(在时间和日期栏内展示)',
+                                                              config_item=cfg.holiday_solar_term_switch,
+                                                              parent=self.otherDetailCard)
+
+        self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='启用历史上的今天组件',
                                                         content='显示历史上的今天信息',
                                                         config_item=cfg.historical_switch, parent=self.otherDetailCard)
+
+        self.dailyCharacterSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.SPEED_MEDIUM, title='启用每日人品组件',
+            content='显示每日人品',
+            config_item=cfg.daily_character_switch, parent=self.otherDetailCard
+        )
+
 
 
         self.otherDetailCard.addCard(self.greetingSwitchCard)
         self.otherDetailCard.addCard(self.startupTimesSwitchCard)
         self.otherDetailCard.addCard(self.datetimeSwitchCard)
         self.otherDetailCard.addCard(self.historicalSwitchCard)
+        self.otherDetailCard.addCard(self.holidaySolarTermSwitchCard)
+        self.otherDetailCard.addCard(self.dailyCharacterSwitchCard)
         otherGroup.addSettingCard(self.otherDetailCard)
         self.expandLayout.addWidget(otherGroup)
 
@@ -290,18 +300,6 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(debugGroup)
 
         self.finalise()
-
-        # ------------------------------------------------------------------
-        # 禁用其他系统暂未适配的功能
-        # ------------------------------------------------------------------
-        # if lib.system != 'Windows':
-        #     # 开机自启
-        #     self.startupCard.setEnabled(False)
-        #     # 关闭设置窗口后的行为锁定为【直接退出】
-        #     if cfg.close_settings_action.value == 'restart':
-        #         qconfig.set(cfg.close_settings_action, 'exit', save=True)
-        #         self.closeSettingsAction.setEnabled(False)
-
 
     # ------------------------------------------------------------------
     # 辅助
@@ -367,15 +365,50 @@ class BasicSettingsPage(BaseSettingPage):
             city_id = box.get_selected_city_id()
             display_name = box.get_selected_city_display()
             if city_id:
-                old_city_id = cfg.city_id.value
-                cfg.set(cfg.city_id, city_id)
-                cfg.set(cfg.city_name, display_name)
+                # city_id 按数据提供方分别存储，兼容旧版单值配置
+                source = box.weather_source
+                city_ids = cfg.city_id.value
+                if not isinstance(city_ids, dict):
+                    city_ids = {'qweather': '101010100', 'xiaomi_weather': '101010100'}
+                else:
+                    city_ids = dict(city_ids)
+                old_city_id = city_ids.get(source)
+                city_ids[source] = city_id
+                cfg.set(cfg.city_id, city_ids, save=True)
+                cfg.set(cfg.city_name, display_name, save=True)
                 self.cityChooseCard.setTitle(f'选择城市(当前: {display_name})')
                 if city_id != old_city_id:
                     Notify.success(title=f'已设置城市 {display_name}', content='正在获取天气信息...', parent=self)
                     self._onRefreshWeather()
 
-    @action('天气信息已更新', '天气信息更新失败')
+    @action('天气信息更新成功','天气信息更新失败')
+    async def _onWeatherSourceChanged(self) -> dict | None:
+        from ..widgets import WeatherWidget
+        widget = WeatherWidget()
+        cache_source = widget.get_cached_source()
+
+        # 如果选择的数据源和缓存的数据源不一致
+        if widget.DATA_SOURCE != cache_source:
+            # 如果对应数据源的city_id未配置
+            city_ids = cfg.city_id.value
+            if not isinstance(city_ids, dict):
+                # 旧版配置存的是单个字符串，无法判断属于哪个数据源
+                city_ids = {}
+            if not city_ids.get(widget.DATA_SOURCE):
+                Notify.info(content='更换天气数据源后请重新选择城市', parent=self)
+
+            else:
+                # 开始刷新天气信息
+                self.weatherSourceCard.setEnabled(False)
+                self.weatherRefreshCard.setEnabled(False)
+                try:
+                    return await widget.get_data_async(force_refresh=True)
+
+                finally:
+                    self.weatherSourceCard.setEnabled(True)
+                    self.weatherRefreshCard.setEnabled(True)
+
+    @action('天气信息更新成功', '天气信息更新失败')
     async def _onRefreshWeather(self) -> dict:
         self.weatherRefreshCard.setEnabled(False)
         try:
@@ -385,17 +418,6 @@ class BasicSettingsPage(BaseSettingPage):
 
         finally:
             self.weatherRefreshCard.setEnabled(True)
-
-    @action('空气质量信息已更新', '空气质量信息更新失败')
-    async def _onRefreshAirQuality(self) -> dict:
-        self.airQualityRefreshCard.setEnabled(False)
-        try:
-            from core.widgets import AirQualityWidget
-            widget = AirQualityWidget()
-            return await widget.get_data_async(force_refresh=True)
-
-        finally:
-            self.airQualityRefreshCard.setEnabled(True)
 
     @action('MC 服务器信息已更新', 'MC 服务器信息更新失败')
     async def _onRefreshMCServer(self) -> dict:
@@ -423,10 +445,11 @@ class BasicSettingsPage(BaseSettingPage):
 
     @action('每日一言信息更新成功', '每日一言信息更新失败')
     async def _onWordsSourceChanged(self) -> dict | None:
+        from ..widgets import EveryDayWordsWidget
         widget = EveryDayWordsWidget()
         cache_source = widget.get_cached_source()
         # 如果选择的数据源和缓存的数据源不一致
-        if widget.API_NAME != cache_source:
+        if widget.DATA_SOURCE != cache_source:
             self.wordsSourceCard.setEnabled(False)
             # 开始刷新每日一言信息
             try:
