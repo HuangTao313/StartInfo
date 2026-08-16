@@ -421,6 +421,14 @@ class WidgetBase:
         if interval <= 0:
             # interval=0 表示「永不过期」
             return True
+
+        # 日级缓存（'1d'）按自然日对齐：跨天即过期。
+        # 若按滚动窗口（24h），昨天 21 点开机、今天 8 点开机仍会命中
+        # 昨天的生日/每日一言等日级数据；'2d' 等更长间隔仍走滚动窗口。
+        if interval == 86400:
+            return time.strftime('%Y%m%d', time.localtime(timestamp)) \
+                == time.strftime('%Y%m%d')
+
         return (time.time() - timestamp) < interval
 
     # ------------------------------------------------------------------
