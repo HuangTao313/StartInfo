@@ -120,11 +120,11 @@ class BasicSettingsPage(BaseSettingPage):
 
         cfg.weather_source.valueChanged.connect(self._onWeatherSourceChanged)
 
-        # self.qweatherApiKeyCard = TextSettingCard(
-        #     icon=FIF.VPN, title='和风天气API Key',
-        #     content='设置和风天气API Key', config_item=cfg.qweather_api_key,
-        #     parent=self.weatherDetailCard,
-        # )
+        self.qweatherApiKeyCard = TextSettingCard(
+            icon=FIF.VPN, title='和风天气API Key',
+            content='设置和风天气API Key', config_item=cfg.qweather_api_key,
+            parent=self.weatherDetailCard,
+        )
 
         self.cityChooseCard = PushSettingCard(
             text='选择城市', icon=FIF.SEARCH,
@@ -149,7 +149,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
 
         self.weatherDetailCard.addCard(self.weatherSourceCard)
-        # self.weatherDetailCard.addCard(self.qweatherApiKeyCard)
+        self.weatherDetailCard.addCard(self.qweatherApiKeyCard)
         self.weatherDetailCard.addCard(self.cityChooseCard)
         self.weatherDetailCard.addCard(self.weatherRefreshTimeCard)
         self.weatherDetailCard.addCard(self.weatherRefreshCard)

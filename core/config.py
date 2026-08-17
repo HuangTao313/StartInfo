@@ -142,12 +142,12 @@ class MyConfig(QConfig):
     weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
     city_name = ConfigItem('Weather', 'city_name', '北京市', StringValidator(default='北京市'))
     city_id = ConfigItem('Weather', 'city_id', {'qweather': '101010100', 'xiaomi_weather': '101010100'})
+    qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
     weather_source = OptionsConfigItem(
         'Weather', 'source', 'xiaomi_weather',
         OptionsValidator(['xiaomi_weather', 'qweather'])
     )
-    qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
 
     # =========================== 倒数日 ===========================
     countdown_switch = ConfigItem('Countdown', 'switch', False, BoolValidator())

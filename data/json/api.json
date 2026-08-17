@@ -1,8 +1,7 @@
 {
     "qweather": {
     "url_weather": "https://ne3qqm4n8w.re.qweatherapi.com/v7/weather/now",
-    "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now",
-    "api_key": "c092d89faa604be69728db088008fc51"
+    "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now"
     },
     "xiaomi_weather": {
     "url": "https://weatherapi.market.xiaomi.com/wtr-v3/weather/all",

@@ -443,7 +443,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
                 'weather':{
                     'url': api['qweather']['url_weather'],
                     'params': {
-                        'key': api['qweather']['api_key'],
+                        'key': cfg.qweather_api_key.value,
                         'location' : cfg.city_id.value[cfg.weather_source.value],
                     },
                     'parse_func': '_parse_qweather_weather',
@@ -451,7 +451,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
                 'air_quality':{
                     'url': api['qweather']['url_air'],
                     'params':  {
-                        'key': api['qweather']['api_key'],
+                        'key': cfg.qweather_api_key.value,
                         'location' : cfg.city_id.value[cfg.weather_source.value],
                     },
                     'parse_func': '_parse_qweather_air_quality',
