@@ -317,13 +317,15 @@ class WidgetInfo:
     cls: type                            # 组件类
     switch: ConfigItem                   # 启用开关
     template_key: str | None = None      # 注入模板的开关变量名(None=不注入)
+    extra_template_keys: dict[str, ConfigItem] | None = None  # 子开关：模板变量名→配置项
 
 
 # 全局组件注册表，@register 装饰器按定义顺序写入
 registered_widgets: list[WidgetInfo] = []
 
 
-def register(switch: ConfigItem, template_key: str | None = None):
+def register(switch: ConfigItem, template_key: str | None = None,
+             extra_template_keys: dict[str, ConfigItem] | None = None):
     """组件注册装饰器：在组件定义处声明启用开关与模板开关变量名
 
     用法:
@@ -331,11 +333,18 @@ def register(switch: ConfigItem, template_key: str | None = None):
         class EveryDayWordsWidget(ExtNetworkWidgetBase):
             ...
 
+        # 组件内部有子开关时，用 extra_template_keys 声明需要注入模板的子开关
+        @register(cfg.datetime_switch, 'datetime_switch',
+                  extra_template_keys={'holiday_switch': cfg.holiday_switch})
+        class DateTimeWidget(LocalWidgetBase):
+            ...
+
     main.py 遍历 registered_widgets 构建启用组件列表并注入模板开关状态，
     新增组件无需再修改 main.py。
     """
     def deco(cls):
-        registered_widgets.append(WidgetInfo(cls, switch, template_key))
+        registered_widgets.append(WidgetInfo(cls, switch, template_key,
+                                             extra_template_keys))
         return cls
     return deco
 

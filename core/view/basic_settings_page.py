@@ -60,6 +60,48 @@ class BasicSettingsPage(BaseSettingPage):
         generalGroup.addSettingCard(self.deleteDownloadTempCard)
         self.expandLayout.addWidget(generalGroup)
 
+        # # ── 日期和时间 ──
+        dateTimeGroup = SettingCardGroup('日期和时间', self.scrollWidget)
+        self.datetimeSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.DATE_TIME, title='启用日期和时间组件',
+            content='显示当前的日期、时间以及其他信息', config_item=cfg.datetime_switch,
+            parent=dateTimeGroup
+        )
+
+        # 创建手风琴组件
+        self.dateTimeDetailCard = ExpandGroupCard(
+            FIF.MORE, '日期和时间组件详细配置', '是否显示农历日期、24节气、节假日',
+            parent=dateTimeGroup
+        )
+
+        self.lunarDateSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.CALENDAR, title='显示农历信息', content='例如：农历二月十九',
+            config_item=cfg.lunar_date_switch,parent=self.dateTimeDetailCard
+        )
+
+        self.solarTermSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.LEAF, title='显示24节气信息', content='例如：谷雨、春分',
+            config_item=cfg.solar_term_switch, parent=self.dateTimeDetailCard
+        )
+
+        self.holidaySwitchCard = ZhSwitchSettingCard(
+            icon=FIF.CALENDAR, title='显示节假日信息', content='有节日时显示节日，无节日时显示休息日或工作日',
+            config_item=cfg.holiday_switch, parent=self.dateTimeDetailCard
+        )
+
+        self.otherDataSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.MESSAGE, title='显示其他信息', content='今年的第几周、第几天以及今年已过进度',
+            config_item=cfg.other_date_switch, parent=self.dateTimeDetailCard
+        )
+
+        self.dateTimeDetailCard.addCard(self.lunarDateSwitchCard)
+        self.dateTimeDetailCard.addCard(self.solarTermSwitchCard)
+        self.dateTimeDetailCard.addCard(self.holidaySwitchCard)
+        self.dateTimeDetailCard.addCard(self.otherDataSwitchCard)
+        dateTimeGroup.addSettingCard(self.datetimeSwitchCard)
+        dateTimeGroup.addSettingCard(self.dateTimeDetailCard)
+        self.expandLayout.addWidget(dateTimeGroup)
+
         # ── 天气 ──
         weatherGroup = SettingCardGroup('天气(需选择城市)', self.scrollWidget)
 
@@ -68,7 +110,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 创建手风琴组件
         self.weatherDetailCard = ExpandGroupCard(
-            FIF.MORE, '天气信息详细配置', '数据源、城市、刷新间隔', parent=weatherGroup,
+            FIF.MORE, '天气组件详细配置', '数据源、城市、刷新间隔', parent=weatherGroup,
         )
 
         self.weatherSourceCard = ComboBoxSettingCard(
@@ -123,7 +165,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 创建手风琴组件
         self.countdownDetailCard = ExpandGroupCard(
-            FIF.MORE, '倒数日详细配置', '倒数日名称、日期信息', parent=countdownGroup,
+            FIF.MORE, '倒数日组件详细配置', '倒数日名称、日期信息', parent=countdownGroup,
         )
 
         self.countdownTextCard = TextSettingCard(config_item=cfg.countdown_name, icon=FIF.EDIT, title='倒数日名称',
@@ -164,7 +206,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 手风琴：详细配置收起来
         self.mcDetailCard = ExpandGroupCard(
-            FIF.MORE, '服务器详细配置', '配置服务器名称、IP、端口等信息', parent=mcGroup,
+            FIF.MORE, '服务器信息详细配置', '配置服务器名称、IP、端口等信息', parent=mcGroup,
         )
         self.mcServerNameCard = TextSettingCard(config_item=cfg.minecraft_server_name, icon=FIF.GAME,
                                                 title='服务器名称', content='Minecraft Java版服务器名称',
@@ -212,7 +254,7 @@ class BasicSettingsPage(BaseSettingPage):
                                                    config_item=cfg.words_switch, parent=wordsGroup)
 
         self.wordsDetailCard = ExpandGroupCard(
-            FIF.MORE, '每日一言详细配置', '配置数据来源、打开一言官网(友情链接)', parent=wordsGroup,
+            FIF.MORE, '每日一言组件详细配置', '配置数据来源、打开一言官网(友情链接)', parent=wordsGroup,
         )
 
         self.wordsSourceCard = ComboBoxSettingCard(
@@ -253,15 +295,6 @@ class BasicSettingsPage(BaseSettingPage):
                                                           content='显示开机次数', config_item=cfg.startup_times_switch,
                                                           parent=self.otherDetailCard)
 
-        self.datetimeSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='启用时间和日期组件',
-                                                      content='显示当前时间、日期', config_item=cfg.datetime_switch,
-                                                      parent=self.otherDetailCard)
-
-        self.holidaySolarTermSwitchCard = ZhSwitchSettingCard(icon=FIF.DATE_TIME, title='启用节假日和24节气组件',
-                                                              content='显示节假日和24节气信息(在时间和日期栏内展示)',
-                                                              config_item=cfg.holiday_solar_term_switch,
-                                                              parent=self.otherDetailCard)
-
         self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='启用历史上的今天组件',
                                                         content='显示历史上的今天信息',
                                                         config_item=cfg.historical_switch, parent=self.otherDetailCard)
@@ -276,9 +309,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.otherDetailCard.addCard(self.greetingSwitchCard)
         self.otherDetailCard.addCard(self.startupTimesSwitchCard)
-        self.otherDetailCard.addCard(self.datetimeSwitchCard)
         self.otherDetailCard.addCard(self.historicalSwitchCard)
-        self.otherDetailCard.addCard(self.holidaySolarTermSwitchCard)
         self.otherDetailCard.addCard(self.dailyCharacterSwitchCard)
         otherGroup.addSettingCard(self.otherDetailCard)
         self.expandLayout.addWidget(otherGroup)

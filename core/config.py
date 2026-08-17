@@ -131,35 +131,34 @@ class MyConfig(QConfig):
     LOG_LEVELS = ['DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']
     log_level = OptionsConfigItem('General', 'log_level', 'WARNING', OptionsValidator(LOG_LEVELS))
 
-    # =========================== 倒数日 ===========================
+    # =========================== 日期和时间 ===========================
+    datetime_switch = ConfigItem('DateTime', 'switch', True, BoolValidator())
+    lunar_date_switch = ConfigItem('DateTime', 'lunar_date_switch', False, BoolValidator())
+    solar_term_switch = ConfigItem('DateTime', 'solar_term_switch', False, BoolValidator())
+    holiday_switch = ConfigItem('DateTime', 'holiday_switch', True, BoolValidator())
+    other_date_switch = ConfigItem('DateTime', 'other_date_switch', False, BoolValidator())
 
-    countdown_switch = ConfigItem('Countdown', 'switch', False, BoolValidator())
-    countdown_name = ConfigItem('Countdown', 'name', '', StringValidator(default=''))
-    countdown_date = ConfigItem('Countdown', 'date', '', StringValidator(default=''))
-
-    # =========================== 天气&空气质量 ===========================
-
+    # =========================== 天气 ===========================
     weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
     city_name = ConfigItem('Weather', 'city_name', '北京市', StringValidator(default='北京市'))
     city_id = ConfigItem('Weather', 'city_id', {'qweather': '101010100', 'xiaomi_weather': '101010100'})
     weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
-
-    # air_quality_switch = ConfigItem('AirQuality', 'switch', False, BoolValidator())
-    # air_quality_interval = ConfigItem('AirQuality', 'interval', 120, IntRangeValidator(min_val=15, max_val=240, default_val=120))
-
     weather_source = OptionsConfigItem(
         'Weather', 'source', 'xiaomi_weather',
         OptionsValidator(['xiaomi_weather', 'qweather'])
     )
-
     qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
-    # =========================== 生日祝福 ===========================
 
+    # =========================== 倒数日 ===========================
+    countdown_switch = ConfigItem('Countdown', 'switch', False, BoolValidator())
+    countdown_name = ConfigItem('Countdown', 'name', '', StringValidator(default=''))
+    countdown_date = ConfigItem('Countdown', 'date', '', StringValidator(default=''))
+
+    # =========================== 生日祝福 ===========================
     birthday_wishes_switch = ConfigItem('BirthdayWishes', 'switch', False, BoolValidator())
     birthday_dict = ConfigItem('BirthdayWishes', 'birthday_dict', {'黄桃': '20100403'})
 
     # =========================== MC服务器检测 ===========================
-
     minecraft_server_checker_switch = ConfigItem('MinecraftJavaServerChecker', 'switch', False, BoolValidator())
     minecraft_server_name = ConfigItem('MinecraftJavaServerChecker', 'server_name', '', StringValidator(default=''))
     minecraft_server_ip = ConfigItem('MinecraftJavaServerChecker', 'server_ip', '', StringValidator(default=''))
@@ -175,11 +174,8 @@ class MyConfig(QConfig):
     )
 
     # =========================== InformationSwitch (组件开关) ===========================
-
     greeting_switch = ConfigItem('InformationSwitch', 'greeting', True, BoolValidator())
     startup_times_switch = ConfigItem('InformationSwitch', 'startup_times', True, BoolValidator())
-    datetime_switch = ConfigItem('InformationSwitch', 'datetime', True, BoolValidator())
-    holiday_solar_term_switch = ConfigItem('InformationSwitch', 'holiday_solar_term', True, BoolValidator())
     historical_switch = ConfigItem('InformationSwitch', 'historical', False, BoolValidator())
     daily_character_switch = ConfigItem('InformationSwitch', 'daily_character', False, BoolValidator())
 

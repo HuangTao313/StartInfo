@@ -113,7 +113,7 @@
     {%- if datetime_switch -%}
     <div class="header">
         <div class="date-big">{{date}}</div>
-        <div class="lunar-date">{{lunar_date}} · 星期{{weekday}} · 第{{week_num}}周 · 第{{day_num}}天</div>
+        <div class="lunar-date">{% if lunar_date_switch %}{{lunar_date}} · {% endif %}星期{{weekday}}{% if other_date_switch %} · 第{{week_num}}周 · 第{{day_num}}天{% endif %}</div>
         <div class="time-big">{{time}}</div>
     </div>
     {%- endif -%}
@@ -169,14 +169,14 @@
         {%- endif -%}
 
         {# --- 5.2 启动次数 & 节日 & 今日人品 --- #}
-        {%- if startup_times_switch or datetime_switch or daily_character_switch -%}
+        {%- if startup_times_switch or holiday_switch or solar_term_switch or daily_character_switch -%}
         <div class="section">
             <div class="section-content">
                 {%- if startup_times_switch -%}
-                    今天已开机 <b>{{startup_times}}</b> 次{% if datetime_switch or daily_character_switch %}<br>{% endif %}
+                    今天已开机 <b>{{startup_times}}</b> 次{% if holiday_switch or solar_term_switch or daily_character_switch %}<br>{% endif %}
                 {%- endif -%}
-                {%- if datetime_switch -%}
-                    节假日：{{holiday}} · 24 节气：{{solar_term}}{% if daily_character_switch %}<br>{% endif %}
+                {%- if holiday_switch or solar_term_switch -%}
+                    {% if holiday_switch %}节假日：{{holiday}}{% endif %}{% if holiday_switch and solar_term_switch %} · {% endif %}{% if solar_term_switch %}24 节气：{{solar_term}}{% endif %}{% if daily_character_switch %}<br>{% endif %}
                 {%- endif -%}
                 {%- if daily_character_switch -%}
                     🎲 今日人品：{{character}}
@@ -186,7 +186,7 @@
         {%- endif -%}
 
         {# --- 6. 年度进度 --- #}
-        {%- if datetime_switch -%}
+        {%- if other_date_switch -%}
         <div class="section">
             <div class="section-title">📊 年度进度</div>
             <div class="section-content">

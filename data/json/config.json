@@ -4,7 +4,7 @@
         "auto_close_time": 60,
         "close_settings_action": "exit",
         "log_level": "WARNING",
-        "template_file": "default.j2",
+        "template_file": "html_style.j2",
         "theme": "dynamic",
         "theme_color": "#ff009faa",
         "use_win_theme_color": true
@@ -33,11 +33,16 @@
     },
     "InformationSwitch": {
         "daily_character": true,
-        "datetime": true,
         "greeting": true,
         "historical": true,
-        "holiday_solar_term": true,
         "startup_times": true
+    },
+    "DateTime": {
+        "switch": true,
+        "holiday_switch": true,
+        "lunar_date_switch": true,
+        "other_date_switch": true,
+        "solar_term_switch": true
     },
     "QFluentWidgets": {
         "FontFamilies": [

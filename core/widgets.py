@@ -1,8 +1,10 @@
 import datetime
 import time
 
-import zhdate
 from datetime import datetime
+
+from lunar_python import Lunar, Solar
+from lunar_python.util import HolidayUtil
 from typing import Any
 
 from . import ht_lib as lib
@@ -26,13 +28,23 @@ weather_emoji = emoji['weather']
 # 获取全局日期和时间信息
 global_date = datetime.today().strftime('%Y%m%d')
 global_time = time.localtime()
+global_now = datetime.now()
 
 # ===== 本地组件 =====
-# 1.日期和时间组件
-@register(cfg.datetime_switch, 'datetime_switch')
+# 1.日期和时间组件(含农历/24节气/节假日/其他数据子开关)
+@register(
+    cfg.datetime_switch, 'datetime_switch',
+    extra_template_keys={
+        'lunar_date_switch': cfg.lunar_date_switch,
+        'solar_term_switch': cfg.solar_term_switch,
+        'holiday_switch': cfg.holiday_switch,
+        'other_date_switch': cfg.other_date_switch,
+    },
+)
 class DateTimeWidget(LocalWidgetBase):
     WIDGET_NAME = 'DateTime'
     NEED_CACHE = False
+    lunar = Lunar.fromDate(global_now)
 
     def _get_time_emoji(self,current_time) -> str:
         """
@@ -73,9 +85,8 @@ class DateTimeWidget(LocalWidgetBase):
             dict[str, str | Any] | dict[str, str]: 当前时间和时间emoji，出错时返回默认值
         """
         try:
-            current_time = time.localtime()
-            time_str = time.strftime('%X', current_time)
-            time_emoji = self._get_time_emoji(current_time)
+            time_str = time.strftime('%X', global_time)
+            time_emoji = self._get_time_emoji(global_time)
             return {
                 'time': time_str,
                 'time_emoji': time_emoji,
@@ -90,72 +101,117 @@ class DateTimeWidget(LocalWidgetBase):
                 'time_emoji': '🕛',
             }
 
-    # 获取当前日期信息
-    def _get_date(self) -> dict[str, str | int]:
-        """
-           获取日期和时间相关信息
-
-        Returns:
-            dict[str, str | int]: 包含静态日期信息和动态时间信息的元组
-           """
+    def _get_date(self) -> dict[str, str] | None:
+        """获取阳历日期"""
         try:
-            current_time = time.localtime()
-            date_str = f'{current_time.tm_year}年{current_time.tm_mon}月{current_time.tm_mday}日'
+            date = datetime.today().strftime('%Y年%m月%d日')
 
-            # 使用 from_datetime 获取农历日期，避免 today() 的问题
-            try:
-                lunar_date = str(zhdate.ZhDate.from_datetime(datetime.now()))
+            weekday = ['日', '一', '二', '三', '四', '五', '六'][int(time.strftime('%w', global_time))]
 
-            except Exception:
-                # 如果 from_datetime 也失败，尝试手动构造
-                try:
-                    lunar_date = str(zhdate.ZhDate(current_time.tm_year, current_time.tm_mon, current_time.tm_mday))
-                except Exception:
-                    # 彻底失败，返回一个占位值
-                    lunar_date = '农历'
+            return {
+                'date': date,
+                'weekday': weekday
+            }
 
-            weekday = ['日', '一', '二', '三', '四', '五', '六'][int(time.strftime('%w', current_time))]
-            week_num = int(time.strftime('%W', current_time))
-            day_num = int(time.strftime('%j', current_time))
+        except Exception as e:
+            log.error(f'[{self.WIDGET_NAME}] 获取阳历日期失败：{str(e)}')
+            
+    def _get_lunar_date(self) -> dict[str, str] | None:
+        """获取农历日期"""
+        try:
+            lunar_date = f'农历：{self.lunar.getMonthInChinese()}月{self.lunar.getDayInChinese()}'
+            return {'lunar_date': lunar_date}
+        
+        except Exception as e:
+            log.error(f'[{self.WIDGET_NAME}] 获取农历日期失败:{str(e)}')
+
+    def _get_other_data(self) -> dict[str, int | str] | None:
+        """获取其他时间信息"""
+        try:
+            week_num = int(time.strftime('%W', global_time))
+            day_num = int(time.strftime('%j', global_time))
 
             # 年度进度百分比计算
-            is_leap = current_time.tm_year % 4 == 0 and (current_time.tm_year % 100 != 0 or current_time.tm_year % 400 == 0)
+            is_leap = global_time.tm_year % 4 == 0 and (global_time.tm_year % 100 != 0 or global_time.tm_year % 400 == 0)
             total_days = 366 if is_leap else 365
             year_progress = round((int(day_num) / int(total_days)) * 100, 2)
             year_remain = round(100 - year_progress, 2)
 
             data = {
-                'date': date_str,
-                'lunar_date': lunar_date,
-                'weekday': weekday,
                 'week_num': week_num,
                 'day_num': day_num,
                 'year_progress': f'{year_progress}%',
-                'year_remain': f'{year_remain}%',
+                'year_remain': f'{year_remain}%'
             }
             return data
 
         except Exception as e:
-            log.error(f'获取时间信息失败：{str(e)}')
-            fallback = time.localtime()
+            log.error(f'[{self.WIDGET_NAME}] 获取其他信息失败:{str(e)}')
             return {
-                'date': f'{fallback.tm_year}年{fallback.tm_mon}月{fallback.tm_mday}日',
-                'lunar_date': f'农历{fallback.tm_mon}月{fallback.tm_mday}日',
-                'weekday': '日',
-                'week_num': 0,
-                'day_num': 0,
-                'year_progress': '0%',
-                'year_remain': '100%',
+                'week_num': '',
+                'day_num': '',
+                'year_progress': '',
+                'year_remain': ''
             }
 
-    def _fetch_data(self) -> dict:
-        """合并日期和时间信息
+    def _get_solar_term(self) -> dict[str, str | Any] | dict[str, str]:
+        """获取24节气信息"""
+        try:
+            solar_term = self.lunar.getJieQi()
+            if solar_term == '':
+                solar_term = f'{self.lunar.getPrevJieQi()}后'
 
-        Returns:
-            dict: 包含日期和时间信息的字典
-        """
+            return {'solar_term': solar_term}
+
+        except Exception as e:
+            log.error(f'[{self.WIDGET_NAME}] 获取24节气失败:{e}')
+            return {'solar_term': ''}
+
+    def _get_holiday(self) -> dict[str, str | Any] | dict[str, str]:
+        """获取节假日信息"""
+        try:
+            solar = Solar.fromDate(global_now)
+            date_str = solar.toYmd()
+            holiday = HolidayUtil.getHoliday(date_str)
+
+            if holiday:
+                if holiday.isWork():
+                    data = '工作日'
+                else:
+                    data = holiday.getName()
+
+            else:
+                # 不在特殊节假日安排中
+                if solar.getWeek() in (0, 6):
+                    data = '休息日'
+
+                else:
+                    data = '工作日'
+
+            return {'holiday': data}
+
+        except Exception as e:
+            log.error(f'[{self.WIDGET_NAME}] 获取节假日信息失败:{str(e)}')
+            return {'holiday': ''}
+
+    def _fetch_data(self) -> dict[str, str] | None:
+        """合并所有信息"""
+        # 阳历日期和时间默认显示
         data = self._get_date()
         data.update(self._get_time())
+
+        # 按需获取需要显示的信息
+        info_config = [
+            (cfg.lunar_date_switch, self._get_lunar_date),
+            (cfg.solar_term_switch, self._get_solar_term),
+            (cfg.holiday_switch, self._get_holiday),
+            (cfg.other_date_switch, self._get_other_data)
+        ]
+
+        for switch, func in info_config:
+            if switch.value:
+                data.update(func())
+
         return data
 
 # 2.倒数日
@@ -176,7 +232,7 @@ class CountDownDayWidget(LocalWidgetBase):
         #     return {'is_countdown_available': False}
 
         # 1. 获取当前日期（只要日期，不要时分秒，方便对齐）
-        today = datetime.now().date()
+        today = global_now.date()
         # 2.获取目标日期
         target_date_str = cfg.countdown_date.value
         try:
@@ -571,78 +627,57 @@ class TodayInHistoryWidget(NetworkWidgetBase):
     WIDGET_NAME = 'TodayInHistory'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'
-    API_URL = api['mxnzp']['today_in_history']['url']
-    PARAMS = {
-        'args': 1,
-        'app_id': api['mxnzp']['today_in_history']['app_id'],
-        'app_secret': api['mxnzp']['today_in_history']['app_secret']
-    }
+    API_URL = api['xxapi_history_url']
 
     def _parse_data(self, raw_data: dict) -> dict | None:
         """解析数据"""
-        if raw_data['code'] == 1:
+        if raw_data['code'] == 200:
             history_data = raw_data['data']
             if len(history_data) > 0:
-                history = history_data[0]
+                history = history_data[0].split()
                 # 格式化输出信息
                 return {
-                    'historical_date': f'{history['year']}年{history['month']}月{history['day']}日',
-                    'historical_event': history['title']
+                    'historical_date': history[0],
+                    'historical_event': history[1]
                 }
 
             else:
-                log.error('历史上的今天：没有找到历史上的今天的信息')
+                log.error(f'[{self.WIDGET_NAME}] 没有找到历史上的今天的信息')
                 self.skip_cache()
                 return None
         else:
             self.skip_cache()
-            log.error('历史上的今天：请求失败')
+            log.error(f'[{self.WIDGET_NAME}] 请求失败')
             return None
 
 # 3.节假日和24节气
-@register(cfg.holiday_solar_term_switch, 'holiday_solar_term_switch')
-class HolidayAndSolarTermWidget(NetworkWidgetBase):
-    WIDGET_NAME = 'HolidayAndSolarTerm'
-    NEED_CACHE = True
-    LOCAL_INTERVAL = '1d'
-    # API_URL 在 _fetch_data 中动态拼接日期，留空占位
-    API_URL = ''
-    PARAMS = {
-        'args': 1,
-        'app_id': api['mxnzp']['holiday_solar_term']['app_id'],
-        'app_secret': api['mxnzp']['holiday_solar_term']['app_secret'],
-    }
+# @register(cfg.holiday_solar_term_switch, 'holiday_solar_term_switch')
+# class HolidayAndSolarTermWidget(NetworkWidgetBase):
+#     WIDGET_NAME = 'HolidayAndSolarTerm'
+#     NEED_CACHE = True
+#     LOCAL_INTERVAL = '1d'
+#     # API_URL 在 _fetch_data 中动态拼接日期，留空占位
+#     API_URL = api['xr_holiday_solar_term_url']
+#
+#     def _parse_data(self, raw_data: dict) -> dict | None:
+#         """解析 API 响应，同时提取节气和节假日信息。"""
+#         required = {'jq', 'gzr'}
+#         if not required.issubset(raw_data):
+#             msg = f'{self.WIDGET_NAME}API 返回数据格式异常'
+#             log.error(msg)
+#             self.skip_cache()
+#             raise ValueError(msg)
+#
+#             holiday = raw_data.get('jjr')
+#             solar_term = data.get('solarTerms') or '没有找到 24 节气'
+#             return {'holiday': holiday, 'solar_term': solar_term}
+#
+#         else:
+#             self.skip_cache()
+#             log.error('节假日和 24 节气信息：请求失败')
+#             return None
 
-    def _set_url(self) -> None:
-        """拼接当天日期到 URL 上。"""
-        base_url = api['mxnzp']['holiday_solar_term']['url']
-        today = time.strftime('%Y%m%d')
-        self.API_URL = f'{base_url}/{today}'
-
-    def _fetch_data(self) -> dict | None:
-        """同步获取。"""
-        self._set_url()
-        return self._sync_request()
-
-    async def _fetch_data_async(self) -> dict | None:
-        """异步获取。"""
-        self._set_url()
-        return await self._async_request()
-
-    def _parse_data(self, raw_data: dict) -> dict | None:
-        """解析 API 响应，同时提取节气和节假日信息。"""
-        if raw_data.get('code') == 1:
-            data = raw_data['data']
-            holiday = data.get('typeDes') or '没有节假日'
-            solar_term = data.get('solarTerms') or '没有找到 24 节气'
-            return {'holiday': holiday, 'solar_term': solar_term}
-
-        else:
-            self.skip_cache()
-            log.error('节假日和 24 节气信息：请求失败')
-            return None
-
-# 4.每日一言
+# 3.每日一言
 @register(cfg.words_switch, 'words_switch')
 class EveryDayWordsWidget(ExtNetworkWidgetBase):
     WIDGET_NAME = 'EveryDayWords'
@@ -701,7 +736,7 @@ class EveryDayWordsWidget(ExtNetworkWidgetBase):
             log.error('每日一言：获取失败')
             return None
 
-# 5.MC 服务器状态
+# 4.MC 服务器状态
 @register(cfg.minecraft_server_checker_switch, 'mc_server_check_switch')
 class MCServerStatusWidget(LocalWidgetBase):
     WIDGET_NAME = 'MCServerStatus'

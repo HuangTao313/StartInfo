@@ -137,19 +137,7 @@ class JsonHandler:
                 return {
                     'General': {
                         'is_first_startup': True,
-                        'data_reset_times': 0,
-                        'startup_times': 1,
                         'last_birthday_date': '',  # 记录上次显示生日祝福的日期
-                    },
-                    'Data': {
-                        'date': {},
-                        'weather': {},
-                        'other': {}
-                    },
-                    'Easter_egg': {
-                        'name': '',
-                        'is_get': False,
-                        'get_date': ''
                     }
                 }
         return {}

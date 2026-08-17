@@ -47,17 +47,6 @@
         "99": "未知"
         }
     },
-    "mxnzp": {
-    "today_in_history": {
-      "url": "https://www.mxnzp.com/api/history/today",
-      "app_id": "7nj0otjrhohslrfx",
-      "app_secret": "VwOGJH9c8Ux9OeQ4oBgBNsF8bAdNX4lC"
-        },
-    "holiday_solar_term": {
-      "url": "https://www.mxnzp.com/api/holiday/single",
-      "app_id": "nnwjnnmhhqrmlqfa",
-      "app_secret": "aZQ3dLKVODHn1VC4wBBcIzTHQa3aoZlz"
-        }
-    },
+    "xxapi_history_url": "https://v2.xxapi.cn/api/history",
     "check_update_url": "https://startinfo.oss-cn-wuhan-lr.aliyuncs.com/version.json"
 }

@@ -13,17 +13,17 @@
 
 {%- if datetime_switch -%}
 ⭐️日期信息⭐️
-今天是{{ date }}  ՞•･•՞🐾（{{ lunar_date }}星期{{ weekday }}喵✨！
-今年的第{{ week_num }}周，是喜欢主人的第{{ day_num }}天呐ฅ( •̥ ̫ •̥ )ฅ喵✨~
+今天是{{ date }}  ՞•･•՞🐾（{% if lunar_date_switch %}{{ lunar_date }} {% endif %}星期{{ weekday }}喵✨！
+{% if other_date_switch %}今年的第{{ week_num }}周，是喜欢主人的第{{ day_num }}天呐ฅ( •̥ ̫ •̥ )ฅ喵✨~{% endif %}
 ฅ我们还有多久见到彼此呢 ٨ـﮩﮩ٨ـ♡‎‎ﮩ٨ـﮩﮩ٨喵~ฅ
-节假日：{{ holiday }} | 24节气：{{ solar_term }}哦喵✨！{% if daily_character_switch %}
+{% if holiday_switch %}节假日：{{ holiday }}{% if solar_term_switch %} | {% endif %}{% endif %}{% if solar_term_switch %}24节气：{{ solar_term }}{% endif %}{% if holiday_switch or solar_term_switch %}哦喵✨！{% endif %}{% if daily_character_switch %}
 🎲今日人品：{{ character }}喵✨~{% endif %}
 {{ "\n" }}
 {%- endif -%}
 
 {%- if datetime_switch -%}
 ⭐️年度进度⭐️
-今年已过{{ year_progress }}，还剩{{ year_remain }}ദ്ദി˶>𖥦<)✧ 喵✨~
+{% if other_date_switch %}今年已过{{ year_progress }}，还剩{{ year_remain }}ദ്ദി˶>𖥦<)✧ 喵✨~{% endif %}
 
 {{ time_emoji }}当前时间：{{ time }}U𖥦U喵✨！
 {%- if is_countdown_available -%}

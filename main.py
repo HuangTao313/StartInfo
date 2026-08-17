@@ -192,13 +192,18 @@ async def main() -> None:
         jinja2_data.pop('life_days', None)
 
     # ── 注入开关状态 ──
-    switch_keys = {
-        info.template_key: info.switch.value
-        for info in registered_widgets if info.template_key
-    }
+    switch_keys = {}
+    for info in registered_widgets:
+        if info.template_key:
+            switch_keys[info.template_key] = info.switch.value
+        for key, item in (info.extra_template_keys or {}).items():
+            switch_keys[key] = item.value
 
     jinja2_data.update(switch_keys)
-    jinja2_data['is_all_off'] = not any(switch_keys.values())
+    # 仅统计主开关，子开关随主开关显示，避免子开关开启时误判"未开启任何模块"
+    jinja2_data['is_all_off'] = not any(
+        info.switch.value for info in registered_widgets if info.template_key
+    )
 
     # ── 判断生日是否已显示（弹窗前记录，弹窗后标记） ──
     birthday_data = results.get('Birthday')

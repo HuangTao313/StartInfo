@@ -63,8 +63,8 @@ dependencies = [
     "viztracer>=1.1.1",
     "wheel>=0.47.0",
     "yarl>=1.24.2",
-    "zhdate>=0.1",
     "zipp>=4.1.0",
     "zope-event>=6.2",
     "zope-interface>=8.4",
+    "lunar-python>=1.4.8",
 ]

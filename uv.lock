@@ -429,6 +429,12 @@ wheels = [
 ]
 
 [[package]]
+name = "lunar-python"
+version = "1.4.8"
+source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/59/45/5154c95ae7feaab7ca508e71c3288692c09952dfe33b03b7c2f18a32e2cd/lunar_python-1.4.8.tar.gz", hash = "sha256:3aa11cc73c25e70ddf0ba5bdac7398c03acc9491a3aa512a91c9642973b669d6", size = 105862, upload-time = "2025-11-05T12:31:53.353Z" }
+
+[[package]]
 name = "markdown-it-py"
 version = "4.2.0"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
@@ -3237,6 +3243,7 @@ dependencies = [
     { name = "importlib-resources" },
     { name = "jinja2" },
     { name = "loguru" },
+    { name = "lunar-python" },
     { name = "markdown-it-py" },
     { name = "markupsafe" },
     { name = "mcstatus" },
@@ -3257,6 +3264,7 @@ dependencies = [
     { name = "pyside6-fluent-widgets" },
     { name = "pysidesix-frameless-window" },
     { name = "pysocks" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "qasync" },
     { name = "requests" },
     { name = "setuptools" },
@@ -3267,7 +3275,6 @@ dependencies = [
     { name = "viztracer" },
     { name = "wheel" },
     { name = "yarl" },
-    { name = "zhdate" },
     { name = "zipp" },
     { name = "zope-event" },
     { name = "zope-interface" },
@@ -3302,6 +3309,7 @@ requires-dist = [
     { name = "importlib-resources", specifier = ">=7.1.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "lunar-python", specifier = ">=1.4.8" },
     { name = "markdown-it-py", specifier = ">=4.2.0" },
     { name = "markupsafe", specifier = ">=3.0.3" },
     { name = "mcstatus", specifier = ">=13.1.0" },
@@ -3322,6 +3330,7 @@ requires-dist = [
     { name = "pyside6-fluent-widgets", specifier = ">=1.11.2" },
     { name = "pysidesix-frameless-window", specifier = ">=0.8.1" },
     { name = "pysocks", specifier = ">=1.7.1" },
+    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=312" },
     { name = "qasync", specifier = ">=0.28.0" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "setuptools", specifier = ">=82.0.1" },
@@ -3332,7 +3341,6 @@ requires-dist = [
     { name = "viztracer", specifier = ">=1.1.1" },
     { name = "wheel", specifier = ">=0.47.0" },
     { name = "yarl", specifier = ">=1.24.2" },
-    { name = "zhdate", specifier = ">=0.1" },
     { name = "zipp", specifier = ">=4.1.0" },
     { name = "zope-event", specifier = ">=6.2" },
     { name = "zope-interface", specifier = ">=8.4" },
@@ -3438,15 +3446,6 @@ wheels = [
     { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/86/e4/62a06b7e87c4246ac76b7c2da136f972eb4a3a1fc94abb07e7022d6fdb0a/yarl-1.24.5-cp313-cp313-win_amd64.whl", hash = "sha256:2dbe06fc16bc91502bca713704022182e5729861ae00277c3a23354b40929740", size = 97454, upload-time = "2026-07-20T02:06:29.163Z" },
     { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/9e/c9/5fc8025b318ab10db413b61056bd0d95c557a70e8df4210c7511f866329c/yarl-1.24.5-cp313-cp313-win_arm64.whl", hash = "sha256:6b8536851f9f65e7f00c7a1d49ba7f2be0ffe2c11555367fc9f50d9f842410a1", size = 92813, upload-time = "2026-07-20T02:06:31.113Z" },
     { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/61/02/962c1cbfc401a30c1d034dc67ff395f64b52302c6d62de556c1fca99acc0/yarl-1.24.5-py3-none-any.whl", hash = "sha256:a33700d13d9b7d84fd10947b09ff69fb9a792e519c8cb9764a3ca70baa6c23a7", size = 58612, upload-time = "2026-07-20T02:07:43.461Z" },
-]
-
-[[package]]
-name = "zhdate"
-version = "0.1"
-source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/67/64/7ba359eab7f61a4852a5125da723544a99d27d37d89b0e3608177195a1cb/zhdate-0.1.tar.gz", hash = "sha256:cf54c07a9a9a027db3a970f7477b7eb7962a0fc0d5f5d5d284a76e953e68993c", size = 6598, upload-time = "2019-02-18T22:48:39.672Z" }
-wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/e5/5e/5ddf769b1ca31d1e997b94a390279da6892c99702593c1feedb93a70f508/zhdate-0.1-py3-none-any.whl", hash = "sha256:d003657bf49d6722c4c3adcb9a91722f6de1077bf3be0e54c0f4492b5e028fa4", size = 19442, upload-time = "2019-02-18T22:48:37.629Z" },
 ]
 
 [[package]]
