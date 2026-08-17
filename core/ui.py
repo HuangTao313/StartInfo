@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import asyncio
+import re
 from PySide6.QtCore import QTimer, Qt, QLocale
 from PySide6.QtWidgets import QApplication, QFileDialog, QHBoxLayout
 from qfluentwidgets import Dialog, Theme, setTheme, ListWidget, PushButton, PrimaryPushButton,setThemeColor, FluentTranslator
@@ -223,14 +224,10 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     # 3. 动态时间更新逻辑 (保持开启)
     timer = QTimer()
 
-    # 模板渲染出的初始时间串（与组件 _get_time 的 %X 格式一致），
-    # 后续只精确替换该串，避免误改自定义模板中其他 HH:MM:SS 文本
-    initial_time = time.strftime('%X', time.localtime())
-
     def update_time():
-        new_time = time.strftime('%X', time.localtime())
-        # 基于原始渲染文本替换，避免时间串累积漂移
-        new_content = clean_text.replace(initial_time, new_time)
+        new_time = time.strftime('%H:%M:%S', time.localtime())
+        current_display_text = dialog_instance.contentLabel.text()
+        new_content = re.sub(r'\d{2}:\d{2}:\d{2}', new_time, current_display_text)
         dialog_instance.contentLabel.setText(new_content)
 
     timer.timeout.connect(update_time)
