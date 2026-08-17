@@ -1,11 +1,9 @@
 import subprocess
-import zipfile
 import asyncio
 import httpx
 import time
 import json
 import hashlib
-import shutil
 import sys
 from pathlib import Path
 from . import ht_lib as lib
@@ -62,64 +60,6 @@ def get_version_file() -> bool:
 
 
 # ==================== 核心工具函数 ====================
-# def _create_replace_script(pending_files: list, exe_path: Path) -> None:
-#     """
-#     【内部函数】创建临时替换脚本（.bat）
-#     【输入】
-#         pending_files: list - 待替换的 .pending 文件列表
-#         exe_path: Path - 主程序路径（替换完成后启动）
-#     【输出】无（创建脚本到 DOWNLOAD_PATH/replace_pending_files.bat）
-#     【原理】
-#       - 创建 Windows 批处理脚本（无需 Python 环境）
-#       - 等待主进程退出 → 替换文件 → 启动主程序 → 自删除
-#     【注意】
-#       - 使用 .bat 而非 .py，兼容 Nuitka 打包后的环境
-#     """
-#     replace_script_path = lib.DOWNLOAD_PATH / 'replace_pending_files.bat'
-#     lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)  # 确保目录存在
-#
-#     # 构建替换任务（bat 语法）
-#     replace_tasks = []
-#     for pending_file in pending_files:
-#         target_file = pending_file.with_suffix('')  # 去掉 .pending 后缀
-#         replace_tasks.append(f"""
-# echo [替换中] {target_file.name}...
-# if exist "{target_file}" del /f /q "{target_file}"
-# move /y "{pending_file}" "{target_file}"
-# echo [成功] {target_file.name} 已替换
-# """)
-#
-#     script_content = f"""@echo off
-# chcp 65001 > nul
-# echo ====================================================
-# echo 等待主程序退出...
-# timeout /t 2 /nobreak > nul
-# echo 开始替换文件...
-# echo ====================================================
-#
-# {''.join(replace_tasks)}
-#
-# echo ====================================================
-# echo 所有文件替换完成，正在启动主程序...
-# echo ====================================================
-#
-# start "" "{exe_path}" --update
-# echo [启动] 主程序已启动
-#
-# echo [清理] 替换脚本已删除
-# del /f /q "%~f0"
-#
-# timeout /t 1 /nobreak > nul
-# exit
-# """
-#
-#     # 使用 UTF-8-SIG 编码（带 BOM），确保 Windows 批处理正确识别中文
-#     with open(replace_script_path, 'w', encoding='utf-8-sig') as f:
-#         f.write(script_content)
-#
-#     log.info(f"更新器-已创建替换脚本: {replace_script_path}")
-
-
 
 def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
     """
@@ -153,7 +93,7 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
 # ==================== 下载模块 ====================
 def download_file(url: str, filename: str, show_progress: bool = True) -> Path | None:
     """
-    【使用场景】下载更新包（增量包/安装程序）
+    【使用场景】下载完整更新安装程序
     【输入】
         url: str - 下载链接
         filename: str - 保存文件名（不含路径）
@@ -244,143 +184,6 @@ def _print_progress_bar(percent: int, downloaded: int, total: int):
     # 打印进度（覆盖上一行）
     print(f"\r[{bar}] {percent:3d}% ({format_bytes(downloaded)} / {format_bytes(total)})", end='', flush=True)
 
-# ==================== 增量更新模块 ====================
-# def apply_incremental_update(zip_path: Path, delete_list_filename: str = "delete.json") -> tuple[bool, list[Path]]:
-#     """
-#     【使用场景】应用增量更新包（解压→删旧文件→覆盖→清理）
-#     【输入】
-#         zip_path: Path - 增量包路径
-#         delete_list_filename: str - 包内删除列表文件名（默认"delete.json"）
-#     【输出】tuple[bool, list[Path]] - (是否成功, 待重启替换的文件列表)
-#     【流程】
-#       1. 解压到临时目录（自动处理中文路径）
-#       2. 读取 delete.json → 删除 MAIN_PATH 下对应文件/目录
-#       3. 复制临时目录中其他文件到 MAIN_PATH（覆盖）
-#       4. 清理临时目录 + delete.json
-#     【注意】
-#       - delete.json 格式: ["相对路径1", "目录/"]（目录以/结尾）
-#       - 跳过复制 delete.json 本身
-#       - 严格保留目录结构
-#     """
-#     temp_dir = lib.DOWNLOAD_PATH / "update_temp"
-#     temp_dir.mkdir(parents=True, exist_ok=True)
-#     pending_files: list[Path] = []  # 记录待重启替换的文件
-#
-#     try:
-#         # === 步骤1: 解压到临时目录（复用你的中文修复逻辑）===
-#         if not unzip_to_temp(zip_path, temp_dir):
-#             return False
-#
-#         # === 步骤2: 处理删除列表 ===
-#         delete_file = temp_dir / delete_list_filename
-#         if delete_file.exists():
-#             try:
-#                 delete_list = lib.read_json(delete_file)
-#                 deleted_count = 0
-#                 for rel_path in delete_list:
-#                     target = lib.MAIN_PATH / rel_path.strip()
-#                     if target.exists():
-#                         try:
-#                             if target.is_dir():
-#                                 shutil.rmtree(target)
-#                             else:
-#                                 target.unlink()
-#                             deleted_count += 1
-#                         except Exception as e:
-#                             log.warning(f"删除失败 {rel_path}: {e}")
-#                 log.info(f"更新器-根据 {delete_list_filename} 删除 {deleted_count} 项")
-#                 delete_file.unlink()  # 立即清理，避免被复制
-#             except Exception as e:
-#                 log.error(f"更新器-处理删除列表失败: {e}")
-#                 return False
-#
-#         # === 步骤3: 覆盖主程序目录（跳过 delete.json）===
-#         copied_count = 0
-#         for src_item in temp_dir.rglob('*'):
-#             if not src_item.is_file() or src_item.name == delete_list_filename:
-#                 continue
-#             # 计算相对路径
-#             rel_path = src_item.relative_to(temp_dir)
-#             dest_path = lib.MAIN_PATH / rel_path
-#
-#             # 确保目标目录存在
-#             dest_path.parent.mkdir(parents=True, exist_ok=True)
-#
-#             # 覆盖文件（处理文件锁定）
-#             try:
-#                 if dest_path.exists():
-#                     dest_path.unlink()
-#                 shutil.copy2(src_item, dest_path)
-#                 copied_count += 1
-#             except PermissionError:
-#                 # 文件被占用（如 core.pyd 正在运行）→ 标记待重启生效
-#                 pending_path = dest_path.with_suffix(dest_path.suffix + '.pending')
-#                 shutil.copy2(src_item, pending_path)
-#                 pending_files.append(pending_path)  # 记录待替换文件
-#                 log.warning(f"更新器-文件被占用，标记待重启生效: {dest_path.name}")
-#             except Exception as e:
-#                 log.error(f"更新器-覆盖文件失败 {rel_path}: {e}")
-#                 return False
-#
-#         log.info(f"更新器-增量更新完成: 覆盖 {copied_count} 个文件")
-#         if pending_files:
-#             log.info(f"更新器-待重启替换的文件: {[f.name for f in pending_files]}")
-#
-#         return True, pending_files
-#
-#     except Exception as e:
-#         log.error(f"更新器-应用增量更新异常: {e}")
-#         return False, []
-#     finally:
-#         # 清理临时目录
-#         if temp_dir.exists():
-#             try:
-#                 shutil.rmtree(lib.DOWNLOAD_PATH)
-#
-#             except Exception as e:
-#                 log.warning(f"更新器-清理临时目录失败: {e}")
-#
-#
-# def unzip_to_temp(zip_path: Path, extract_to: Path) -> bool:
-#     """
-#     【内部函数】安全解压ZIP到临时目录（专为增量更新设计）
-#     【输入】
-#         zip_path: Path - ZIP文件路径
-#         extract_to: Path - 目标目录
-#     【输出】bool - True=解压成功
-#     【特点】
-#       - 修复中文文件名（CP437→GBK/UTF-8）
-#       - 跳过目录条目
-#       - 详细错误日志
-#     """
-#     try:
-#         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#             for file in zip_ref.namelist():
-#                 # 修复中文路径
-#                 try:
-#                     fixed_name = file.encode('cp437').decode('gbk', errors='strict')
-#                 except:
-#                     try:
-#                         fixed_name = file.encode('cp437').decode('utf-8', errors='strict')
-#                     except:
-#                         fixed_name = file  # 保留原始
-#
-#                 # 跳过目录
-#                 if fixed_name.endswith('/') or fixed_name.endswith('\\'):
-#                     continue
-#
-#                 target_path = extract_to / fixed_name
-#                 target_path.parent.mkdir(parents=True, exist_ok=True)
-#
-#                 with zip_ref.open(file) as source, open(target_path, 'wb') as target:
-#                     shutil.copyfileobj(source, target)
-#         log.info(f"更新器-解压成功: {len(zip_ref.namelist())} 项 → {extract_to}")
-#         return True
-#     except Exception as e:
-#         log.error(f"更新器-解压失败: {e}")
-#         return False
-
-
 # ==================== 完整更新模块 ====================
 def apply_full_update(installer_path: Path) -> None:
     """
@@ -416,7 +219,7 @@ def check_update() -> tuple[bool, dict]:
     【使用场景】判断是否需要更新 + 返回更新策略
     【输入】无（自动读取 VERSION_PATH 和 lib.CURRENT_VERSION_JSON）
     【输出】(need_update: bool, update_info: dict)
-        update_info 包含: type, url, sha256, [changelog], [reason], [delete_list]
+        update_info 包含: type, url, sha256, [changelog], [reason]
     """
     # 读取本地版本
     current_ver = lib.CURRENT_VERSION_JSON.get('version', '0.0.0')
@@ -442,45 +245,31 @@ def check_update() -> tuple[bool, dict]:
 
     log.info(f"更新器-发现新版本! 当前: {current_ver} → 远程: {remote_ver}")
 
-    # 决策分支
-    if remote.get('force_full_update', False):
-        return True, _build_update_info(remote, 'full', '服务端强制完整更新')
-
-    # 尝试增量更新
-    incremental_pkg = remote.get('incremental_packages', {}).get(current_ver)
-    if incremental_pkg:
-        return True, _build_update_info(remote, 'incremental', f'支持 {current_ver} → {remote_ver} 增量更新',
-                                        incremental_pkg)
-
-    # 降级完整更新
-    return True, _build_update_info(remote, 'full', f'当前版本 {current_ver} 无增量包，使用完整更新')
+    # 决策：完整更新（服务端强制 或 常规新版本）
+    reason = '服务端强制完整更新' if remote.get('force_full_update', False) else f'当前版本 {current_ver} 可升级到 {remote_ver}'
+    return True, _build_update_info(remote, 'full', reason)
 
 
-def _build_update_info(remote: dict, update_type: str, reason: str, pkg: dict = None) -> dict:
-    """【内部函数】构建统一的更新信息"""
-    if pkg is None:  # 完整更新
-        pkg = remote.get('full_package', {})
+def _build_update_info(remote: dict, reason: str) -> dict:
+    """【内部函数】构建完整更新的更新信息"""
+    pkg = remote.get('full_package', {})
 
     return {
         'version': remote.get('version', '版本号获取失败'),
         'release_date': remote.get('release_date', '日期获取失败'),
         'changelog': remote.get('changelog', '更新日志获取失败'),
-        'type': update_type,
+        'type': 'full',
         'url': pkg.get('url', ''),
         'sha256': pkg.get('sha256', ''),
         'reason': reason,
-        **({'delete_list': pkg.get('delete_list', 'delete.json')} if update_type == 'incremental' else {})
     }
 
 
 def perform_update(update_info: dict) -> None:
-    """执行完整的更新流程（下载 → 校验 → 应用）"""
-    update_type_en = update_info.get('type', '')
-    file_name = 'update_package.zip' if update_type_en == 'incremental' else 'StartInfo.exe'
-
+    """执行完整更新流程（下载 → 校验 → 应用安装程序）"""
     # 下载
-    log.info(f'更新器-准备{"增量" if update_type_en == "incremental" else "完整"}更新，正在下载...')
-    update_file_path = download_file(update_info['url'], filename=file_name)
+    log.info('更新器-准备完整更新，正在下载...')
+    update_file_path = download_file(update_info['url'], filename='StartInfo.exe')
     if not update_file_path:
         ui.dialog('更新失败', '下载更新包时出错，请稍后重试。')
         return
@@ -490,27 +279,8 @@ def perform_update(update_info: dict) -> None:
         ui.dialog('更新失败', '更新包校验失败，文件可能已损坏。')
         return
 
-    # 应用
-    if update_type_en == 'incremental':
-        success, pending_files = apply_incremental_update(update_file_path)
-        if success:
-            if pending_files:
-                # 启动临时脚本处理待替换文件
-                _create_replace_script(pending_files, lib.EXE_PATH)
-                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version", "版本号获取失败")}\n将在后台完成更新后自动重启...')
-
-                # 启动替换脚本并退出当前进程（释放文件锁）
-                replace_script = lib.DOWNLOAD_PATH / 'replace_pending_files.bat'
-                subprocess.Popen([str(replace_script)], shell=True)
-            else:
-                ui.dialog('更新成功', f'程序已更新至最新版本{update_info.get("version", "版本号获取失败")}')
-                subprocess.Popen([lib.EXE_PATH, "--update"])
-            sys.exit()
-
-        else:
-            ui.dialog('更新失败', '增量更新过程中出现错误。')
-    else:
-        apply_full_update(update_file_path)  # 此函数会直接退出进程
+    # 应用（此函数会启动安装程序并退出当前进程）
+    apply_full_update(update_file_path)
 
 async def check_update_logic() -> tuple[bool, dict]:
     """
