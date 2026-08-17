@@ -630,8 +630,9 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
             return await w.get_data_async()
 
         方法返回值非空 → 显示 success_msg
-        返回空/None  → 显示 fail_msg
-        抛出异常     → 显示异常信息
+        返回 None      → 静默（表示无需操作，不弹任何提示）
+        返回 False     → 显示 fail_msg
+        抛出异常       → 显示异常信息
 
     也适用于同步方法：
         @action('删除成功')
@@ -651,6 +652,9 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
                     InfoBar.success(title=success_msg, content='', parent=self,
                                     position=InfoBarPosition.TOP,
                                     duration=2000)
+                elif result is None:
+                    # 返回 None 表示无需操作（如数据源未变更），静默处理
+                    pass
                 else:
                     InfoBar.error(title=fail_msg, content='', parent=self,
                                   position=InfoBarPosition.TOP,

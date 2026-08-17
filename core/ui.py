@@ -1,7 +1,6 @@
 import sys
 import os
 import time
-import re
 import asyncio
 from PySide6.QtCore import QTimer, Qt, QLocale
 from PySide6.QtWidgets import QApplication, QFileDialog, QHBoxLayout
@@ -199,248 +198,6 @@ def error_dialog(text: str) -> None:
             log.error(f'打开日志文件失败：{e}')
             dialog('打开日志文件失败╥﹏╥...', f'{e}')
 
-    else:
-        log.info('用户取消了操作，程序退出')
-        sys.exit()
-
-# ========== 选项选择对话框 (ChoiceBox) ==========
-class _ChoiceBox(Dialog):
-    """使用 QFluentWidgets 实现的选项选择对话框"""
-
-    def __init__(self, title: str, message: str, options: list[str], parent=None):
-        # 使用 Dialog 默认的标题和消息
-        super().__init__(title, message, parent)
-
-        self.options = options
-        self.selected_option = None
-
-        # 移除原有的按钮
-        self.yesButton.hide()
-        self.cancelButton.hide()
-
-        # 重新创建 UI
-        self._init_ui()
-
-    def _init_ui(self):
-        """初始化 UI"""
-        # 获取内容布局
-        content_layout = self.vBoxLayout
-
-        # 设置布局间距 - 减小间距让列表更靠上
-        content_layout.setSpacing(0)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-
-        # 创建 ListWidget - 使用 QFluentWidgets 默认样式
-        self.list_widget = ListWidget()
-        self.list_widget.setMinimumHeight(150)
-        self.list_widget.setMaximumHeight(350)
-
-        # 添加列表项
-        for option in self.options:
-            self.list_widget.addItem(option)
-
-        # 双击事件
-        self.list_widget.itemDoubleClicked.connect(self._on_item_double_clicked)
-
-        # 选中事件
-        self.list_widget.currentItemChanged.connect(self._on_current_item_changed)
-
-        content_layout.addWidget(self.list_widget)
-
-        # 创建按钮布局
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
-        button_layout.setContentsMargins(20, 15, 20, 20)
-
-        # 确定按钮（高亮样式）
-        self.ok_button = PrimaryPushButton('确定')
-        self.ok_button.setMinimumWidth(100)
-        self.ok_button.clicked.connect(self._on_ok_clicked)
-        self.ok_button.setEnabled(False)  # 初始禁用，选中选项后启用
-
-        # 取消按钮（普通样式）
-        self.cancel_button = PushButton('取消')
-        self.cancel_button.setMinimumWidth(100)
-        self.cancel_button.clicked.connect(self.reject)
-
-        # 添加按钮到布局
-        button_layout.addStretch()
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-
-        content_layout.addLayout(button_layout)
-
-        # 设置窗口大小 - 更宽更高
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(450)
-        
-        # 窗口居中显示
-        self.adjustSize()
-        screen = QApplication.primaryScreen().geometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
-        self.move(x, y)
-
-    def _on_item_double_clicked(self, item):
-        """双击选项事件"""
-        self.selected_option = item.text()
-        self.accept()
-
-    def _on_current_item_changed(self, current, previous):
-        """选中项变化事件"""
-        # 有选中项时启用确定按钮
-        self.ok_button.setEnabled(current is not None)
-
-    def _on_ok_clicked(self):
-        """点击确定按钮事件"""
-        current_item = self.list_widget.currentItem()
-        if current_item:
-            self.selected_option = current_item.text()
-            self.accept()
-
-    def get_result(self) -> str | None:
-        """获取用户选择的选项"""
-        return self.selected_option
-
-
-def choicebox(title: str, message: str, options: list[str]) -> str | None:
-    """
-    显示选项选择对话框（列表样式）
-
-    :param title: 对话框标题
-    :param message: 提示信息（可选）
-    :param options: 选项列表
-    :return: 用户选择的选项，如果取消则返回 None
-    """
-    # 确保 QApplication 已初始化
-    app = app_manager.get_app()
-
-    # 创建对话框
-    dialog = _ChoiceBox(title, message, options)
-
-    # 显示对话框
-    result = dialog.exec()
-
-    # 返回结果
-    if result == Dialog.Accepted:
-        return dialog.get_result()
-    else:
-        return None
-
-
-# ========== 下拉框选择对话框 (ComboBox) ==========
-
-class _ComboBoxDialog(Dialog):
-    """使用 QFluentWidgets 实现的下拉框选择对话框"""
-
-    def __init__(self, title: str, message: str, options: list[str], parent=None):
-        # 使用 Dialog 默认的标题和消息
-        super().__init__(title, message, parent)
-
-        self.options = options
-        self.selected_option = None
-
-        # 移除原有的按钮
-        self.yesButton.hide()
-        self.cancelButton.hide()
-
-        # 重新创建 UI
-        self._init_ui()
-
-    def _init_ui(self):
-        """初始化 UI"""
-        # 获取内容布局
-        content_layout = self.vBoxLayout
-
-        # 设置布局间距
-        content_layout.setSpacing(0)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-
-        # 创建 ComboBox - 使用 QFluentWidgets 默认样式
-        from qfluentwidgets import ComboBox as FluentComboBox
-        self.combo_box = FluentComboBox()
-        self.combo_box.addItems(self.options)
-        self.combo_box.setMinimumWidth(250)
-        self.combo_box.setMinimumHeight(40)
-
-        content_layout.addWidget(self.combo_box)
-
-        # 创建按钮布局
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
-        button_layout.setContentsMargins(20, 15, 20, 20)
-
-        # 确定按钮（高亮样式）
-        self.ok_button = PrimaryPushButton('确定')
-        self.ok_button.setMinimumWidth(100)
-        self.ok_button.clicked.connect(self._on_ok_clicked)
-
-        # 取消按钮（普通样式）
-        self.cancel_button = PushButton('取消')
-        self.cancel_button.setMinimumWidth(100)
-        self.cancel_button.clicked.connect(self.reject)
-
-        # 添加按钮到布局
-        button_layout.addStretch()
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-
-        content_layout.addLayout(button_layout)
-
-        # 设置窗口大小
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(200)
-        
-        # 窗口居中显示
-        self.adjustSize()
-        screen = QApplication.primaryScreen().geometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
-        self.move(x, y)
-
-    def _on_ok_clicked(self):
-        """点击确定按钮事件"""
-        self.selected_option = self.combo_box.currentText()
-        self.accept()
-
-    def get_result(self) -> str | None:
-        """获取用户选择的选项"""
-        return self.selected_option
-
-
-def combobox(title: str, message: str = '', options: list[str] = None) -> str | None:
-    """
-    显示选项选择对话框（下拉框样式）
-
-    :param title: 对话框标题
-    :param message: 提示信息（可选）
-    :param options: 选项列表
-    :return: 用户选择的选项，如果取消则返回 None
-    """
-    # 确保 QApplication 已初始化
-    app = app_manager.get_app()
-
-    # 处理默认参数
-    if options is None:
-        options = []
-    
-    # 如果 message 为 None，设为空字符串
-    if message is None:
-        message = ''
-
-    # 创建对话框
-    dialog = _ComboBoxDialog(title, message, options)
-
-    # 显示对话框
-    result = dialog.exec()
-
-    # 返回结果
-    if result == Dialog.Accepted:
-        return dialog.get_result()
-    else:
-        return None
-
-
 # ========== 主窗口 - 稳定版（支持禁用自动关闭） ==========
 def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     """
@@ -466,10 +223,14 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     # 3. 动态时间更新逻辑 (保持开启)
     timer = QTimer()
 
+    # 模板渲染出的初始时间串（与组件 _get_time 的 %X 格式一致），
+    # 后续只精确替换该串，避免误改自定义模板中其他 HH:MM:SS 文本
+    initial_time = time.strftime('%X', time.localtime())
+
     def update_time():
-        new_time = time.strftime('%H:%M:%S', time.localtime())
-        current_display_text = dialog_instance.contentLabel.text()
-        new_content = re.sub(r'\d{2}:\d{2}:\d{2}', new_time, current_display_text)
+        new_time = time.strftime('%X', time.localtime())
+        # 基于原始渲染文本替换，避免时间串累积漂移
+        new_content = clean_text.replace(initial_time, new_time)
         dialog_instance.contentLabel.setText(new_content)
 
     timer.timeout.connect(update_time)

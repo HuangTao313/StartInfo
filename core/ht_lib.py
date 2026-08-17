@@ -10,6 +10,8 @@ import shlex
 import shutil
 import socket
 import subprocess
+import sys
+import time
 from ctypes.wintypes import HANDLE, DWORD, BOOL
 from typing import Any, Dict
 from typing import Union
@@ -68,14 +70,18 @@ SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{TITLE}.lnk'  # 开机启动项路径
 
 # 检查网络连接情况
 # 模块级缓存变量（所有导入此模块的文件共享同一个缓存）
-_is_internet_cache = None
+# 记录 (是否可用, 检测时刻)；带 TTL 避免长期缓存断网结果，
+# 网络恢复后仍可重新检测
+_is_internet_cache: tuple[bool, float] | None = None
+_INTERNET_CACHE_TTL: float = 30.0  # 缓存有效秒数
 
 def is_internet(timeout: float = 3.0) -> bool:
     """
     检测网络连通性（使用阿里云公共 DNS，自动缓存结果）
 
     - 第一次调用：执行网络检测并缓存结果
-    - 后续调用：直接返回缓存结果（零开销）
+    - 缓存有效期（默认 30 秒）内：直接返回缓存结果（零开销）
+    - 缓存过期后：重新检测，避免断网恢复后仍返回旧的失败结果
     - 所有导入 lib 的文件共享同一个缓存状态
 
     :param timeout: 超时时间（秒），默认 3 秒
@@ -83,10 +89,11 @@ def is_internet(timeout: float = 3.0) -> bool:
     """
     global _is_internet_cache
 
-    if _is_internet_cache is None:
-        _is_internet_cache = check_internet(timeout)
+    now = time.monotonic()
+    if _is_internet_cache is None or now - _is_internet_cache[1] >= _INTERNET_CACHE_TTL:
+        _is_internet_cache = (check_internet(timeout), now)
 
-    return _is_internet_cache
+    return _is_internet_cache[0]
 
 
 def check_internet(timeout: float) -> bool:
@@ -227,30 +234,6 @@ class JsonHandler:
         with open(self.file_path, 'w', encoding='utf-8') as f:
             json.dump(self.data, f, indent=4, ensure_ascii=False)
 
-    def batch_update(self):
-        """
-        批量更新（单线程优化版）
-        用法：
-        with handler.batch_update():
-            handler.write('key', 'value')
-            handler.update('section', {'new': 'data'})
-        """
-        return self._BatchContext(self)
-
-    class _BatchContext:
-        def __init__(self, handler):
-            self.handler = handler
-            self.original_data = handler.data.copy()  # 仅浅拷贝
-
-        def __enter__(self):
-            self.handler.data = self.original_data.copy()
-            return self.handler
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            if exc_type:
-                self.handler.data = self.original_data  # 回滚
-            else:
-                self.handler._save()  # 保存
 
 # 初始化data.json读写
 file = JsonHandler()
@@ -291,22 +274,6 @@ class WinSingleInstance:
         """返回检测结果：True表示已有实例运行"""
         return not self.is_first
 
-# 次数自增函数
-def times(mode: str) -> int | None:
-    try:
-        if mode == 'reset':
-            file.write('General', 'startup_times', value = 1)
-
-        elif mode == 'read':
-            return file.read('General', 'startup_times')
-
-        elif mode == 'add':
-            new_times = file.read('General', 'startup_times')
-            file.write('General', 'startup_times', value = new_times + 1)
-
-    except Exception as e:
-        log.error(f'次数自增函数错误: {str(e)}')
-
 # 模板路径与列表
 def get_template_path() -> Path:
     """动态获取当前激活的模板路径（每次调用实时读取配置）。"""
@@ -324,7 +291,6 @@ def get_template_files() -> list:
     if not files:
         return ['default.j2']
     return files
-
 
 # 导入模板
 def import_template(template_file_path: Path) -> tuple[bool, str]:

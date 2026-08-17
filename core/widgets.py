@@ -529,7 +529,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
         current = raw_data.get('current')
         if current:
             # 小米天气API返回的天气是代码，需要另外解析
-            weather = api['xiaomi_weather']['weather_status'].get(current['weather'])
+            weather = api['xiaomi_weather']['weather_status'].get(current['weather'], '未知')
             weather_emoji = self._get_weather_emoji(weather)
             temp_data = current['temperature']
             feels_data = current['feelsLike']
