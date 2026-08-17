@@ -841,10 +841,21 @@ class ExtNetworkWidgetBase(WidgetBase):
     def _dispatch_requests(self) -> dict:
         """同步调度当前数据源的全部 API"""
         result = {}
+        failed = False
+
         for api_name, api_config in self.CURRENT_API_DATA.items():
-            data = self._request_api(api_name, api_config)
-            if data:
-                result.update(data)
+            try:
+                data = self._request_api(api_name, api_config)
+                if data:
+                    result.update(data)
+            except Exception as e:
+                # 单个 API 失败不影响其他 API 的数据
+                failed = True
+                log.error(f'[{self.WIDGET_NAME}] API [{api_name}] 获取失败: {e}')
+
+        # 任一 API 失败时不缓存部分结果，下次启动重新获取全部
+        if failed:
+            self.skip_cache()
 
         # 记录本次缓存对应的数据源，供 get_cached_source() 判断切换
         if result:
@@ -863,12 +874,21 @@ class ExtNetworkWidgetBase(WidgetBase):
             in self.CURRENT_API_DATA.items()
         ]
 
-        results = await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
         result = {}
+        failed = False
 
         for data in results:
-            if data:
+            if isinstance(data, Exception):
+                # 单个 API 失败不影响其他 API 的数据
+                failed = True
+                log.error(f'[{self.WIDGET_NAME}] API 获取失败: {data}')
+            elif data:
                 result.update(data)
+
+        # 任一 API 失败时不缓存部分结果，下次启动重新获取全部
+        if failed:
+            self.skip_cache()
 
         # 记录本次缓存对应的数据源，供 get_cached_source() 判断切换
         if result:
