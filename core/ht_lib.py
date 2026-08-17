@@ -20,7 +20,6 @@ from .config import cfg
 from .paths import *
 
 # 涉及 cfg 的必须留在后面
-TEMPLATE_PATH = TEMPLATE_FOLDER_PATH / cfg.template_file.value
 WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 
 # 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
@@ -308,6 +307,25 @@ def times(mode: str) -> int | None:
     except Exception as e:
         log.error(f'次数自增函数错误: {str(e)}')
 
+# 模板路径与列表
+def get_template_path() -> Path:
+    """动态获取当前激活的模板路径（每次调用实时读取配置）。"""
+    return TEMPLATE_FOLDER_PATH / cfg.template_file.value
+
+
+def get_template_files() -> list:
+    """扫描模板文件夹，获取所有 .j2 模板文件名"""
+    if not TEMPLATE_FOLDER_PATH.exists():
+        return ['default.j2']
+    files = [
+        p.name for p in TEMPLATE_FOLDER_PATH.glob('*.j2')
+        if p.is_file() and p.name != 'birthday_wishes.j2'
+    ]
+    if not files:
+        return ['default.j2']
+    return files
+
+
 # 导入模板
 def import_template(template_file_path: Path) -> tuple[bool, str]:
     """
@@ -377,6 +395,7 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
         info_text = f'已启用模版文件{template_file_path.name}'
         log.info(info_text)
         return True, info_text
+
     except Exception as e:
         error_text = f'启用模版文件失败：{str(e)}'
         log.error(error_text)

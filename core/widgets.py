@@ -555,6 +555,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
                     result['air_quality'] = f'{self._aqi_to_level(aqi)}(PM2.5 指数:{pm25})'
 
             except (TypeError, ValueError) as e:
+                self.skip_cache()
                 log.error(f'空气质量：解析失败:{e}')
 
             return result
@@ -588,8 +589,10 @@ class TodayInHistoryWidget(NetworkWidgetBase):
                     'historical_date': f'{history['year']}年{history['month']}月{history['day']}日',
                     'historical_event': history['title']
                 }
+
             else:
                 log.error('历史上的今天：没有找到历史上的今天的信息')
+                self.skip_cache()
                 return None
         else:
             self.skip_cache()

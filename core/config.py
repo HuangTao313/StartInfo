@@ -40,14 +40,28 @@ class IntRangeValidator(ConfigValidator):
         return int(max(self.min_val, min(val, self.max_val)))
 
 
-class DynamicOptionsValidator(OptionsValidator):
-    """支持动态选项列表的验证器"""
+class DynamicOptionsValidator(ConfigValidator):
+    """支持动态选项列表的验证器。
+
+    选项列表通过 options_getter 在运行时动态获取。
+    构造时不调用 getter：config.py 类体执行期间 ht_lib 可能尚未完成加载
+    （ht_lib 在顶层 import 本模块的 cfg），立即调用会触发循环导入。
+    """
     def __init__(self, options_getter):
         self._options_getter = options_getter
-        super().__init__(options_getter())
+        self._options = None  # 首次成功获取后缓存
 
-    def get_options(self):
-        return self._options_getter()
+    @property
+    def options(self) -> list:
+        """兼容 OptionsConfigItem.options 的读取。"""
+        return self.get_options()
+
+    def get_options(self) -> list:
+        if self._options is None:
+            options = self._options_getter() or []
+            if options:
+                self._options = options
+        return self._options or []
 
     def validate(self, value):
         if not isinstance(value, str):
@@ -57,22 +71,29 @@ class DynamicOptionsValidator(OptionsValidator):
             return len(value) > 0
         return value in current_options
 
+    def correct(self, value):
+        current_options = self.get_options()
+        if not current_options:
+            return value
+        return value if value in current_options else current_options[0]
+
 
 # ===========================================================================
 # 辅助函数
 # ===========================================================================
 
-def get_template_files() -> list:
-    """扫描模板文件夹，获取所有 .j2 模板文件名"""
-    if not lib.TEMPLATE_FOLDER_PATH.exists():
-        return ['default.j2']
-    files = [
-        p.name for p in lib.TEMPLATE_FOLDER_PATH.glob('*.j2')
-        if p.is_file() and p.name != 'birthday_wishes.j2'
-    ]
-    if not files:
-        return ['default.j2']
-    return files
+def _get_template_files() -> list:
+    """延迟导入 ht_lib 的 get_template_files，避免 config ↔ ht_lib 循环依赖。
+
+    ht_lib 在模块顶层 import 本模块的 cfg，因此本模块不能在顶层直接
+    import ht_lib；改为在调用时导入。若 ht_lib 仍在加载中（构造验证器
+    时触发的调用），返回空列表，配置项使用默认值即可。
+    """
+    try:
+        from .ht_lib import get_template_files
+        return get_template_files()
+    except ImportError:
+        return []
 
 
 # ===========================================================================
@@ -85,7 +106,7 @@ class MyConfig(QConfig):
     # 模板
     template_file = OptionsConfigItem(
         'General', 'template_file', 'default.j2',
-        DynamicOptionsValidator(get_template_files),
+        DynamicOptionsValidator(_get_template_files),
     )
 
     # 主题

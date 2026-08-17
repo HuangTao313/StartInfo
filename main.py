@@ -23,11 +23,11 @@ def load_template(data: dict[str, str]) -> str | None:
     # 从 data 中检查是否有生日信息（birthday_star 字段）
     if data.get('birthday_star'):
         # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
-        templates_to_try = ['birthday_wishes.j2', lib.TEMPLATE_PATH.name, 'default.j2']
+        templates_to_try = ['birthday_wishes.j2', lib.get_template_path().name, 'default.j2']
 
     else:
         # 无生日信息：尝试当前激活的模板，然后是默认模板
-        templates_to_try = [lib.TEMPLATE_PATH.name, 'default.j2']
+        templates_to_try = [lib.get_template_path().name, 'default.j2']
 
     for template_name in templates_to_try:
         try:
@@ -39,10 +39,10 @@ def load_template(data: dict[str, str]) -> str | None:
 
         except Exception as e:
             # 如果是当前激活的模板加载失败，显示错误对话框
-            if template_name == lib.TEMPLATE_PATH.name:
+            if template_name == lib.get_template_path().name:
                 yn = ui.dialog(
                     f'程序运行时发生错误╥﹏╥...',
-                    f'未找到模版文件：{lib.TEMPLATE_PATH.name}\n请检查模版文件是否存在！',
+                    f'未找到模版文件：{lib.get_template_path().name}\n请检查模版文件是否存在！',
 
                     ['加载默认模板', '打开模板文件夹']
                 )
@@ -130,7 +130,7 @@ def handle_j2_template(j2_file_path: Path):
 
     if not activate_choice:
         # 用户选择不立即启用
-        ui.app_manager.quit()
+        ui.app_manager.get_app().quit()
         sys.exit()
 
     # 用户选择立即启用
@@ -248,19 +248,8 @@ if __name__ == '__main__':
 
     # 检测是否带有启动参数(args列表的长度≥1)
     elif len(lib.global_argv) >= 1:
-        # 如果是开机自启(带有--startup启动参数)，
-
-        # 如果是更新后第一次启动
-        if '--update' in lib.global_argv:
-            ui.dialog(lib.TITLE,
-                      f'已成功更新到{lib.VERSION}(・ω・)\n{lib.CURRENT_VERSION_JSON.get('changelog', '更新日志获取失败')}')
-            from settings import delete_download_cache
-
-            # 删除下载缓存
-            delete_download_cache()
-
         # 如果是以--settings参数启动
-        elif '--settings' in lib.global_argv:
+        if '--settings' in lib.global_argv:
             # 启动设置
             from settings import start_settings
             start_settings()
@@ -286,9 +275,10 @@ if __name__ == '__main__':
     # 预先保存 qasync loop 引用，用于手动清理
     qasync_loop = asyncio.get_event_loop()
 
-    # 使用原生 asyncio 事件循环运行主函数（aiohttp 兼容性最佳）
+    # 使用原生 asyncio 事件循环运行主函数
     try:
         asyncio.run(main())
+
     except SystemExit:
         # main() 内调用了 sys.exit()（用户点击确定 / 异常退出）
         # 先关闭 qasync 事件循环，避免 shutdown 时 'Signal source has been deleted' 警告
