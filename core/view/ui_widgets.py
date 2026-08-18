@@ -378,8 +378,7 @@ class ExpandGroupCard(ExpandGroupSettingCard):
 
     用法：
         detail = ExpandGroupCard(FIF.GLOBE, '标题', '描述')
-        detail.addCard(TextSettingCard(..., parent=detail))
-        detail.addCard(PushSettingCard(..., parent=detail))
+        detail.addCards([card1, card2, ...])
         group.addSettingCard(detail)
     """
 
@@ -392,6 +391,11 @@ class ExpandGroupCard(ExpandGroupSettingCard):
     def addCard(self, card: SettingCard):
         """添加一张标准设置卡到手风琴展开区域。"""
         self.addGroupWidget(card)
+
+    def addCards(self, cards: list):
+        """批量添加标准设置卡到手风琴展开区域。"""
+        for card in cards:
+            self.addCard(card)
 
 class ListEditingBox(MessageBoxBase):
 

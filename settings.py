@@ -1,8 +1,9 @@
 """新版设置窗口入口。"""
 import sys
 
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
-from qfluentwidgets import FluentWindow, FluentIcon,NavigationItemPosition
+from qfluentwidgets import FluentWindow, FluentIcon, NavigationItemPosition, SplashScreen
 
 import core.ht_lib as lib
 import core.ui as ui
@@ -26,9 +27,20 @@ class SettingsWindow(FluentWindow):
         if SETTINGS_ICON.exists():
             self.setWindowIcon(QIcon(str(SETTINGS_ICON)))
 
+        # 1. 创建启动页面
+        self.splashScreen = SplashScreen(self.windowIcon(), self)
+        self.splashScreen.setIconSize(QSize(96, 96))
+
+        # 2. 在创建其他子页面前先显示主界面
+        self.show()
+
+        # 3.创建子界面
         self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, '基本设置')
         self.addSubInterface(CustomSettingsPage(self), FluentIcon.BRUSH, '个性化')
         self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于',NavigationItemPosition.BOTTOM)
+
+        # 4. 隐藏启动页面
+        self.splashScreen.finish()
 
     def set_mica_enabled(self, enabled: bool):
         self.setMicaEffectEnabled(enabled)

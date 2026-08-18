@@ -140,10 +140,10 @@ var color = $.NSColor.controlAccentColor.colorUsingColorSpace(
             )
             return f'#{r:02x}{g:02x}{b:02x}'
 
-        return '#009faa'
+        return '#0078d4'
 
     except Exception:
-        return '#009faa'  # 读取失败时的保底蓝色
+        return '#0078d4'  # 读取失败时的保底蓝色
 
 def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
     """

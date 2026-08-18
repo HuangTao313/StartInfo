@@ -3,9 +3,9 @@
 import os
 
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
-                            FluentIcon as FIF, PushSettingCard,
-                            PrimaryPushSettingCard, SettingCardGroup,
-                            OptionsSettingCard)
+                            FluentIcon as FIF, OptionsSettingCard,
+                            PrimaryPushSettingCard, PushSettingCard,
+                            SettingCardGroup)
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
@@ -20,6 +20,10 @@ class CustomSettingsPage(BaseSettingPage):
 
         self.parent_window = parent
 
+        self._init_ui()
+        self._connect_signals()
+
+    def _init_ui(self):
         # ── 主题 ──
         self.themeGroup = SettingCardGroup('主题', self.scrollWidget)
 
@@ -30,8 +34,11 @@ class CustomSettingsPage(BaseSettingPage):
             parent=self.themeGroup,
         )
 
-        self.useWinThemeColor = ZhSwitchSettingCard(icon=FIF.PALETTE, title='使用系统主题色', content='使用系统主题色',
-                                                    config_item=cfg.use_win_theme_color, parent=self.themeGroup)
+        self.useWinThemeColor = ZhSwitchSettingCard(
+            icon=FIF.PALETTE, title='使用系统主题色',
+            content='使用系统主题色', config_item=cfg.use_win_theme_color,
+            parent=self.themeGroup,
+        )
 
         self.themeColorCard = ColorSettingCard(
             configItem=cfg.theme_color, icon=FIF.PALETTE,
@@ -45,10 +52,12 @@ class CustomSettingsPage(BaseSettingPage):
             config_item=cfg.mica_effect_switch, parent=self.themeGroup,
         )
 
-        self.themeGroup.addSettingCard(self.themeCard)
-        self.themeGroup.addSettingCard(self.useWinThemeColor)
-        self.themeGroup.addSettingCard(self.themeColorCard)
-        self.themeGroup.addSettingCard(self.micaEffectSwitchCard)
+        self.themeGroup.addSettingCards([
+            self.themeCard,
+            self.useWinThemeColor,
+            self.themeColorCard,
+            self.micaEffectSwitchCard,
+        ])
         self.expandLayout.addWidget(self.themeGroup)
 
         # ── 模板 ──
@@ -85,14 +94,14 @@ class CustomSettingsPage(BaseSettingPage):
             parent=self.templateGroup,
         )
 
-        self.templateGroup.addSettingCard(self.templateCard)
-        self.templateGroup.addSettingCard(self.importTemplateCard)
-        self.templateGroup.addSettingCard(self.refreshTemplateCard)
-        self.templateGroup.addSettingCard(self.openTemplateFolderCard)
-        self.templateGroup.addSettingCard(self.openTemplateDocCard)
+        self.templateGroup.addSettingCards([
+            self.templateCard,
+            self.importTemplateCard,
+            self.refreshTemplateCard,
+            self.openTemplateFolderCard,
+            self.openTemplateDocCard,
+        ])
         self.expandLayout.addWidget(self.templateGroup)
-
-        self.finalise()
 
         # —— 禁用其他系统暂未适配的功能 ——
         if lib.system not in ('Windows', 'Darwin'):
@@ -100,7 +109,10 @@ class CustomSettingsPage(BaseSettingPage):
             qconfig.set(cfg.use_win_theme_color, False, save=True)
             self.useWinThemeColor.setEnabled(False)
 
-        # ── 信号 ──
+        self.finalise()
+
+    def _connect_signals(self):
+        """连接信号与槽。"""
         cfg.theme.valueChanged.connect(self._onThemeChanged)
         cfg.use_win_theme_color.valueChanged.connect(self._onUseWinThemeColorChanged)
         cfg.theme_color.valueChanged.connect(self._onThemeColorChanged)

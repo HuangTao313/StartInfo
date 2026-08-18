@@ -1,6 +1,6 @@
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
-                            ColorConfigItem, ColorValidator,
-                            ConfigItem, BoolValidator, qconfig, ConfigValidator)
+                            ColorConfigItem, ConfigItem, BoolValidator,
+                            qconfig, ConfigValidator)
 
 from . import paths as lib
 
@@ -10,8 +10,9 @@ from . import paths as lib
 # ===========================================================================
 
 class StringValidator(ConfigValidator):
-    """非空字符串验证器"""
-    def __init__(self, default: str = "未知"):
+    """非空字符串验证器。"""
+
+    def __init__(self, default: str = '未知'):
         self._default = default
 
     def validate(self, value):
@@ -24,8 +25,10 @@ class StringValidator(ConfigValidator):
 
 
 class IntRangeValidator(ConfigValidator):
-    """整数范围验证器"""
-    def __init__(self, min_val: int = 0, max_val: float = float('inf'), default_val: int = None):
+    """整数范围验证器。"""
+
+    def __init__(self, min_val: int = 0, max_val: float = float('inf'),
+                 default_val: int = None):
         self.min_val = min_val
         self.max_val = max_val
         self.default_val = default_val if default_val is not None else min_val
@@ -48,6 +51,7 @@ class DynamicOptionsValidator(ConfigValidator):
     构造时不调用 getter：config.py 类体执行期间 ht_lib 可能尚未完成加载
     （ht_lib 在顶层 import 本模块的 cfg），立即调用会触发循环导入。
     """
+
     def __init__(self, options_getter):
         self._options_getter = options_getter
         self._options = None  # 首次成功获取后缓存
@@ -110,18 +114,12 @@ class MyConfig(QConfig):
         DynamicOptionsValidator(_get_template_files),
     )
 
-    # 主题
-    theme = OptionsConfigItem(
-        'Appearance', 'theme', 'dynamic',
-        OptionsValidator(['light', 'dark', 'dynamic']),
-    )
-    use_win_theme_color = ConfigItem('Appearance', 'use_win_theme_color', True, BoolValidator())
-    theme_color = ColorConfigItem('Appearance', 'theme_color', '#ff009faa', ColorValidator(default='#ff009faa'))
-    mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', False, BoolValidator())
-
     # 自动关闭弹窗
     auto_close_switch = ConfigItem('General', 'auto_close_switch', False, BoolValidator())
-    auto_close_time = ConfigItem('General', 'auto_close_time', 60, IntRangeValidator(min_val=30, max_val=300, default_val=60))
+    auto_close_time = ConfigItem(
+        'General', 'auto_close_time', 60,
+        IntRangeValidator(min_val=30, max_val=300, default_val=60),
+    )
 
     # 关闭设置窗口后的行为
     close_settings_action = OptionsConfigItem(
@@ -133,6 +131,15 @@ class MyConfig(QConfig):
     LOG_LEVELS = ['DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']
     log_level = OptionsConfigItem('General', 'log_level', 'WARNING', OptionsValidator(LOG_LEVELS))
 
+    # =========================== Appearance ===========================
+    theme = OptionsConfigItem(
+        'Appearance', 'theme', 'dynamic',
+        OptionsValidator(['light', 'dark', 'dynamic']),
+    )
+    use_win_theme_color = ConfigItem('Appearance', 'use_win_theme_color', True, BoolValidator())
+    theme_color = ColorConfigItem('Appearance', 'theme_color', '#0078d4')
+    mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', False, BoolValidator())
+
     # =========================== 日期和时间 ===========================
     datetime_switch = ConfigItem('DateTime', 'switch', True, BoolValidator())
     lunar_date_switch = ConfigItem('DateTime', 'lunar_date_switch', False, BoolValidator())
@@ -143,12 +150,18 @@ class MyConfig(QConfig):
     # =========================== 天气 ===========================
     weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
     city_name = ConfigItem('Weather', 'city_name', '北京市', StringValidator(default='北京市'))
-    city_id = ConfigItem('Weather', 'city_id', {'qweather': '101010100', 'xiaomi_weather': '101010100'})
+    city_id = ConfigItem(
+        'Weather', 'city_id',
+        {'qweather': '101010100', 'xiaomi_weather': '101010100'},
+    )
     qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
-    weather_interval = ConfigItem('Weather', 'interval', 30, IntRangeValidator(min_val=15, max_val=60, default_val=30))
+    weather_interval = ConfigItem(
+        'Weather', 'interval', 30,
+        IntRangeValidator(min_val=15, max_val=60, default_val=30),
+    )
     weather_source = OptionsConfigItem(
         'Weather', 'source', 'xiaomi_weather',
-        OptionsValidator(['xiaomi_weather', 'qweather'])
+        OptionsValidator(['xiaomi_weather', 'qweather']),
     )
 
     # =========================== 倒数日 ===========================
@@ -161,25 +174,43 @@ class MyConfig(QConfig):
     birthday_dict = ConfigItem('BirthdayWishes', 'birthday_dict', {'黄桃': '20100403'})
 
     # =========================== MC服务器检测 ===========================
-    minecraft_server_checker_switch = ConfigItem('MinecraftJavaServerChecker', 'switch', False, BoolValidator())
-    minecraft_server_name = ConfigItem('MinecraftJavaServerChecker', 'server_name', '', StringValidator(default=''))
-    minecraft_server_ip = ConfigItem('MinecraftJavaServerChecker', 'server_ip', '', StringValidator(default=''))
-    minecraft_server_port = ConfigItem('MinecraftJavaServerChecker', 'server_port', '25565', StringValidator(default='25565'))
-    minecraft_server_friends_list = ConfigItem('MinecraftJavaServerChecker', 'friends_list', [])
-    minecraft_server_data_refresh_interval = ConfigItem('MinecraftJavaServerChecker', 'data_refresh_interval', 60, IntRangeValidator(min_val=5, default_val=60))
+    minecraft_server_checker_switch = ConfigItem(
+        'MinecraftJavaServerChecker', 'switch', False, BoolValidator(),
+    )
+    minecraft_server_name = ConfigItem(
+        'MinecraftJavaServerChecker', 'server_name', '',
+        StringValidator(default=''),
+    )
+    minecraft_server_ip = ConfigItem(
+        'MinecraftJavaServerChecker', 'server_ip', '',
+        StringValidator(default=''),
+    )
+    minecraft_server_port = ConfigItem(
+        'MinecraftJavaServerChecker', 'server_port', '25565',
+        StringValidator(default='25565'),
+    )
+    minecraft_server_friends_list = ConfigItem(
+        'MinecraftJavaServerChecker', 'friends_list', [],
+    )
+    minecraft_server_data_refresh_interval = ConfigItem(
+        'MinecraftJavaServerChecker', 'data_refresh_interval', 60,
+        IntRangeValidator(min_val=5, default_val=60),
+    )
 
     # =========================== 每日一言 ===========================
     words_switch = ConfigItem('EveryDayWords', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
         'EveryDayWords', 'source', 'hitokoto',
-        OptionsValidator(['hitokoto', 'iciba'])
+        OptionsValidator(['hitokoto', 'iciba']),
     )
 
     # =========================== InformationSwitch (组件开关) ===========================
     greeting_switch = ConfigItem('InformationSwitch', 'greeting', True, BoolValidator())
     startup_times_switch = ConfigItem('InformationSwitch', 'startup_times', True, BoolValidator())
     historical_switch = ConfigItem('InformationSwitch', 'historical', False, BoolValidator())
-    daily_character_switch = ConfigItem('InformationSwitch', 'daily_character', False, BoolValidator())
+    daily_character_switch = ConfigItem(
+        'InformationSwitch', 'daily_character', False, BoolValidator(),
+    )
 
 cfg = MyConfig()
 qconfig.load(lib.CONFIG_FILE_PATH, cfg)
