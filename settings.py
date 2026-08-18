@@ -30,9 +30,8 @@ class SettingsWindow(FluentWindow):
         self.addSubInterface(CustomSettingsPage(self), FluentIcon.BRUSH, '个性化')
         self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于',NavigationItemPosition.BOTTOM)
 
-        # 系统兼容性警告
-        if lib.system != 'Windows':
-            Notify.warning(content='当前系统暂不支持某些功能', parent=self)
+    def set_mica_enabled(self, enabled: bool):
+        self.setMicaEffectEnabled(enabled)
 
     def _center(self):
         screen = ui.app_manager.get_app().primaryScreen()

@@ -4,7 +4,8 @@ import os
 
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             FluentIcon as FIF, PushSettingCard,
-                            PrimaryPushSettingCard, SettingCardGroup, qconfig)
+                            PrimaryPushSettingCard, SettingCardGroup,
+                            OptionsSettingCard)
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
@@ -16,6 +17,8 @@ from ..config import cfg, qconfig
 class CustomSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
         super().__init__(parent=parent, object_name='custom_settings_page')
+
+        self.parent_window = parent
 
         # ── 主题 ──
         self.themeGroup = SettingCardGroup('主题', self.scrollWidget)
@@ -37,18 +40,24 @@ class CustomSettingsPage(BaseSettingPage):
         )
         self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
 
+        self.micaEffectSwitchCard = ZhSwitchSettingCard(
+            icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明',
+            config_item=cfg.mica_effect_switch, parent=self.themeGroup,
+        )
+
         self.themeGroup.addSettingCard(self.themeCard)
         self.themeGroup.addSettingCard(self.useWinThemeColor)
         self.themeGroup.addSettingCard(self.themeColorCard)
+        self.themeGroup.addSettingCard(self.micaEffectSwitchCard)
         self.expandLayout.addWidget(self.themeGroup)
 
         # ── 模板 ──
         self.templateGroup = SettingCardGroup('模板', self.scrollWidget)
 
         template_files = lib.get_template_files()
-        self.templateCard = ComboBoxSettingCard(
+        self.templateCard = OptionsSettingCard(
             configItem=cfg.template_file, icon=FIF.LABEL, title='模板',
-            content='选择主程序使用的模板', texts=template_files,
+            content='选择主界面使用的模板', texts=template_files,
             parent=self.templateGroup,
         )
 
@@ -95,6 +104,7 @@ class CustomSettingsPage(BaseSettingPage):
         cfg.theme.valueChanged.connect(self._onThemeChanged)
         cfg.use_win_theme_color.valueChanged.connect(self._onUseWinThemeColorChanged)
         cfg.theme_color.valueChanged.connect(self._onThemeColorChanged)
+        cfg.mica_effect_switch.valueChanged.connect(self.parent_window.set_mica_enabled)
         self.importTemplateCard.clicked.connect(self._onImportTemplateClicked)
         self.refreshTemplateCard.clicked.connect(self._onRefreshTemplateClicked)
         self.openTemplateFolderCard.clicked.connect(self._onOpenTemplateFolderClicked)

@@ -37,9 +37,11 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 更新日志
         changelog_text = (
+            f'版本号：{lib.VERSION}\n'
             f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date', '获取失败')}\n\n'
             f'更新日志：\n{lib.CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
         )
+
         changelog = BodyLabel(changelog_text, self.scrollWidget)
         changelog.setWordWrap(True)
         changelog.adjustSize()

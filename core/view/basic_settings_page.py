@@ -63,7 +63,7 @@ class BasicSettingsPage(BaseSettingPage):
         # # ── 日期和时间 ──
         dateTimeGroup = SettingCardGroup('日期和时间', self.scrollWidget)
         self.datetimeSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.DATE_TIME, title='启用日期和时间组件',
+            icon=FIF.DATE_TIME, title='日期和时间组件',
             content='显示当前的日期、时间以及其他信息', config_item=cfg.datetime_switch,
             parent=dateTimeGroup
         )
@@ -105,7 +105,7 @@ class BasicSettingsPage(BaseSettingPage):
         # ── 天气 ──
         weatherGroup = SettingCardGroup('天气(需选择城市)', self.scrollWidget)
 
-        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='启用天气组件', content='显示当前城市的天气信息',
+        self.weatherSwitchCard = ZhSwitchSettingCard(icon=FIF.CLOUD, title='天气组件', content='显示当前城市的天气信息',
                                                      config_item=cfg.weather_switch, parent=weatherGroup)
 
         # 创建手风琴组件
@@ -159,7 +159,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 倒数日 ──
         countdownGroup = SettingCardGroup('倒数日', self.scrollWidget)
-        self.countdownCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用倒数日组件',
+        self.countdownCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='倒数日组件',
                                                  content='在主窗口显示："距离【xx】还有xx天"',
                                                  config_item=cfg.countdown_switch, parent=countdownGroup)
 
@@ -182,7 +182,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 生日祝福 ──
         birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.scrollWidget)
-        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='启用生日祝福功能',
+        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(icon=FIF.CALENDAR, title='生日祝福功能',
                                                             content='在生日当天显示生日祝福',
                                                             config_item=cfg.birthday_wishes_switch,
                                                             parent=birthdayGroup)
@@ -199,7 +199,7 @@ class BasicSettingsPage(BaseSettingPage):
         # ── Minecraft 服务器检测器 ──
         mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.scrollWidget)
         self.mcServerCheckSwitchCard = ZhSwitchSettingCard(icon=FIF.GLOBE,
-                                                           title='启用Minecraft Java版服务器玩家在线情况检测组件',
+                                                           title='Minecraft Java版服务器玩家在线情况检测组件',
                                                            content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
                                                            config_item=cfg.minecraft_server_checker_switch,
                                                            parent=mcGroup)
@@ -250,7 +250,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 每日一言 ──
         wordsGroup = SettingCardGroup('每日一言', self.scrollWidget)
-        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.MESSAGE, title='启用每日一言组件', content='显示每日一言信息',
+        self.wordsSwitchCard = ZhSwitchSettingCard(icon=FIF.MESSAGE, title='每日一言组件', content='显示每日一言信息',
                                                    config_item=cfg.words_switch, parent=wordsGroup)
 
         self.wordsDetailCard = ExpandGroupCard(
@@ -287,25 +287,23 @@ class BasicSettingsPage(BaseSettingPage):
             FIF.MORE, '其他信息开关', '问候语、开机次数、时间和日期等信息', parent=otherGroup,
         )
 
-        self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='启用问候语组件',
+        self.greetingSwitchCard = ZhSwitchSettingCard(icon=FIF.HEART, title='问候语组件',
                                                       content='显示当前时间对应的问候语',
                                                       config_item=cfg.greeting_switch, parent=self.otherDetailCard)
 
-        self.startupTimesSwitchCard = ZhSwitchSettingCard(icon=FIF.POWER_BUTTON, title='启用开机次数组件',
+        self.startupTimesSwitchCard = ZhSwitchSettingCard(icon=FIF.POWER_BUTTON, title='开机次数组件',
                                                           content='显示开机次数', config_item=cfg.startup_times_switch,
                                                           parent=self.otherDetailCard)
 
-        self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='启用历史上的今天组件',
+        self.historicalSwitchCard = ZhSwitchSettingCard(icon=FIF.HISTORY, title='历史上的今天组件',
                                                         content='显示历史上的今天信息',
                                                         config_item=cfg.historical_switch, parent=self.otherDetailCard)
 
         self.dailyCharacterSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.SPEED_MEDIUM, title='启用每日人品组件',
+            icon=FIF.SPEED_MEDIUM, title='每日人品组件',
             content='显示每日人品',
             config_item=cfg.daily_character_switch, parent=self.otherDetailCard
         )
-
-
 
         self.otherDetailCard.addCard(self.greetingSwitchCard)
         self.otherDetailCard.addCard(self.startupTimesSwitchCard)
@@ -380,15 +378,15 @@ class BasicSettingsPage(BaseSettingPage):
             else:
                 Notify.error(content='删除开机启动项失败，请查看日志', parent=self)
 
-    @action('已删除下载缓存', '下载缓存删除失败')
-    def _onDeleteDownloadTempClicked(self) -> bool:
+    def _onDeleteDownloadTempClicked(self) -> bool | None:
         if lib.DOWNLOAD_PATH.exists():
             shutil.rmtree(lib.DOWNLOAD_PATH)
-            lib.log.info('设置-已删除下载缓存')
+            lib.log.info('已删除下载缓存')
             return True
+
         else:
             Notify.info(content='未发现下载缓存', parent=self)
-            return False
+            return None
 
     def _onCityChooseClicked(self) -> None:
         box = CitySearchBox(self)

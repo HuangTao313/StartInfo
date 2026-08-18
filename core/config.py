@@ -1,6 +1,7 @@
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
                             ColorConfigItem, ColorValidator,
                             ConfigItem, BoolValidator, qconfig, ConfigValidator)
+
 from . import paths as lib
 
 
@@ -111,11 +112,12 @@ class MyConfig(QConfig):
 
     # 主题
     theme = OptionsConfigItem(
-        'General', 'theme', 'dynamic',
+        'Appearance', 'theme', 'dynamic',
         OptionsValidator(['light', 'dark', 'dynamic']),
     )
-    use_win_theme_color = ConfigItem('General', 'use_win_theme_color', True, BoolValidator())
-    theme_color = ColorConfigItem('General', 'theme_color', '#ff009faa', ColorValidator(default='#ff009faa'))
+    use_win_theme_color = ConfigItem('Appearance', 'use_win_theme_color', True, BoolValidator())
+    theme_color = ColorConfigItem('Appearance', 'theme_color', '#ff009faa', ColorValidator(default='#ff009faa'))
+    mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', False, BoolValidator())
 
     # 自动关闭弹窗
     auto_close_switch = ConfigItem('General', 'auto_close_switch', False, BoolValidator())
