@@ -86,7 +86,7 @@ class CustomSettingsPage(BaseSettingPage):
         self.finalise()
 
         # —— 禁用其他系统暂未适配的功能 ——
-        if lib.system != 'Windows':
+        if lib.system not in ('Windows', 'Darwin'):
             # 使用系统主题色
             qconfig.set(cfg.use_win_theme_color, False, save=True)
             self.useWinThemeColor.setEnabled(False)

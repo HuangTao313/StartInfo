@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 import time
 import asyncio
 import re
@@ -37,8 +38,8 @@ class AppManager:
             QLocale.setDefault(QLocale('zh_CN'))
 
             # 创建翻译器实例，生命周期必须和 app 相同
-            translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
-            self._app.installTranslator(translator)
+            self._translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
+            self._app.installTranslator(self._translator)
 
             self._apply_theme()
         return self._app
@@ -111,9 +112,33 @@ def get_real_windows_accent_color() -> str:
 
             return f'#{r:02x}{g:02x}{b:02x}'.upper().lower()
 
-        # 如果系统是MacOS，暂时返回默认蓝色
-        else:
-            return '#009faa'
+        # 如果系统是MacOS，读取系统当前强调色
+        elif lib.system == 'Darwin':
+            script = '''
+ObjC.import("AppKit");
+var color = $.NSColor.controlAccentColor.colorUsingColorSpace(
+    $.NSColorSpace.sRGBColorSpace
+);
+[color.redComponent, color.greenComponent, color.blueComponent].join(",");
+'''
+            result = subprocess.run(
+                ['osascript', '-l', 'JavaScript', '-e', script],
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=True
+            )
+            components = [float(value) for value in result.stdout.strip().split(',')]
+            if len(components) != 3:
+                raise ValueError(f'无法解析MacOS强调色: {result.stdout!r}')
+
+            r, g, b = (
+                max(0, min(255, round(component * 255)))
+                for component in components
+            )
+            return f'#{r:02x}{g:02x}{b:02x}'
+
+        return '#009faa'
 
     except Exception:
         return '#009faa'  # 读取失败时的保底蓝色
