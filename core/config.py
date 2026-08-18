@@ -126,6 +126,11 @@ class MyConfig(QConfig):
         'General', 'close_settings_action', 'restart',
         OptionsValidator(['restart', 'exit']),
     )
+    # 更新源
+    update_source = OptionsConfigItem(
+        'General', 'update_source', 'aliyun_oss',
+        OptionsValidator(['aliyun_oss', 'github', 'github_mirror']),
+    )
 
     # 日志等级
     LOG_LEVELS = ['DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']

@@ -23,3 +23,6 @@ venv/
 
 # 组件缓存
 data/db/widgets_cache.db
+
+# 设置
+data/json/config.json

@@ -7,10 +7,12 @@ import sys
 from PySide6.QtGui import QPixmap
 from qasync import asyncSlot
 from qfluentwidgets import (SubtitleLabel, BodyLabel, SettingCardGroup,
-                            FluentIcon as FIF, PrimaryPushSettingCard, MessageBox)
+                            FluentIcon as FIF, PrimaryPushSettingCard, MessageBox,
+                            ComboBoxSettingCard)
 
 from .setting_card_base import BaseSettingPage
 from .. import ht_lib as lib
+from ..config import cfg
 from ..updater import check_update_logic, run_update_process
 
 # 常量
@@ -54,6 +56,12 @@ class AboutSettingsPage(BaseSettingPage):
         )
         self.checkUpdateCard.clicked.connect(self.onUpdateClicked)
 
+        # 更新源
+        self.updateSourceCard = ComboBoxSettingCard(
+            icon=FIF.CLOUD_DOWNLOAD, title='更新源', content='选择更新源：阿里云OSS、GitHub、GitHub镜像站',
+            texts=['阿里云OSS', 'GitHub(未启用)', 'GitHub镜像站(未启用)'], configItem=cfg.update_source, parent=self.aboutGroup,
+        )
+
         # 卸载
         self.uninstallCard = PrimaryPushSettingCard(
             text='卸载', icon=FIF.DELETE, title='卸载',
@@ -62,6 +70,7 @@ class AboutSettingsPage(BaseSettingPage):
         self.uninstallCard.clicked.connect(self.onUninstallClicked)
 
         self.aboutGroup.addSettingCard(self.checkUpdateCard)
+        self.aboutGroup.addSettingCard(self.updateSourceCard)
         self.aboutGroup.addSettingCard(self.uninstallCard)
         self.expandLayout.addWidget(self.aboutGroup)
         self.finalise()
@@ -78,8 +87,11 @@ class AboutSettingsPage(BaseSettingPage):
     async def onUpdateClicked(self):
         self.checkUpdateCard.setEnabled(False)
         try:
-            update_available, new_version_data = await check_update_logic()
-            if update_available:
+            update_available, new_version_data, error_msg = await check_update_logic()
+            if error_msg:
+                from .ui_widgets import Notify
+                Notify.error(title='检查更新失败', content=error_msg, parent=self)
+            elif update_available:
                 content = (
                     f'版本号：{new_version_data.get('version', '获取失败')}\n'
                     f'发布日期：{new_version_data.get('release_date', '获取失败')}\n'

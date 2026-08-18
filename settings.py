@@ -11,11 +11,9 @@ from core.config import cfg
 from core.view.about_settings_page import AboutSettingsPage
 from core.view.basic_settings_page import BasicSettingsPage
 from core.view.custom_settings_page import CustomSettingsPage
-from core.view.ui_widgets import Notify
 
 # 图标
 SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'
-
 
 class SettingsWindow(FluentWindow):
     def __init__(self):
@@ -26,6 +24,10 @@ class SettingsWindow(FluentWindow):
         self._center()
         if SETTINGS_ICON.exists():
             self.setWindowIcon(QIcon(str(SETTINGS_ICON)))
+
+        # 云母效果FluentWindow在Windows11默认启用，如果未启用云母效果，则禁用
+        if not cfg.mica_effect_switch.value:
+            self.set_mica_enabled(False)
 
         # 1. 创建启动页面
         self.splashScreen = SplashScreen(self.windowIcon(), self)

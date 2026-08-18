@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from . import ht_lib as lib
 from . import ui
+from .config import cfg
 
 # ==================== 路径定义 ====================
 VERSION_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'version.json'  # 远程版本缓存
@@ -27,10 +28,10 @@ def get_version_file() -> bool:
     """
     try:
         api_data = lib.read_json(lib.API_FILE_PATH)
-        if 'check_update_url' not in api_data:
-            log.error("更新器-API配置中缺少check_update_url字段")
+        if 'update_source' not in api_data:
+            log.error("更新器-API配置中缺少[update_source]字段")
             return False
-        url = api_data['check_update_url']
+        url = api_data['update_source'][cfg.update_source.value]
 
     except Exception as e:
         log.error(f"更新器-解密更新URL失败: {e}")
@@ -250,7 +251,7 @@ def check_update() -> tuple[bool, dict]:
     return True, _build_update_info(remote, 'full', reason)
 
 
-def _build_update_info(remote: dict, reason: str) -> dict:
+def _build_update_info(remote: dict, update_type: str, reason: str) -> dict:
     """【内部函数】构建完整更新的更新信息"""
     pkg = remote.get('full_package', {})
 
@@ -258,7 +259,7 @@ def _build_update_info(remote: dict, reason: str) -> dict:
         'version': remote.get('version', '版本号获取失败'),
         'release_date': remote.get('release_date', '日期获取失败'),
         'changelog': remote.get('changelog', '更新日志获取失败'),
-        'type': 'full',
+        'type': update_type,
         'url': pkg.get('url', ''),
         'sha256': pkg.get('sha256', ''),
         'reason': reason,
@@ -282,32 +283,35 @@ def perform_update(update_info: dict) -> None:
     # 应用（此函数会启动安装程序并退出当前进程）
     apply_full_update(update_file_path)
 
-async def check_update_logic() -> tuple[bool, dict]:
+async def check_update_logic() -> tuple[bool, dict, str | None]:
     """
     【核心逻辑】仅检查更新，不触发任何控制台或 UI 弹窗
-    返回: (是否有更新, 更新信息字典)
+    返回: (是否有更新, 更新信息字典, 错误信息)
+        错误信息为 None 表示检查正常完成（可能没有更新）
+        错误信息非 None 表示检查失败，调用方应提示出错而不是"已是最新版本"
     """
     try:
         # 1. 版本文件维护逻辑
         if not VERSION_PATH.exists():
             if not await asyncio.to_thread(get_version_file):
-                return False, {}
+                return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
         else:
             version_data = lib.read_json(VERSION_PATH)
             # 过期检查（1小时）
             if int(time.time()) - version_data.get('get_time', 0) >= 3600:
                 if not await asyncio.to_thread(get_version_file):
                     log.warning("更新器-静默检查失败：无法获取远程版本")
-                    return False, {}
+                    return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
 
         # 2. 联网并比对
-        if lib.is_internet():
-            need_update, update_info = check_update()  # 调用你原有的比对函数
-            return need_update, update_info
+        if not lib.is_internet():
+            return False, {}, "无法连接网络，检查更新失败"
+
+        need_update, update_info = check_update()  # 调用你原有的比对函数
+        return need_update, update_info, None
     except Exception as e:
         log.error(f"静默检查异常: {e}")
-
-    return False, {}
+        return False, {}, f"检查更新异常: {e}"
 
 
 def run_update_process(update_info: dict) -> None:
@@ -325,9 +329,11 @@ def start_updater() -> None:
     旧版入口：包含检查逻辑和弹窗确认
     """
     loop = asyncio.get_event_loop()
-    need_update, update_info = loop.run_until_complete(check_update_logic())
+    need_update, update_info, error_msg = loop.run_until_complete(check_update_logic())
 
-    if need_update:
+    if error_msg:
+        ui.dialog(lib.TITLE, error_msg)
+    elif need_update:
         text = f"发现新版本：{update_info.get('version', '未知')}\n\n更新内容：\n{update_info.get('changelog', '暂无')}"
         if ui.dialog('更新器', text, ['立即更新', '取消更新']):
             run_update_process(update_info)
