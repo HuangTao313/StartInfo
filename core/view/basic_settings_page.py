@@ -131,27 +131,20 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.weatherSourceCard = ComboBoxSettingCard(
             icon=FIF.CLOUD_DOWNLOAD, title='数据源', content='设置天气数据源',
-            texts=['小米天气', '和风天气(需API Key)'],
+            texts=['小米天气', '和风天气(需API Host、API Key)'],
             configItem=cfg.weather_source, parent=self.weatherDetailCard,
-        )
-
-        self.qweatherApiKeyCard = TextSettingCard(
-            icon=FIF.VPN, title='和风天气API Key',
-            content='设置和风天气API Key', config_item=cfg.qweather_api_key,
-            parent=self.weatherDetailCard,
         )
 
         self.cityChooseCard = PushSettingCard(
             text='选择城市', icon=FIF.SEARCH,
-            title=f'选择城市(当前: {cfg.city_name.value})',
+            title=f'选择城市(当前: {cfg.city_name.value[cfg.weather_source.value]})',
             content='获取天气的城市', parent=self.weatherDetailCard,
         )
 
         self.weatherRefreshTimeCard = TextSettingCard(
-            config_item=cfg.weather_interval, icon=FIF.STOP_WATCH,
-            title='天气信息刷新间隔(单位：分钟/m)',
+            icon=FIF.STOP_WATCH, title='天气信息刷新间隔(单位：分钟/m)',
             content='天气信息自动刷新时间(范围：15~60分钟，默认30分钟)',
-            parent=self.weatherDetailCard,
+            config_item=cfg.weather_interval, parent=self.weatherDetailCard,
         )
 
         self.weatherRefreshCard = PrimaryPushSettingCard(
@@ -160,12 +153,33 @@ class BasicSettingsPage(BaseSettingPage):
             parent=self.weatherDetailCard,
         )
 
+        self.qweatherApiHostCard = TextSettingCard(
+            icon=FIF.CODE, title='和风天气API Host',
+            content='设置和风天气API Host，从[和风天气开发控制台-设置]获取，例如abc1234xyz.def.qweatherapi.com',
+            config_item=cfg.qweather_api_host, parent=self.weatherDetailCard,
+        )
+
+        self.qweatherApiKeyCard = TextSettingCard(
+            icon=FIF.VPN, title='和风天气API Key',
+            content='设置和风天气API Key，从[和风天气开发控制台-项目管理]获取',
+            config_item=cfg.qweather_api_key, parent=self.weatherDetailCard,
+        )
+
+        self.qweatherConsoleCard = HyperlinkCard(
+            icon=FIF.COMMAND_PROMPT, title='和风天气开发控制台', text='打开',
+            content='打开和风天气开发控制台(https://console.qweather.com/home?lang=zh)',
+            url='https://console.qweather.com/home?lang=zh',
+            parent=self.weatherDetailCard,
+        )
+
         self.weatherDetailCard.addCards([
             self.weatherSourceCard,
-            self.qweatherApiKeyCard,
             self.cityChooseCard,
             self.weatherRefreshTimeCard,
             self.weatherRefreshCard,
+            self.qweatherApiHostCard,
+            self.qweatherApiKeyCard,
+            self.qweatherConsoleCard,
         ])
         weatherGroup.addSettingCards([
             self.weatherSwitchCard,
@@ -304,9 +318,10 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
         self.friendlyLinksCard = HyperlinkCard(
-            url='https://hitokoto.cn/', icon=FIF.HEART,
+            url='https://hitokoto.cn', icon=FIF.HEART,
             title='友情链接', text='一言网',
-            content='一言网(hitokoto.cn)创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务，属于公益性运营，欢迎各位捐助一言网。'
+            content='一言网(hitokoto.cn)创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务，属于公益性运营，欢迎各位捐助一言网。',
+            parent=self.wordsDetailCard,
         )
 
         self.wordsDetailCard.addCards([
@@ -482,17 +497,17 @@ class BasicSettingsPage(BaseSettingPage):
             city_id = box.get_selected_city_id()
             display_name = box.get_selected_city_display()
             if city_id:
-                # city_id 按数据提供方分别存储，兼容旧版单值配置
+                # city_id / city_name 按数据提供方分别存储
                 source = box.weather_source
-                city_ids = cfg.city_id.value
-                if not isinstance(city_ids, dict):
-                    city_ids = {'qweather': '101010100', 'xiaomi_weather': '101010100'}
-                else:
-                    city_ids = dict(city_ids)
+                city_ids = dict(cfg.city_id.value)
                 old_city_id = city_ids.get(source)
                 city_ids[source] = city_id
+
+                city_names = dict(cfg.city_name.value)
+                city_names[source] = display_name
+
                 cfg.set(cfg.city_id, city_ids, save=True)
-                cfg.set(cfg.city_name, display_name, save=True)
+                cfg.set(cfg.city_name, city_names, save=True)
                 self.cityChooseCard.setTitle(f'选择城市(当前: {display_name})')
                 if city_id != old_city_id:
                     Notify.success(
@@ -509,13 +524,20 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 如果选择的数据源和缓存的数据源不一致
         if widget.DATA_SOURCE != cache_source:
+            # 更新当前选择的城市
+            self.cityChooseCard.setTitle(f'选择城市(当前: {cfg.city_name.value[widget.DATA_SOURCE]})')
             # 如果对应数据源的city_id未配置
             city_ids = cfg.city_id.value
-            if not isinstance(city_ids, dict):
-                # 旧版配置存的是单个字符串，无法判断属于哪个数据源
-                city_ids = {}
-            if not city_ids.get(widget.DATA_SOURCE):
+            city_names = cfg.city_name.value
+            data_source = widget.DATA_SOURCE
+            if not city_ids[data_source] or not city_names[data_source]:
                 Notify.info(content='更换天气数据源后请重新选择城市', parent=self)
+
+            # 如果数据源是和风天气，检查API Host和API Key是否可用
+            if data_source == 'qweather':
+                if not (cfg.qweather_api_host.value.strip() and cfg.qweather_api_key.value.strip()):
+                    Notify.warning('未填写API Host或API Key', parent=self)
+                    return None
 
             else:
                 # 开始刷新天气信息
@@ -530,10 +552,16 @@ class BasicSettingsPage(BaseSettingPage):
 
     @action('天气信息更新成功', '天气信息更新失败')
     async def _onRefreshWeather(self) -> dict:
+        from core.widgets import WeatherWidget
+        widget = WeatherWidget()
+        # 如果数据源是和风天气，检查API Host和API Key是否可用
+        if widget.DATA_SOURCE == 'qweather':
+            if not (cfg.qweather_api_host.value.strip() and cfg.qweather_api_key.value.strip()):
+                Notify.warning('未填写API Host或API Key', parent=self)
+                return None
+
         self.weatherRefreshCard.setEnabled(False)
         try:
-            from core.widgets import WeatherWidget
-            widget = WeatherWidget()
             return await widget.get_data_async(force_refresh=True)
 
         finally:
@@ -564,8 +592,8 @@ class BasicSettingsPage(BaseSettingPage):
 
     @action('每日一言信息更新成功', '每日一言信息更新失败')
     async def _onWordsSourceChanged(self) -> dict | None:
-        from ..widgets import EveryDayWordsWidget
-        widget = EveryDayWordsWidget()
+        from ..widgets import DailyWordsWidget
+        widget = DailyWordsWidget()
         cache_source = widget.get_cached_source()
         # 如果选择的数据源和缓存的数据源不一致
         if widget.DATA_SOURCE != cache_source:

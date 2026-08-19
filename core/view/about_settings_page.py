@@ -5,10 +5,11 @@ import shutil
 import sys
 
 from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QHBoxLayout, QWidget
 from qasync import asyncSlot
-from qfluentwidgets import (SubtitleLabel, BodyLabel, SettingCardGroup,
-                            FluentIcon as FIF, PrimaryPushSettingCard, MessageBox,
-                            ComboBoxSettingCard)
+from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
+                            HyperlinkCard, MessageBox, PrimaryPushSettingCard,
+                            SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel)
 
 from .setting_card_base import BaseSettingPage
 from .. import base_lib as lib
@@ -24,18 +25,33 @@ class AboutSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
         super().__init__(parent=parent, object_name='about_settings_page')
 
+        self._init_ui()
+        self._connect_signals()
+
+    def _init_ui(self):
+        # ── 关于 ──
         self.aboutGroup = SettingCardGroup('关于', self.scrollWidget)
 
-        # 图标
+        # 图标（居中）
         if IS_LOGO_EXIST:
-            self.image_label = SubtitleLabel(self.scrollWidget)
+            self.image_label = SubtitleLabel()
             pixmap = QPixmap(LOGO_ICON_PATH)
             self.image_label.setPixmap(pixmap)
             self.image_label.setFixedSize(pixmap.size())
-            self._add_widget(self.image_label)
+            self._add_centered_widget(self.image_label)
 
-        # 标题
-        self._add_widget(SubtitleLabel(lib.TITLE, self.scrollWidget))
+        # 标题（居中）
+        self._add_centered_widget(TitleLabel(lib.TITLE))
+
+        # 小标题(居中)
+        self._add_centered_widget(SubtitleLabel('StartInfo'))
+
+        # 简单介绍(居中)
+        self._add_centered_widget(StrongBodyLabel('一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。'))
+
+
+        # 与下方设置项之间的间距
+        self._add_spacer(20)
 
         # 更新日志
         changelog_text = (
@@ -44,22 +60,29 @@ class AboutSettingsPage(BaseSettingPage):
             f'更新日志：\n{lib.CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
         )
 
-        changelog = BodyLabel(changelog_text, self.scrollWidget)
-        changelog.setWordWrap(True)
-        changelog.adjustSize()
-        self._add_widget(changelog)
+        self.changelog = BodyLabel(changelog_text, self.scrollWidget)
+        self.changelog.setWordWrap(True)
+        self.changelog.adjustSize()
 
         # 检查更新
         self.checkUpdateCard = PrimaryPushSettingCard(
             text='检查更新', icon=FIF.UPDATE, title='检查更新',
             content='检查新版本并下载', parent=self.aboutGroup,
         )
-        self.checkUpdateCard.clicked.connect(self.onUpdateClicked)
 
         # 更新源
         self.updateSourceCard = ComboBoxSettingCard(
-            icon=FIF.CLOUD_DOWNLOAD, title='更新源', content='选择更新源：阿里云OSS、GitHub、GitHub镜像站',
-            texts=['阿里云OSS', 'GitHub(未启用)', 'GitHub镜像站(未启用)'], configItem=cfg.update_source, parent=self.aboutGroup,
+            icon=FIF.CLOUD_DOWNLOAD, title='更新源',
+            content='选择更新源：阿里云OSS、GitHub、GitHub镜像站',
+            texts=['阿里云OSS', 'GitHub(未启用)', 'GitHub镜像站(未启用)'],
+            configItem=cfg.update_source, parent=self.aboutGroup,
+        )
+
+        # 项目GitHub仓库
+        self.githubCard = HyperlinkCard(
+            url='https://github.com/HuangTao313/StartInfo', icon=FIF.GITHUB,
+            title='此项目的GitHub仓库', content='打开此项目的GitHub仓库',
+            text='打开', parent=self.aboutGroup,
         )
 
         # 卸载
@@ -67,17 +90,39 @@ class AboutSettingsPage(BaseSettingPage):
             text='卸载', icon=FIF.DELETE, title='卸载',
             content='卸载本程序', parent=self.aboutGroup,
         )
-        self.uninstallCard.clicked.connect(self.onUninstallClicked)
 
-        self.aboutGroup.addSettingCard(self.checkUpdateCard)
-        self.aboutGroup.addSettingCard(self.updateSourceCard)
-        self.aboutGroup.addSettingCard(self.uninstallCard)
+        self.aboutGroup.addSettingCards([
+            self.checkUpdateCard,
+            self.updateSourceCard,
+            self.githubCard,
+            self.uninstallCard,
+            self.changelog,
+        ])
         self.expandLayout.addWidget(self.aboutGroup)
         self.finalise()
 
-    def _add_widget(self, widget):
-        """把非卡片 widget 添加到 aboutGroup。"""
-        self.aboutGroup.addSettingCard(widget)
+    def _connect_signals(self):
+        """连接信号与槽。"""
+        self.checkUpdateCard.clicked.connect(self.onUpdateClicked)
+        self.uninstallCard.clicked.connect(self.onUninstallClicked)
+
+    def _add_centered_widget(self, widget):
+        """把非卡片 widget 水平居中添加进 aboutGroup。"""
+        container = QWidget(self.aboutGroup)
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addStretch(1)
+        layout.addWidget(widget)
+        layout.addStretch(1)
+        # ExpandLayout 按子项当前高度排布，显式固定高度避免内容被下一项盖住
+        container.setFixedHeight(widget.sizeHint().height())
+        self.aboutGroup.addSettingCard(container)
+
+    def _add_spacer(self, height: int):
+        """在 aboutGroup 中插入一段垂直空白。"""
+        spacer = QWidget(self.aboutGroup)
+        spacer.setFixedHeight(height)
+        self.aboutGroup.addSettingCard(spacer)
 
     # ------------------------------------------------------------------
     # 槽函数

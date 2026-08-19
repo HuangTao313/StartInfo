@@ -83,6 +83,21 @@ class DynamicOptionsValidator(ConfigValidator):
         return value if value in current_options else current_options[0]
 
 
+class CityDictValidator(ConfigValidator):
+    """城市信息字典验证器：校验 {数据源: 城市名/城市ID} 格式的字典。"""
+
+    def __init__(self, default: dict):
+        self._default = default
+
+    def validate(self, value):
+        return isinstance(value, dict) and len(value) > 0
+
+    def correct(self, value):
+        if isinstance(value, dict) and len(value) > 0:
+            return value
+        return dict(self._default)
+
+
 # ===========================================================================
 # 辅助函数
 # ===========================================================================
@@ -107,7 +122,6 @@ def _get_template_files() -> list:
 
 class MyConfig(QConfig):
     # =========================== General ===========================
-
     # 模板
     template_file = OptionsConfigItem(
         'General', 'template_file', 'default.j2',
@@ -153,12 +167,20 @@ class MyConfig(QConfig):
     other_date_switch = ConfigItem('DateTime', 'other_date_switch', False, BoolValidator())
 
     # =========================== 天气 ===========================
+    # 城市信息默认值（按天气数据源分别存储）
+    DEFAULT_CITY_NAMES = {'qweather': '北京', 'xiaomi_weather': '北京'}
+    DEFAULT_CITY_IDS = {'qweather': '101010100', 'xiaomi_weather': '101010100'}
+
     weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
-    city_name = ConfigItem('Weather', 'city_name', '北京市', StringValidator(default='北京市'))
-    city_id = ConfigItem(
-        'Weather', 'city_id',
-        {'qweather': '101010100', 'xiaomi_weather': '101010100'},
+    city_name = ConfigItem(
+        'Weather', 'city_name', DEFAULT_CITY_NAMES,
+        CityDictValidator(DEFAULT_CITY_NAMES),
     )
+    city_id = ConfigItem(
+        'Weather', 'city_id', DEFAULT_CITY_IDS,
+        CityDictValidator(DEFAULT_CITY_IDS),
+    )
+    qweather_api_host = ConfigItem('Weather', 'qweather_api_host', '' ,StringValidator(default=''))
     qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
     weather_interval = ConfigItem(
         'Weather', 'interval', 30,

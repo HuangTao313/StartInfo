@@ -438,40 +438,51 @@ class WeatherWidget(ExtNetworkWidgetBase):
     # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
     @property
     def API_DATA(self) -> dict:
+        api_host = (
+            cfg.qweather_api_host.value
+            .strip()
+            .removeprefix("https://")
+            .removeprefix("http://")
+            .rstrip("/")
+        )
+
+        qweather_base_url = f"https://{api_host}"
+        api_key = cfg.qweather_api_key.value.strip()
+        location = cfg.city_id.value[cfg.weather_source.value]
+
         return {
-            'qweather':{
-                'weather':{
-                    'url': api['qweather']['url_weather'],
+            'qweather': {
+                'weather': {
+                    'url': f'{qweather_base_url}{api['qweather']['weather_path']}',
                     'params': {
-                        'key': cfg.qweather_api_key.value,
-                        'location' : cfg.city_id.value[cfg.weather_source.value],
+                        'key': api_key,
+                        'location': location,
                     },
                     'parse_func': '_parse_qweather_weather',
                 },
-                'air_quality':{
-                    'url': api['qweather']['url_air'],
-                    'params':  {
-                        'key': cfg.qweather_api_key.value,
-                        'location' : cfg.city_id.value[cfg.weather_source.value],
+                'air_quality': {
+                    'url': f'{qweather_base_url}{api['qweather']['air_quality_path']}',
+                    'params': {
+                        'key': api_key,
+                        'location': location,
                     },
                     'parse_func': '_parse_qweather_air_quality',
                 }
             },
-            'xiaomi_weather':{
-                'all':{
+            'xiaomi_weather': {
+                'all': {
                     'url': api['xiaomi_weather']['url'],
                     'params': {
                         'latitude': 0,
                         'longitude': 0,
                         'locationKey': f'weathercn:{cfg.city_id.value[cfg.weather_source.value]}',
                         'days': 1,
-                        # 小米天气无需个人API Key，以下为接口要求的固定参数
                         'appKey': 'weather20151024',
                         'sign': 'zUFJoAR2ZVrDy1vF3D07',
                         'isGlobal': 'false',
                         'locale': 'zh_cn',
                     },
-                    'parse_func': '_parse_xiaomi_weather',
+                    'parse_func': '_parse_xiaomi_weather'
                 }
             }
         }
@@ -547,7 +558,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
                 weather_emoji = self._get_weather_emoji(weather)
 
                 return {
-                    'city_name': cfg.city_name.value,
+                    'city_name': cfg.city_name.value[cfg.weather_source.value],
                     'weather': weather,
                     'temperature': f'{now['temp']}℃',
                     'feels_like': f'{now['feelsLike']}℃',
@@ -559,7 +570,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
 
             except Exception as e:
                 log.error(f'天气：解析失败:{e}')
-                return {'city_name': cfg.city_name.value}
+                return {'city_name': cfg.city_name.value[cfg.weather_source.value]}
 
         else:
             self.skip_cache()
@@ -592,7 +603,7 @@ class WeatherWidget(ExtNetworkWidgetBase):
             wind_data = current['wind']
 
             result = {
-                'city_name': cfg.city_name.value,
+                'city_name': cfg.city_name.value[cfg.weather_source.value],
                 'weather': weather,
                 'temperature': f'{temp_data['value']}{temp_data['unit']}',
                 'feels_like': f'{feels_data['value']}{feels_data['unit']}',
@@ -650,36 +661,9 @@ class TodayInHistoryWidget(NetworkWidgetBase):
             log.error(f'[{self.WIDGET_NAME}] 请求失败')
             return None
 
-# 3.节假日和24节气
-# @register(cfg.holiday_solar_term_switch, 'holiday_solar_term_switch')
-# class HolidayAndSolarTermWidget(NetworkWidgetBase):
-#     WIDGET_NAME = 'HolidayAndSolarTerm'
-#     NEED_CACHE = True
-#     LOCAL_INTERVAL = '1d'
-#     # API_URL 在 _fetch_data 中动态拼接日期，留空占位
-#     API_URL = api['xr_holiday_solar_term_url']
-#
-#     def _parse_data(self, raw_data: dict) -> dict | None:
-#         """解析 API 响应，同时提取节气和节假日信息。"""
-#         required = {'jq', 'gzr'}
-#         if not required.issubset(raw_data):
-#             msg = f'{self.WIDGET_NAME}API 返回数据格式异常'
-#             log.error(msg)
-#             self.skip_cache()
-#             raise ValueError(msg)
-#
-#             holiday = raw_data.get('jjr')
-#             solar_term = data.get('solarTerms') or '没有找到 24 节气'
-#             return {'holiday': holiday, 'solar_term': solar_term}
-#
-#         else:
-#             self.skip_cache()
-#             log.error('节假日和 24 节气信息：请求失败')
-#             return None
-
 # 3.每日一言
 @register(cfg.words_switch, 'words_switch')
-class EveryDayWordsWidget(ExtNetworkWidgetBase):
+class DailyWordsWidget(ExtNetworkWidgetBase):
     WIDGET_NAME = 'EveryDayWords'
     NEED_CACHE = True
     LOCAL_INTERVAL = '1d'

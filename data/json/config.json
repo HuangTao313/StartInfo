@@ -16,10 +16,14 @@
     "Weather": {
         "city_id": {
             "qweather": "101201009",
-            "xiaomi_weather": "101201001"
+            "xiaomi_weather": "101180701"
         },
-        "city_name": "恩施",
-        "qweather_api_key": "c092d89faa604be69728db088008fc51",
+        "city_name": {
+            "qweather": "恩施",
+            "xiaomi_weather": "南阳"
+        },
+        "qweather_api_host": "",
+        "qweather_api_key": "",
         "interval": 30,
         "source": "qweather",
         "switch": true

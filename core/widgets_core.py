@@ -330,7 +330,7 @@ def register(switch: ConfigItem, template_key: str | None = None,
 
     用法:
         @register(cfg.words_switch, 'words_switch')
-        class EveryDayWordsWidget(ExtNetworkWidgetBase):
+        class DailyWordsWidget(ExtNetworkWidgetBase):
             ...
 
         # 组件内部有子开关时，用 extra_template_keys 声明需要注入模板的子开关

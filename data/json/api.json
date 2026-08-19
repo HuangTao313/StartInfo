@@ -1,7 +1,7 @@
 {
     "qweather": {
-    "url_weather": "https://ne3qqm4n8w.re.qweatherapi.com/v7/weather/now",
-    "url_air": "https://ne3qqm4n8w.re.qweatherapi.com/v7/air/now"
+    "weather_path": "/v7/weather/now",
+    "air_quality_path": "/v7/air/now"
     },
     "xiaomi_weather": {
     "url": "https://weatherapi.market.xiaomi.com/wtr-v3/weather/all",
