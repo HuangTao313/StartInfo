@@ -5,7 +5,7 @@ import os
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             FluentIcon as FIF, OptionsSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
-                            SettingCardGroup)
+                            SettingCardGroup, HyperlinkCard)
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
@@ -48,9 +48,12 @@ class CustomSettingsPage(BaseSettingPage):
         self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
 
         self.micaEffectSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明',
+            icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明(仅支持Windows11)',
             config_item=cfg.mica_effect_switch, parent=self.themeGroup,
         )
+        # 非Windows系统云母效果开关默认锁定
+        if lib.system != 'Windows':
+            self.micaEffectSwitchCard.setEnabled(False)
 
         self.themeGroup.addSettingCards([
             self.themeCard,
@@ -88,10 +91,11 @@ class CustomSettingsPage(BaseSettingPage):
             parent=self.templateGroup,
         )
 
-        self.openTemplateDocCard = PrimaryPushSettingCard(
-            text='模板自定义文档', icon=FIF.DICTIONARY,
-            title='模板自定义文档', content='DIY自己的模板',
-            parent=self.templateGroup,
+        self.openTemplateDocCard = HyperlinkCard(
+            icon=FIF.DICTIONARY, title='模板自定义文档',
+            content='打开模板自定义文档',
+            url='https://github.com/HuangTao313/StartInfo/blob/main/docs/template-customization.md',
+            text='打开', parent=self.templateGroup,
         )
 
         self.templateGroup.addSettingCards([
@@ -120,7 +124,6 @@ class CustomSettingsPage(BaseSettingPage):
         self.importTemplateCard.clicked.connect(self._onImportTemplateClicked)
         self.refreshTemplateCard.clicked.connect(self._onRefreshTemplateClicked)
         self.openTemplateFolderCard.clicked.connect(self._onOpenTemplateFolderClicked)
-        self.openTemplateDocCard.clicked.connect(self._openTemplateDoc)
 
     # ------------------------------------------------------------------
     # 主题
@@ -177,7 +180,3 @@ class CustomSettingsPage(BaseSettingPage):
 
     def _onOpenTemplateFolderClicked(self):
         os.startfile(lib.TEMPLATE_FOLDER_PATH)
-
-    @staticmethod
-    def _openTemplateDoc():
-        os.startfile(str(lib.TEMPLATE_FOLDER_PATH / '模板自定义文档.md'))

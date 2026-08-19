@@ -45,6 +45,7 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 小标题(居中)
         self._add_centered_widget(SubtitleLabel('StartInfo'))
+        self._add_centered_widget(SubtitleLabel('本项目采用 GNU GPLv3.0 许可证开源'))
 
         # 简单介绍(居中)
         self._add_centered_widget(StrongBodyLabel('一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。'))
@@ -74,14 +75,15 @@ class AboutSettingsPage(BaseSettingPage):
         self.updateSourceCard = ComboBoxSettingCard(
             icon=FIF.CLOUD_DOWNLOAD, title='更新源',
             content='选择更新源：阿里云OSS、GitHub、GitHub镜像站',
-            texts=['阿里云OSS', 'GitHub(未启用)', 'GitHub镜像站(未启用)'],
+            texts=['阿里云OSS', 'GitHub', 'GitHub镜像站'],
             configItem=cfg.update_source, parent=self.aboutGroup,
         )
 
         # 项目GitHub仓库
         self.githubCard = HyperlinkCard(
-            url='https://github.com/HuangTao313/StartInfo', icon=FIF.GITHUB,
-            title='此项目的GitHub仓库', content='打开此项目的GitHub仓库',
+            icon=FIF.GITHUB, title='此项目的GitHub仓库',
+            content='打开此项目的GitHub仓库',
+            url='https://github.com/HuangTao313/StartInfo',
             text='打开', parent=self.aboutGroup,
         )
 

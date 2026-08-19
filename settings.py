@@ -25,9 +25,14 @@ class SettingsWindow(FluentWindow):
         if SETTINGS_ICON.exists():
             self.setWindowIcon(QIcon(str(SETTINGS_ICON)))
 
-        # 云母效果FluentWindow在Windows11默认启用，如果未启用云母效果，则禁用
-        if not cfg.mica_effect_switch.value:
+        # 云母效果仅支持 Windows 11
+        # 未启用或系统不支持时，关闭云母效果
+        if not cfg.mica_effect_switch.value or lib.system != 'Windows':
             self.set_mica_enabled(False)
+
+            if lib.system != 'Windows':
+                # 非 Windows 平台不支持云母效果，锁定开关为关闭状态
+                cfg.set(cfg.mica_effect_switch, False, save=True)
 
         # 1. 创建启动页面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
