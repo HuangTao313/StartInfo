@@ -9,7 +9,7 @@ from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
-from .. import ht_lib as lib
+from .. import base_lib as lib
 from .. import ui
 from ..config import cfg, qconfig
 

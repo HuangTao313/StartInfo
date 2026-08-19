@@ -5,11 +5,11 @@ import subprocess
 import time
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
-import core.ht_lib as lib
+import core.base_lib as lib
 import core.init_app as init_app
 import core.ui as ui
 from core.config import cfg
-from core.ht_lib import log
+from core.base_lib import log
 from core.widgets import (BirthdayWidget, ExtNetworkWidgetBase, MCServerStatusWidget,
                           NetworkWidgetBase, registered_widgets)
 

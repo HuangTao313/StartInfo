@@ -13,7 +13,7 @@ from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageB
                             ExpandGroupSettingCard, Action, CommandBar, FluentIcon)
 
 from .switch_button import IndicatorPosition, SwitchButton
-from ..ht_lib import log
+from ..base_lib import log
 from ..paths import DB_FOLDER_PATH
 from ..config import cfg
 

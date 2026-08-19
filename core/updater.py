@@ -6,7 +6,7 @@ import json
 import hashlib
 import sys
 from pathlib import Path
-from . import ht_lib as lib
+from . import base_lib as lib
 from . import ui
 from .config import cfg
 
@@ -15,7 +15,7 @@ VERSION_PATH: Path = lib.MAIN_PATH / 'data' / 'json' / 'version.json'  # 远程�
 CURRENT_VERSION_PATH: Path = lib.CURRENT_VERSION_PATH  # 本地已安装版本记录
 log = lib.log
 
-
+api_data = lib.read_json(lib.API_FILE_PATH)
 # ==================== 保留你原有的函数 ====================
 def get_version_file() -> bool:
     """
@@ -27,11 +27,16 @@ def get_version_file() -> bool:
       - 失败时记录详细错误日志
     """
     try:
-        api_data = lib.read_json(lib.API_FILE_PATH)
         if 'update_source' not in api_data:
             log.error("更新器-API配置中缺少[update_source]字段")
             return False
-        url = api_data['update_source'][cfg.update_source.value]
+
+        # 如果使用GitHub镜像站，就拼接前缀
+        if cfg.update_source.value == 'github_mirror':
+            url = api_data['update_source']['github_mirror_prefix'] + api_data['update_source']['github']
+
+        else:
+            url = api_data['update_source'][cfg.update_source.value]
 
     except Exception as e:
         log.error(f"更新器-解密更新URL失败: {e}")
@@ -61,7 +66,6 @@ def get_version_file() -> bool:
 
 
 # ==================== 核心工具函数 ====================
-
 def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
     """
     【使用场景】下载文件后校验完整性
@@ -89,7 +93,6 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
     except Exception as e:
         log.error(f"更新器-SHA256校验异常: {e}")
         return False
-
 
 # ==================== 下载模块 ====================
 def download_file(url: str, filename: str, show_progress: bool = True) -> Path | None:
@@ -159,7 +162,6 @@ def download_file(url: str, filename: str, show_progress: bool = True) -> Path |
 
     return None
 
-
 def _print_progress_bar(percent: int, downloaded: int, total: int):
     """
     【私有函数】打印控制台进度条
@@ -213,7 +215,6 @@ def apply_full_update(installer_path: Path) -> None:
         log.critical(f"更新器-启动安装程序失败: {e}")
         sys.exit(1)
 
-
 # ==================== 检查更新决策 ====================
 def check_update() -> tuple[bool, dict]:
     """
@@ -255,16 +256,22 @@ def _build_update_info(remote: dict, update_type: str, reason: str) -> dict:
     """【内部函数】构建完整更新的更新信息"""
     pkg = remote.get('full_package', {})
 
+    # 如果使用GitHub镜像站，就拼接前缀
+    if cfg.update_source.value == 'github_mirror':
+        url = api_data['update_source']['github_mirror_prefix'] + pkg.get('url', '')
+
+    else:
+        url = pkg.get('url', '')
+
     return {
         'version': remote.get('version', '版本号获取失败'),
         'release_date': remote.get('release_date', '日期获取失败'),
         'changelog': remote.get('changelog', '更新日志获取失败'),
         'type': update_type,
-        'url': pkg.get('url', ''),
+        'url': url,
         'sha256': pkg.get('sha256', ''),
         'reason': reason,
     }
-
 
 def perform_update(update_info: dict) -> None:
     """执行完整更新流程（下载 → 校验 → 应用安装程序）"""
@@ -313,13 +320,11 @@ async def check_update_logic() -> tuple[bool, dict, str | None]:
         log.error(f"静默检查异常: {e}")
         return False, {}, f"检查更新异常: {e}"
 
-
 def run_update_process(update_info: dict) -> None:
     """
     【执行逻辑】执行下载替换（窗口已关闭，同步即可）。
     """
     perform_update(update_info)
-
 
 # ==========================================
 # 兼容层：适配旧版设置和直接运行
@@ -343,7 +348,6 @@ def start_updater() -> None:
     else:
         log.info('更新器-已是最新版本')
         ui.dialog(lib.TITLE, '更新器-已是最新版本')
-
 
 if __name__ == '__main__':
     # 初始化UI

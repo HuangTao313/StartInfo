@@ -11,7 +11,7 @@ from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, ExpandGroupCard,
                          ListEditingBox, Notify, TextSettingCard,
                          ZhSwitchSettingCard, action)
-from .. import ht_lib as lib
+from .. import base_lib as lib
 from ..config import cfg, qconfig
 from ..init_app import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..ui import log
@@ -347,7 +347,7 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
         self.dailyCharacterSwitchCard = ZhSwitchSettingCard(
-            icon=FIF.SPEED_MEDIUM, title='每日人品组件',
+            icon=FIF.EXPRESSIVE_INPUT_ENTRY, title='每日人品组件',
             content='显示每日人品',
             config_item=cfg.daily_character_switch, parent=self.otherDetailCard,
         )

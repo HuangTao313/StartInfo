@@ -33,7 +33,7 @@ from typing import Any, TypedDict
 
 import httpx
 
-from .ht_lib import log
+from .base_lib import log
 from .paths import DB_FOLDER_PATH
 from .config import ConfigItem
 

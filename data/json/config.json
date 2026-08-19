@@ -5,9 +5,7 @@
         "close_settings_action": "exit",
         "log_level": "WARNING",
         "template_file": "html_style.j2",
-        "theme": "dynamic",
-        "theme_color": "#ff009faa",
-        "use_win_theme_color": true
+        "update_source": "aliyun_oss"
     },
     "BirthdayWishes": {
         "birthday_dict": {
@@ -52,6 +50,12 @@
         ],
         "ThemeColor": "#ff6b69d6",
         "ThemeMode": "Auto"
+    },
+    "Appearance": {
+        "mica_effect_switch": true,
+        "theme": "dynamic",
+        "theme_color": "#ff0078d4",
+        "use_win_theme_color": true
     },
     "MinecraftJavaServerChecker": {
         "switch": false,

@@ -48,8 +48,8 @@ class DynamicOptionsValidator(ConfigValidator):
     """支持动态选项列表的验证器。
 
     选项列表通过 options_getter 在运行时动态获取。
-    构造时不调用 getter：config.py 类体执行期间 ht_lib 可能尚未完成加载
-    （ht_lib 在顶层 import 本模块的 cfg），立即调用会触发循环导入。
+    构造时不调用 getter：config.py 类体执行期间 base_lib 可能尚未完成加载
+    （base_lib 在顶层 import 本模块的 cfg），立即调用会触发循环导入。
     """
 
     def __init__(self, options_getter):
@@ -88,14 +88,14 @@ class DynamicOptionsValidator(ConfigValidator):
 # ===========================================================================
 
 def _get_template_files() -> list:
-    """延迟导入 ht_lib 的 get_template_files，避免 config ↔ ht_lib 循环依赖。
+    """延迟导入 base_lib 的 get_template_files，避免 config ↔ base_lib 循环依赖。
 
-    ht_lib 在模块顶层 import 本模块的 cfg，因此本模块不能在顶层直接
-    import ht_lib；改为在调用时导入。若 ht_lib 仍在加载中（构造验证器
+    base_lib 在模块顶层 import 本模块的 cfg，因此本模块不能在顶层直接
+    import base_lib；改为在调用时导入。若 base_lib 仍在加载中（构造验证器
     时触发的调用），返回空列表，配置项使用默认值即可。
     """
     try:
-        from .ht_lib import get_template_files
+        from .base_lib import get_template_files
         return get_template_files()
     except ImportError:
         return []

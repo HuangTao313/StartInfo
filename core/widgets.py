@@ -7,7 +7,7 @@ from lunar_python import Lunar, Solar
 from lunar_python.util import HolidayUtil
 from typing import Any
 
-from . import ht_lib as lib
+from . import base_lib as lib
 from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
                            register, registered_widgets)
 from .config import cfg

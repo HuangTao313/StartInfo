@@ -11,7 +11,7 @@ def get_main_path() -> Path:
         path = Path(sys.executable).parent
 
     else:
-        # 开发时：可能是 ht_lib.py 所在目录（core/），也可能是主脚本目录
+        # 开发时：可能是 base_lib.py 所在目录（core/），也可能是主脚本目录
         path = Path(__file__).parent.resolve()
 
     # 如果路径以 'core' 结尾，说明我们在 core/ 里，要退回上一级

@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import ht_lib as lib
+from . import base_lib as lib
 
 # 日志
 log = lib.log

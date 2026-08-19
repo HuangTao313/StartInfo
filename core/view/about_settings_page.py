@@ -11,7 +11,7 @@ from qfluentwidgets import (SubtitleLabel, BodyLabel, SettingCardGroup,
                             ComboBoxSettingCard)
 
 from .setting_card_base import BaseSettingPage
-from .. import ht_lib as lib
+from .. import base_lib as lib
 from ..config import cfg
 from ..updater import check_update_logic, run_update_process
 

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 from qasync import QEventLoop
 from qfluentwidgets import Dialog, Theme, setTheme, setThemeColor, FluentTranslator
 
-from . import ht_lib as lib
+from . import base_lib as lib
 from .config import cfg
 
 # 日志

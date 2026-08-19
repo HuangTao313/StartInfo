@@ -5,7 +5,7 @@ from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from qfluentwidgets import FluentWindow, FluentIcon, NavigationItemPosition, SplashScreen
 
-import core.ht_lib as lib
+import core.base_lib as lib
 import core.ui as ui
 from core.config import cfg
 from core.view.about_settings_page import AboutSettingsPage
@@ -64,7 +64,7 @@ def start_settings():
         loop.run_forever()
 
     if cfg.close_settings_action.value == 'restart':
-        from core.ht_lib import restart_program
+        from core.base_lib import restart_program
         restart_program()
 
     else:
