@@ -1,0 +1,11 @@
+{
+    "version": "V2.4.2",
+    "release_date": "2026年8月19日",
+    "release_timestamp": 1787117482,
+    "changelog": "V2.4.1 → V2.4.2\n【新增功能】\n1.新增多更新源支持，支持从多个来源获取版本信息。\n2.完成 macOS 平台功能适配，提升项目跨平台兼容性。\n\n【优化】\n1.完善设置页面，优化设置项布局与交互体验。\n2.优化天气组件相关设置，支持用户自行配置和风天气 API Host 与 API Key。\n3.优化天气组件的数据源配置及请求逻辑。\n4.整理项目代码，优化部分代码结构，提高可维护性。\n5.优化云母效果相关逻辑，在不支持的平台上自动禁用相关功能。\n\n【Bug修复】\n1.修复部分已知问题，提升程序稳定性与使用体验。\n\n【其他】\n1.本版本为 StartInfo 首个正式开源版本。",
+    "force_full_update": true,
+    "full_package": {
+        "url": "https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Setup.exe",
+        "sha256": "3daaf153a63fdcf9cac7931d0966369d8d9fe0a019c1d6dc815f6f5b02c86a48"
+    }
+}
