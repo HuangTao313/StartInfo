@@ -9,11 +9,11 @@ from typing import Any
 
 from . import base_lib as lib
 from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
-                           register, registered_widgets)
+                           register)
 from .config import cfg
 
-# StartInfo默认组件
-# 于2026.6.30开始重构
+# StartInfo内置组件
+# 组件系统及组件于2026-06-30开始重构
 # 获取 api 信息
 api = lib.read_json(lib.API_FILE_PATH)
 

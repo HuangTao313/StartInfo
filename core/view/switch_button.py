@@ -1,4 +1,17 @@
 # coding:utf-8
+"""
+This file is ported from:
+https://github.com/Aegisir/QWidgetSekai
+
+Original implementation:
+PyQt5
+
+Ported to:
+PySide6
+
+License: GPL-3.0
+"""
+
 from enum import Enum
 
 from PySide6.QtCore import Qt, Property, Signal, QEvent, QPropertyAnimation, QEasingCurve, QPointF, QRectF
