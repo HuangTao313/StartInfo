@@ -120,6 +120,12 @@ StartInfo 主要使用以下项目：
 - [PySide6](https://doc.qt.io/qtforpython-6/gettingstarted.html#getting-started)
 - [QFluentWidgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6)
 
+# AI 辅助开发
+
+本项目开发过程中使用了 AI 辅助编程（Vibe Coding），包括代码编写、重构、调试、问题分析等。
+
+项目的整体设计、功能规划、代码审查与最终维护由作者负责。
+
 ## 致谢
 
 感谢以下项目和资源：
