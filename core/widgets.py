@@ -9,7 +9,7 @@ from typing import Any
 
 from . import base_lib as lib
 from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
-                           register)
+                           register, registered_widgets)
 from .config import cfg
 
 # StartInfo内置组件
