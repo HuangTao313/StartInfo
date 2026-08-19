@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body {
+        /* 适配深色/浅色模式，不设背景色 */
+        font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .birthday-container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* 核心视觉：蛋糕 Emoji */
+    .cake-emoji {
+        font-size: 80px;
+        margin-bottom: 25px;
+        animation: breath 3s ease-in-out infinite;
+    }
+
+    /* 金色大字：寿星名称与年龄 */
+    .wish-text {
+        font-size: 36px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: #D4AF37; /* 兜底颜色 */
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    /* 修改后的小字：不再使用斜体，字号适中 */
+    .life-days {
+        font-size: 18px; /* 调大了一号，更清晰 */
+        color: #888;
+        font-weight: normal;
+        margin-top: 20px;
+        letter-spacing: 1px;
+    }
+
+    @keyframes breath {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.9; }
+    }
+</style>
+</head>
+<body>
+    <div class="birthday-container">
+        <div class="cake-emoji">🎂</div>
+
+        <div class="wish-text">
+            今天是 {{ birthday_star }} <br>
+            的 {{ age }} 岁生日！
+        </div>
+
+        <div class="life-days">
+            来到这个世界的第 {{ life_days }} 天 🌟
+        </div>
+    </div>
+</body>
+</html>

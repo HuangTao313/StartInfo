@@ -1,0 +1,224 @@
+<html>
+<head>
+<style>
+    body {
+        font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: transparent !important;
+    }
+
+    /* === 顶部核心信息区域 === */
+    .header {
+        text-align: center;
+        padding: 20px 15px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid rgba(128, 128, 128, 0.3);
+    }
+
+    .date-big { font-size: 32px; font-weight: bold; margin-bottom: 8px; }
+    .lunar-date { font-size: 15px; margin-bottom: 15px; }
+    .time-big {
+        font-size: 48px;
+        font-weight: bold;
+        font-family: "Consolas", "Courier New", monospace;
+        line-height: 1;
+    }
+
+    /* === 倒数日大字样式 (金色) === */
+    .countdown-container {
+        text-align: center;
+        padding: 15px 10px;
+        margin: 10px 15px;
+        background: transparent !important;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 179, 71, 0.3);
+    }
+
+    .countdown-title { font-size: 16px; color: #888; margin-bottom: 5px; }
+    .countdown-number {
+        font-size: 64px;
+        font-weight: 900;
+        color: #ffb347;
+        line-height: 1.1;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .countdown-unit { font-size: 24px; margin-left: 5px; color: #ffb347; }
+
+    /* === 卡片通用样式 (天气 & 服务器) === */
+    .card {
+        text-align: center;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 15px;
+        background: transparent !important;
+        border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+
+    .card-main { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+    .card-detail { font-size: 13px; line-height: 1.8; }
+
+    /* === 核心修改：好友勋章标签彻底透明 === */
+    .friend-badge {
+        display: inline-block;
+        background: transparent !important; /* 强制干掉背景色 */
+        color: #ffb347;
+        padding: 0 4px;
+        margin-right: 4px;
+        font-weight: bold;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); /* 增加阴影增强可读性 */
+    }
+
+    /* === 正文区域 === */
+    .content { padding: 0 15px 15px; }
+    .section {
+        margin-bottom: 12px;
+        padding: 12px;
+        border-left: 4px solid #ffb347;
+        border-radius: 0 8px 8px 0;
+        background-color: transparent !important;
+    }
+    .section-title { font-size: 15px; font-weight: bold; margin-bottom: 8px; }
+    .section-content { font-size: 13px; line-height: 1.7; }
+    .progress-text { font-weight: bold; }
+
+    /* 每日一言 */
+    .quote-box {
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+        background: transparent !important;
+        border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    .quote { font-style: italic; font-size: 14px; line-height: 1.6; }
+    .quote-en { font-size: 12px; font-style: italic; color: #777; }
+
+    .footer {
+        text-align: center;
+        font-size: 13px;
+        padding: 10px;
+        border-top: 1px solid rgba(128, 128, 128, 0.3);
+    }
+</style>
+</head>
+<body>
+    {% if is_all_off -%}
+    <div class="header">
+        <div class="date-big">StartInfo v2.4.0</div>
+        <div class="section-content">未启用任何信息显示</div>
+    </div>
+    {%- else -%}
+
+    {# --- 1. 顶部日期时间 --- #}
+    {%- if datetime_switch -%}
+    <div class="header">
+        <div class="date-big">{{date}}</div>
+        <div class="lunar-date">{% if lunar_date_switch %}{{lunar_date}} · {% endif %}星期{{weekday}}{% if other_date_switch %} · 第{{week_num}}周 · 第{{day_num}}天{% endif %}</div>
+        <div class="time-big">{{time}}</div>
+    </div>
+    {%- endif -%}
+
+    {# --- 2. 倒数日大字 --- #}
+    {%- if is_countdown_available -%}
+    <div class="countdown-container">
+        <div class="countdown-title">距离【{{countdown_name}}】还有</div>
+        <div class="countdown-number">{{countdown_number}}<span class="countdown-unit">天</span></div>
+    </div>
+    {%- endif -%}
+
+    {# --- 3. 天气卡片 --- #}
+    {%- if weather_switch -%}
+    <div class="card">
+        <div class="card-main">{{weather_emoji}} {{city_name}} · {{weather}}</div>
+        <div class="card-detail">
+            🌡️ 温度 {{temperature}} · 体感{{feels_like}}<br>
+            💧 湿度 {{humidity}} · 💨 {{wind_direction}} {{wind_speed}}<br>
+            🌫️ AQI: {{air_quality}}
+        </div>
+    </div>
+    {%- endif -%}
+
+    {# --- 4. MC 服务器状态 (新适配) --- #}
+    {%- if mc_server_check_switch -%}
+    <div class="card">
+        <div class="card-main">🎮 {{ mc_server_name }}</div>
+        <div class="card-detail">
+            {%- if is_mc_server_online -%}
+            <span style="color: #4CAF50;">● 在线</span> · ⚡ {{ mc_server_latency }}ms · 👥 {{ mc_server_current }} / {{ mc_server_max }}<br>
+            {%- if mc_online_friends -%}
+            ✨ 在线好友：
+            {%- for name in mc_online_friends -%}
+            <span class="friend-badge">[{{ name }}]</span>
+            {%- endfor -%}
+            {%- else -%}
+            💤 暂无好友在线
+            {%- endif -%}
+            {%- else -%}
+            <span style="color: #F44336;">○ 离线</span> · 服务器维护中喵~
+            {%- endif -%}
+        </div>
+    </div>
+    {%- endif -%}
+
+    <div class="content">
+        {# --- 5.1 问候语组件 --- #}
+        {%- if greeting_switch -%}
+        <div class="section">
+            <div class="section-title">⭐️ {{greeting}}</div>
+        </div>
+        {%- endif -%}
+
+        {# --- 5.2 启动次数 & 节日 & 今日人品 --- #}
+        {%- if startup_times_switch or holiday_switch or solar_term_switch or daily_character_switch -%}
+        <div class="section">
+            <div class="section-content">
+                {%- if startup_times_switch -%}
+                    今天已开机 <b>{{startup_times}}</b> 次{% if holiday_switch or solar_term_switch or daily_character_switch %}<br>{% endif %}
+                {%- endif -%}
+                {%- if holiday_switch or solar_term_switch -%}
+                    {% if holiday_switch %}节假日：{{holiday}}{% endif %}{% if holiday_switch and solar_term_switch %} · {% endif %}{% if solar_term_switch %}24 节气：{{solar_term}}{% endif %}{% if daily_character_switch %}<br>{% endif %}
+                {%- endif -%}
+                {%- if daily_character_switch -%}
+                    🎲 今日人品：{{character}}
+                {%- endif -%}
+            </div>
+        </div>
+        {%- endif -%}
+
+        {# --- 6. 年度进度 --- #}
+        {%- if other_date_switch -%}
+        <div class="section">
+            <div class="section-title">📊 年度进度</div>
+            <div class="section-content">
+                <span>今年已过 <span class="progress-text">{{year_progress}}</span></span>
+                <span style="margin-left: 15px;">还剩 <span class="progress-text">{{year_remain}}</span></span>
+            </div>
+        </div>
+        {%- endif -%}
+
+        {# --- 7. 历史上的今天 --- #}
+        {%- if historical_switch -%}
+        <div class="section">
+            <div class="section-title">📜 历史上的今天</div>
+            <div class="section-content">
+                <b>{{historical_date}}</b><br>{{historical_event}}
+            </div>
+        </div>
+        {%- endif -%}
+
+        {# --- 8. 每日一言 --- #}
+        {%- if words_switch -%}
+        <div class="section">
+            <div class="section-title">💭 每日一言</div>
+            <div class="quote-box">
+                <div class="quote">{{words_primary}}</div>
+                <div class="quote-en">{{words_secondary}}</div>
+            </div>
+        </div>
+        {%- endif -%}
+    </div>
+
+    <div class="footer">🌟 今天也要开心呀 🌟</div>
+    {%- endif -%}
+</body>
+</html>

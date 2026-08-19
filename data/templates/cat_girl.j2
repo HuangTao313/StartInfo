@@ -1,0 +1,79 @@
+{% if is_all_off -%}
+★ 未启用任何信息显示喵 ★
+主人快去设置里调教一下我吧 ( •̥ ̫ •̥ )
+{% else -%}
+
+{%- if greeting_switch or startup_times_switch -%}
+⭐️
+{%- if greeting_switch -%}{{ greeting }}主人 ~˃ v ˂~ {% endif -%}
+{%- if startup_times_switch -%}今天已开机{{ startup_times }}次喵~{%- endif -%}
+⭐️
+{{ "\n" }}
+{%- endif -%}
+
+{%- if datetime_switch -%}
+⭐️日期信息⭐️
+今天是{{ date }}  ՞•･•՞🐾（{% if lunar_date_switch %}{{ lunar_date }} {% endif %}星期{{ weekday }}喵✨！
+{% if other_date_switch %}今年的第{{ week_num }}周，是喜欢主人的第{{ day_num }}天呐ฅ( •̥ ̫ •̥ )ฅ喵✨~{% endif %}
+ฅ我们还有多久见到彼此呢 ٨ـﮩﮩ٨ـ♡‎‎ﮩ٨ـﮩﮩ٨喵~ฅ
+{% if holiday_switch %}节假日：{{ holiday }}{% if solar_term_switch %} | {% endif %}{% endif %}{% if solar_term_switch %}24节气：{{ solar_term }}{% endif %}{% if holiday_switch or solar_term_switch %}哦喵✨！{% endif %}{% if daily_character_switch %}
+🎲今日人品：{{ character }}喵✨~{% endif %}
+{{ "\n" }}
+{%- endif -%}
+
+{%- if datetime_switch -%}
+⭐️年度进度⭐️
+{% if other_date_switch %}今年已过{{ year_progress }}，还剩{{ year_remain }}ദ്ദി˶>𖥦<)✧ 喵✨~{% endif %}
+
+{{ time_emoji }}当前时间：{{ time }}U𖥦U喵✨！
+{%- if is_countdown_available -%}
+★📅距离【{{ countdown_name }}】还有 {{ countdown_number }}天★喵✨~
+{%- endif %}
+{{ "\n" }}
+{%- endif -%}
+
+{%- if weather_switch -%}
+⭐️ฅο(=•ω＜=)ρ⌒☆{{ city_name }}天气情况ฅ⭐️
+天气：{{ weather_emoji }}{{ weather }}喵✨~
+温度：{{ temperature }} | 体感温度：{{ feels_like }} | 湿度：{{ humidity }}喵✨~
+风向：{{ wind_direction }} | 风速：{{ wind_speed }}喵✨~
+空气质量：{{ air_quality }}喵✨~
+ฅ虽然我不能直接关♥主人，但主人还是要注意适当增减衣物呀“>⸝⸝⸝⸝<”喵✨~ฅ
+˗ˋˏ( ´͈ T `͈ )ˎˊ˗
+{{ "\n" }}
+{%- endif -%}
+
+{# --- MC 服务器状态：猫娘适配版 --- #}
+{%- if mc_server_check_switch -%}
+⭐️ฅ🐾 MC服务器：{{ mc_server_name }} ฅ⭐️
+{%- if is_mc_server_online -%}
+🌐 状态：在线喵✨ | ⚡ 延迟：{{ mc_server_latency }}ms
+📊 人数：{{ mc_server_current }} / {{ mc_server_max }} ฅ🐾
+{%- if mc_online_friends -%}
+✨ 陪主人玩的好友：
+{%- for name in mc_online_friends -%}[ {{ name }} ]{{ " " if not loop.last }}{%- endfor -%}
+{%- else -%}
+💤 大家都还在潜水喵...
+{%- endif -%}
+{%- else -%}
+❌ 服务器去喵星进修了（离线）
+{%- endif %}
+{{ "\n" }}
+{%- endif -%}
+
+{%- if historical_switch -%}
+⭐️历史上的今天⭐️
+{{ historical_date }}
+{{ historical_event }}
+{{ "\n" }}
+{%- endif -%}
+
+{%- if words_switch -%}
+⭐️每日一言⭐️
+{{ words_primary }}
+{{ words_secondary }}
+{{ "\n" }}
+{%- endif -%}
+
+🌟今天也要开心呀🌟喵！
+{%- endif -%}
