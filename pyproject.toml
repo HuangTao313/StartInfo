@@ -3,7 +3,7 @@ name = "StartInfo"
 version = "2.4.1"
 description = "开机速览"
 readme = "README.md"
-requires-python = "==3.13.13"
+requires-python = "==3.13.15"
 dependencies = [
     "aiofiles>=25.1.0",
     "aiohappyeyeballs>=2.6.2",
@@ -50,7 +50,7 @@ dependencies = [
     "pyside6>=6.11.1",
     "pyside6-addons>=6.11.1",
     "pyside6-essentials>=6.11.1",
-    "pyside6-fluent-widgets>=1.11.2",
+    "pyside6-fluent-widgets>=1.11.3",
     "pysidesix-frameless-window>=0.8.1",
     "pysocks>=1.7.1",
     "qasync>=0.28.0",
