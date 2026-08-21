@@ -33,7 +33,7 @@ from typing import Any, TypedDict
 
 import httpx
 
-from .base_lib import log
+from .base_lib import log, is_internet
 from .paths import DB_FOLDER_PATH
 from .config import ConfigItem
 
@@ -397,6 +397,11 @@ class WidgetBase:
         """按 JSON 路径读取缓存子树。"""
         return CacheManager.read_path(self.WIDGET_NAME, cache_key, json_path)
 
+    def _read_cache_value(self, path: str, default: object = 1) -> Any:
+        """读取缓存路径的值，不存在时返回默认值"""
+        cached = self._read_cache_path(path)
+        return cached[0] if cached is not None else default
+
     def _update_cache_path(self, json_path: str, value: Any,
                            cache_key: str = 'default') -> bool:
         """局部更新缓存中指定 JSON 路径的值。"""
@@ -579,6 +584,11 @@ class NetworkWidgetBase(WidgetBase):
 
     def _sync_request(self) -> dict | None:
         """发出同步 GET 请求并返回解析后的数据。"""
+        # 检查是否联网
+        if not is_internet():
+            log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
+            return None
+
         if not self.API_URL:
             msg = f'联网组件 [{self.WIDGET_NAME}] 未配置 API_URL'
             log.error(msg)
@@ -624,6 +634,11 @@ class NetworkWidgetBase(WidgetBase):
 
         适合大多数组件（小时/天级刷新），无需手动管理连接。
         """
+        # 检查是否联网
+        if not is_internet():
+            log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
+            return None
+
         if not self.API_URL:
             msg = f'联网组件 [{self.WIDGET_NAME}] 未配置 API_URL'
             log.error(msg)
@@ -728,7 +743,6 @@ class ExtNetworkWidgetBase(WidgetBase):
         api_config: APIConfig,
     ) -> dict | None:
         """同步请求一个 API 并解析结果"""
-
         url = api_config.get('url')
 
         if not url:
@@ -847,8 +861,13 @@ class ExtNetworkWidgetBase(WidgetBase):
     # --------------------------------------------------------------
     # API 调度 —— 同步
     # --------------------------------------------------------------
-    def _dispatch_requests(self) -> dict:
+    def _dispatch_requests(self) -> dict | None:
         """同步调度当前数据源的全部 API"""
+        # 检查是否联网
+        if not is_internet():
+            log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
+            return None
+
         result = {}
         failed = False
 
@@ -875,8 +894,13 @@ class ExtNetworkWidgetBase(WidgetBase):
     # --------------------------------------------------------------
     # API 调度 —— 异步
     # --------------------------------------------------------------
-    async def _dispatch_requests_async(self) -> dict:
+    async def _dispatch_requests_async(self) -> dict | None:
         """异步并发调度当前数据源的全部 API"""
+        # 检查是否联网
+        if not is_internet():
+            log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
+            return None
+
         tasks = [
             self._request_api_async(api_name, api_config)
             for api_name, api_config

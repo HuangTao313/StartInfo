@@ -157,7 +157,7 @@ class MyConfig(QConfig):
     )
     use_win_theme_color = ConfigItem('Appearance', 'use_win_theme_color', True, BoolValidator())
     theme_color = ColorConfigItem('Appearance', 'theme_color', '#0078d4')
-    mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', False, BoolValidator())
+    mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', True, BoolValidator())
 
     # =========================== 日期和时间 ===========================
     datetime_switch = ConfigItem('DateTime', 'switch', True, BoolValidator())

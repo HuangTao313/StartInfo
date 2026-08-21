@@ -11,7 +11,8 @@ import core.ui as ui
 from core.config import cfg
 from core.base_lib import log
 from core.widgets import (BirthdayWidget, ExtNetworkWidgetBase, MCServerStatusWidget,
-                          NetworkWidgetBase, registered_widgets)
+                          NetworkWidgetBase, global_date)
+from core.widgets_core import registered_widgets
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
@@ -72,8 +73,6 @@ def init():
         if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
             init_app.create_shortcut()
             log.info('主程序-用户已添加开机启动项')
-
-    lib.file.write('General', 'is_first_startup', value=False)
 
 def handle_j2_template(j2_file_path: Path):
     """处理 .j2 模板文件的逻辑"""
@@ -184,9 +183,9 @@ async def main() -> None:
             jinja2_data.update(data)
 
     # ── 生日已显示过 → 移除生日字段，不走生日模板 ──
-    last_birthday_date = lib.file.read('General', 'last_birthday_date') or ''
-    today_str = time.strftime('%Y%m%d', time.localtime())
-    if last_birthday_date == today_str:
+    birthday_widget = BirthdayWidget()
+    last_birthday_date = birthday_widget.read_last_birthday_date()
+    if last_birthday_date == global_date:
         jinja2_data.pop('birthday_star', None)
         jinja2_data.pop('age', None)
         jinja2_data.pop('life_days', None)
@@ -247,8 +246,8 @@ if __name__ == '__main__':
             log.warning('主程序-检测到多开，请勿重复启动')
             sys.exit()
 
-    # 如果是第一次启动，进入初始化流程
-    if lib.file.read('General', 'is_first_startup'):
+    # 当config.json不存在时，视为第一次启动，询问用户是否将程序添加到开机启动项
+    if not lib.CONFIG_FILE_PATH.exists():
         init()
 
     # 检测是否带有启动参数(args列表的长度>1)

@@ -9,7 +9,7 @@ from typing import Any
 
 from . import base_lib as lib
 from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
-                           register, registered_widgets)
+                           register)
 from .config import cfg
 
 # StartInfo内置组件
@@ -267,7 +267,11 @@ class BirthdayWidget(LocalWidgetBase):
 
     def mark_as_shown(self) -> None:
         """标记生日祝福今天已显示，明天之前不再重复检测。"""
-        lib.file.write('General', 'last_birthday_date', time.strftime('%Y%m%d', time.localtime()))
+        self._update_cache_path('last_birthday_date', global_date)
+
+    def read_last_birthday_date(self):
+        """获取最后检查生日的日期"""
+        return self._read_cache_value('last_birthday_date', '')
 
     def _fetch_data(self) -> dict | None:
         """刷新生日信息并自动缓存"""
@@ -344,11 +348,6 @@ class StartupTimesWidget(LocalWidgetBase):
     WIDGET_NAME = 'StartupTimes'
     NEED_CACHE = False
 
-    def _read_value(self, path: str = 'times', default: object = 1) -> int | Any:
-        """读取缓存路径的值，不存在时返回默认值。"""
-        cached = self._read_cache_path(path)
-        return cached[0] if cached is not None else default
-
     def _reset_times(self) -> None:
         """重置开机次数为 1，记录今天日期。"""
         self._update_cache_path('times', 1)
@@ -360,7 +359,7 @@ class StartupTimesWidget(LocalWidgetBase):
         Returns:
             int: 新的开机次数
         """
-        current = self._read_value('times')
+        current = self._read_cache_value('times')
         new_times = current + 1
         self._update_cache_path('times', new_times)
         return new_times
@@ -372,7 +371,7 @@ class StartupTimesWidget(LocalWidgetBase):
             dict: 开机次数信息，示例：{'times': 1}
         """
         if '--startup' in lib.global_argv:
-            last_date = self._read_value('get_date', default='')
+            last_date = self._read_cache_value('get_date', default='')
             if global_date != last_date:
                 # 新的一天 → 重置
                 self._reset_times()
@@ -383,7 +382,7 @@ class StartupTimesWidget(LocalWidgetBase):
                 return {'startup_times': times}
         else:
             # 手动打开，只读不写
-            times = self._read_value()
+            times = self._read_cache_value('times')
             return {'startup_times': times}
 
 # 6.今日人品

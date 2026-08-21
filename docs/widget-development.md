@@ -253,14 +253,15 @@ class MyWindow(QMainWindow):
 
 **缓存辅助方法（通常不需要直接调用）：**
 
-| 方法 | 返回 | 说明 |
-|------|------|------|
+| 方法 | 返回                      | 说明      |
+|------|-------------------------|---------|
 | `_read_cache(cache_key)` | `(dict, float) \| None` | 读整条缓存 + 时间戳 |
-| `_save_cache(data, cache_key)` | `bool` | 写入整条缓存 |
-| `_clear_cache(cache_key)` | `bool` | 删除缓存 |
-| `_read_cache_path(json_path, cache_key)` | `(Any, float) \| None` | 读路径节点 + 时间戳 |
-| `_update_cache_path(json_path, value, cache_key)` | `bool` | 局部更新路径值 |
-| `_remove_cache_path(json_path, cache_key)` | `bool` | 删除路径子树 |
+| `_save_cache(data, cache_key)` | `bool`                  | 写入整条缓存  |
+| `_clear_cache(cache_key)` | `bool`                  | 删除缓存    |
+| `_read_cache_path(json_path, cache_key)` | `(Any, float) \| None`  | 读路径节点 + 时间戳 |
+| `_read_cache_value(path, default)` | `Any`                   | 读取缓存路径的值，不存在时返回默认值        |
+| `_update_cache_path(json_path, value, cache_key)` | `bool`                  | 局部更新路径值 |
+| `_remove_cache_path(json_path, cache_key)` | `bool`                  | 删除路径子树  |
 
 **子类覆写点：**
 
