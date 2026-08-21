@@ -68,6 +68,10 @@ class DynamicOptionsValidator(ConfigValidator):
                 self._options = options
         return self._options or []
 
+    def invalidate(self) -> None:
+        """清除缓存的选项列表，下次读取时重新扫描获取。"""
+        self._options = None
+
     def validate(self, value):
         if not isinstance(value, str):
             return False

@@ -5,7 +5,7 @@ import os
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             FluentIcon as FIF, OptionsSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
-                            SettingCardGroup, HyperlinkCard)
+                            RadioButton, SettingCardGroup, HyperlinkCard)
 
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import Notify, ZhSwitchSettingCard
@@ -106,13 +106,6 @@ class CustomSettingsPage(BaseSettingPage):
             self.openTemplateDocCard,
         ])
         self.expandLayout.addWidget(self.templateGroup)
-
-        # —— 禁用其他系统暂未适配的功能 ——
-        if lib.system not in ('Windows', 'Darwin'):
-            # 使用系统主题色
-            qconfig.set(cfg.use_win_theme_color, False, save=True)
-            self.useWinThemeColor.setEnabled(False)
-
         self.finalise()
 
     def _connect_signals(self):
@@ -161,21 +154,63 @@ class CustomSettingsPage(BaseSettingPage):
                                parent=self)
                 self._onRefreshTemplateClicked()
 
+    # @staticmethod
+    # def _update_combobox_options(card: ComboBoxSettingCard, new_texts: list):
+    #     old_options = cfg.template_file.value
+    #     new_options = card.configItem.validator.get_options()
+    #     card.comboBox.clear()
+    #     card.optionToText.clear()
+    #     card.optionToText = {o: t for o, t in zip(new_options, new_texts)}
+    #     for text, option in zip(new_texts, new_options):
+    #         card.comboBox.addItem(text, userData=option)
+    #     if old_options in card.optionToText:
+    #         card.comboBox.setCurrentText(card.optionToText[old_options])
+
     @staticmethod
-    def _update_combobox_options(card: ComboBoxSettingCard, new_texts: list):
-        old_options = cfg.template_file.value
-        new_options = card.configItem.validator.get_options()
-        card.comboBox.clear()
-        card.optionToText.clear()
-        card.optionToText = {o: t for o, t in zip(new_options, new_texts)}
-        for text, option in zip(new_texts, new_options):
-            card.comboBox.addItem(text, userData=option)
-        if old_options in card.optionToText:
-            card.comboBox.setCurrentText(card.optionToText[old_options])
+    def _update_options_setting_card(card: OptionsSettingCard, new_texts: list):
+        """刷新模板选项按钮列表（模板文件变更后重建单选按钮）。
+
+        OptionsSettingCard 展开时重建按钮会与展开动画/高度计算冲突，
+        因此先强制收起并复位高度，避免刷新后显示异常。
+        """
+        old_value = cfg.template_file.value
+        config_name = card.configName
+
+        # 展开状态下重建单选按钮会导致高度计算异常，先收起并停掉动画
+        card.setExpand(False)
+        card.expandAni.stop()
+        card.setFixedHeight(card.card.height())
+
+        # 清除验证器缓存，保证 configItem.options 与最新文件列表一致
+        card.configItem.validator.invalidate()
+
+        # 移除旧的单选按钮
+        for button in card.buttonGroup.buttons():
+            card.buttonGroup.removeButton(button)
+            card.viewLayout.removeWidget(button)
+            button.deleteLater()
+
+        # 依据最新模板列表重建按钮，文本与选项值均为模板文件名
+        for text in new_texts:
+            button = RadioButton(text, card.view)
+            card.buttonGroup.addButton(button)
+            card.viewLayout.addWidget(button)
+            button.setProperty(config_name, text)
+
+        card._adjustViewSize()
+
+        # 保留原选中项；若原模板已不存在则回退到第一个
+        value = old_value if old_value in new_texts else new_texts[0]
+        card.setValue(value)
+
+        # setValue 内部 choiceLabel.adjustSize() 会压缩标签固有高度，
+        # 重新激活头部布局，让标签恢复垂直拉伸（避免收起时文本上移）
+        card.card.hBoxLayout.invalidate()
+        card.card.hBoxLayout.activate()
 
     def _onRefreshTemplateClicked(self):
         templates_list = lib.get_template_files()
-        self._update_combobox_options(self.templateCard, templates_list)
+        self._update_options_setting_card(self.templateCard, templates_list)
         Notify.success(f'已刷新模板列表，发现 {len(templates_list)} 个文件', parent=self)
 
     def _onOpenTemplateFolderClicked(self):
