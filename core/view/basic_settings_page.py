@@ -3,6 +3,7 @@
 import os
 import shutil
 
+from qasync import asyncSlot
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup)
@@ -10,7 +11,7 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import (CalendarSettingCard, CitySearchBox, ExpandGroupCard,
                          ListEditingBox, Notify, TextSettingCard,
-                         ZhSwitchSettingCard, action)
+                         ZhSwitchSettingCard)
 from .. import base_lib as lib
 from ..config import cfg, qconfig
 from ..init_app import create_shortcut, is_shortcut_exist, remove_shortcut
@@ -516,8 +517,8 @@ class BasicSettingsPage(BaseSettingPage):
                     )
                     self._onRefreshWeather()
 
-    @action('天气信息更新成功', '天气信息更新失败')
-    async def _onWeatherSourceChanged(self) -> dict | None:
+    @asyncSlot()
+    async def _onWeatherSourceChanged(self):
         from ..widgets import WeatherWidget
         widget = WeatherWidget()
         cache_source = widget.get_cached_source()
@@ -537,46 +538,83 @@ class BasicSettingsPage(BaseSettingPage):
             if data_source == 'qweather':
                 if not (cfg.qweather_api_host.value.strip() and cfg.qweather_api_key.value.strip()):
                     Notify.warning('未填写API Host或API Key', parent=self)
-                    return None
+                    return
 
             else:
                 # 开始刷新天气信息
                 self.weatherSourceCard.setEnabled(False)
                 self.weatherRefreshCard.setEnabled(False)
                 try:
-                    return await widget.get_data_async(force_refresh=True)
+                    await widget.get_data_async(force_refresh=True)
+                    self._notify_widget_result(widget, '天气信息更新成功', '天气信息更新失败')
+
+                except Exception as e:
+                    log.error(f'设置-天气信息更新失败：{e}')
+                    Notify.error(content=f'未知错误：{e}', title='天气信息更新失败', parent=self)
 
                 finally:
                     self.weatherSourceCard.setEnabled(True)
                     self.weatherRefreshCard.setEnabled(True)
 
-    @action('天气信息更新成功', '天气信息更新失败')
-    async def _onRefreshWeather(self) -> dict:
+    @asyncSlot()
+    async def _onRefreshWeather(self):
         from core.widgets import WeatherWidget
         widget = WeatherWidget()
         # 如果数据源是和风天气，检查API Host和API Key是否可用
         if widget.DATA_SOURCE == 'qweather':
             if not (cfg.qweather_api_host.value.strip() and cfg.qweather_api_key.value.strip()):
                 Notify.warning('未填写API Host或API Key', parent=self)
-                return None
+                return
 
         self.weatherRefreshCard.setEnabled(False)
         try:
-            return await widget.get_data_async(force_refresh=True)
+            await widget.get_data_async(force_refresh=True)
+            self._notify_widget_result(widget, '天气信息更新成功', '天气信息更新失败')
+
+        except Exception as e:
+            log.error(f'设置-天气信息更新失败：{e}')
+            Notify.error(content=f'未知错误：{e}', title='天气信息更新失败', parent=self)
 
         finally:
             self.weatherRefreshCard.setEnabled(True)
 
-    @action('MC 服务器信息已更新', 'MC 服务器信息更新失败')
-    async def _onRefreshMCServer(self) -> dict:
+    @asyncSlot()
+    async def _onRefreshMCServer(self):
         self.mcServerDataRefreshCard.setEnabled(False)
         try:
-            from core.widgets import MCServerStatusWidget
+            from core.widgets import MCServerError, MCServerStatusWidget
             mc = MCServerStatusWidget()
-            return await mc.get_data_async(force_refresh=True)
+            data = await mc.get_data_async(force_refresh=True)
+
+            # 成功提示中附带在线朋友信息（≤3 个时列出名单）
+            content = 'MC 服务器信息已更新'
+            online_friends = (data or {}).get('mc_online_friends') or []
+            if online_friends:
+                friend_count = len(online_friends)
+                if friend_count <= 3:
+                    content += f'，当前有 {friend_count} 个朋友在线：' \
+                               f'{"、".join(online_friends)}'
+                else:
+                    content += f'，当前有 {friend_count} 个朋友在线'
+            Notify.success(content=content, parent=self)
+
+        except MCServerError as e:
+            log.error(f'设置-MC 服务器信息更新失败：{e}')
+            Notify.error(content=str(e), title='MC 服务器信息更新失败', parent=self)
+
+        except Exception as e:
+            log.error(f'设置-MC 服务器信息更新失败：{e}')
+            Notify.error(content=f'未知错误：{e}', title='MC 服务器信息更新失败', parent=self)
 
         finally:
             self.mcServerDataRefreshCard.setEnabled(True)
+
+    def _notify_widget_result(self, widget, success_msg: str, fail_title: str) -> None:
+        """根据组件获取结果弹提示：组件记录有错误信息则弹错误，否则弹成功。"""
+        if getattr(widget, 'last_error', ''):
+            Notify.error(content=widget.last_error, title=fail_title, parent=self)
+        else:
+            Notify.success(content=success_msg, parent=self)
 
     def _onEditFriendsList(self) -> None:
         friends_list = cfg.minecraft_server_friends_list.value
@@ -590,8 +628,8 @@ class BasicSettingsPage(BaseSettingPage):
                 Notify.success('已保存新的朋友列表', parent=self)
                 log.info(f'设置-已保存新的朋友列表：{box.result}')
 
-    @action('每日一言信息更新成功', '每日一言信息更新失败')
-    async def _onWordsSourceChanged(self) -> dict | None:
+    @asyncSlot()
+    async def _onWordsSourceChanged(self):
         from ..widgets import DailyWordsWidget
         widget = DailyWordsWidget()
         cache_source = widget.get_cached_source()
@@ -600,7 +638,12 @@ class BasicSettingsPage(BaseSettingPage):
             self.wordsSourceCard.setEnabled(False)
             # 开始刷新每日一言信息
             try:
-                return await widget.get_data_async(force_refresh=True)
+                await widget.get_data_async(force_refresh=True)
+                self._notify_widget_result(widget, '每日一言信息更新成功', '每日一言信息更新失败')
+
+            except Exception as e:
+                log.error(f'设置-每日一言信息更新失败：{e}')
+                Notify.error(content=f'未知错误：{e}', title='每日一言信息更新失败', parent=self)
 
             finally:
                 self.wordsSourceCard.setEnabled(True)

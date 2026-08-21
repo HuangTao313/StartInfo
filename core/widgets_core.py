@@ -732,6 +732,8 @@ class ExtNetworkWidgetBase(WidgetBase):
     def __init__(self) -> None:
         super().__init__()
         self._async_client: httpx.AsyncClient | None = None
+        # 最近一次获取失败的用户可读错误信息（成功或未触发获取时为空字符串）
+        self.last_error: str = ''
 
     # --------------------------------------------------------------
     # 单个 API —— 同步
@@ -787,12 +789,12 @@ class ExtNetworkWidgetBase(WidgetBase):
                 else:
                     msg = (f'组件 [{self.WIDGET_NAME}] API [{api_name}] 获取数据失败')
                     log.error(f'{msg}: {exc}')
-                    raise ConnectionError(msg) from exc
+                    raise ConnectionError(f'{msg}: {exc}') from exc
 
             except Exception as exc:
                 msg = (f'组件 [{self.WIDGET_NAME}] API [{api_name}] 发生未知错误')
                 log.error(f'{msg}: {exc}')
-                raise RuntimeError(msg) from exc
+                raise RuntimeError(f'{msg}: {exc}') from exc
 
         return None
 
@@ -849,12 +851,12 @@ class ExtNetworkWidgetBase(WidgetBase):
                 else:
                     msg = f'组件 [{self.WIDGET_NAME}] API [{api_name}] 获取数据失败'
                     log.error(f'{msg}: {exc}')
-                    raise ConnectionError(msg) from exc
+                    raise ConnectionError(f'{msg}: {exc}') from exc
 
             except Exception as exc:
                 msg = f'组件 [{self.WIDGET_NAME}] API [{api_name}] 发生未知错误'
                 log.error(f'{msg}: {exc}')
-                raise RuntimeError(msg) from exc
+                raise RuntimeError(f'{msg}: {exc}') from exc
 
         return None
 
@@ -865,24 +867,30 @@ class ExtNetworkWidgetBase(WidgetBase):
         """同步调度当前数据源的全部 API"""
         # 检查是否联网
         if not is_internet():
+            self.last_error = '当前未联网，无法获取数据'
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
         result = {}
-        failed = False
+        errors = []
 
         for api_name, api_config in self.CURRENT_API_DATA.items():
             try:
                 data = self._request_api(api_name, api_config)
                 if data:
                     result.update(data)
+                else:
+                    # 请求成功但解析函数返回空，视为解析失败
+                    errors.append(f'{api_name}: 数据解析失败')
+                    log.error(f'[{self.WIDGET_NAME}] API [{api_name}] 解析失败')
             except Exception as e:
                 # 单个 API 失败不影响其他 API 的数据
-                failed = True
+                errors.append(str(e))
                 log.error(f'[{self.WIDGET_NAME}] API [{api_name}] 获取失败: {e}')
 
         # 任一 API 失败时不缓存部分结果，下次启动重新获取全部
-        if failed:
+        if errors:
+            self.last_error = '；'.join(errors)
             self.skip_cache()
 
         # 记录本次缓存对应的数据源，供 get_cached_source() 判断切换
@@ -898,6 +906,7 @@ class ExtNetworkWidgetBase(WidgetBase):
         """异步并发调度当前数据源的全部 API"""
         # 检查是否联网
         if not is_internet():
+            self.last_error = '当前未联网，无法获取数据'
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
@@ -909,18 +918,23 @@ class ExtNetworkWidgetBase(WidgetBase):
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         result = {}
-        failed = False
+        errors = []
 
         for data in results:
             if isinstance(data, Exception):
                 # 单个 API 失败不影响其他 API 的数据
-                failed = True
+                errors.append(str(data))
                 log.error(f'[{self.WIDGET_NAME}] API 获取失败: {data}')
             elif data:
                 result.update(data)
+            else:
+                # 请求成功但解析函数返回空，视为解析失败
+                errors.append('数据解析失败')
+                log.error(f'[{self.WIDGET_NAME}] API 解析失败')
 
         # 任一 API 失败时不缓存部分结果，下次启动重新获取全部
-        if failed:
+        if errors:
+            self.last_error = '；'.join(errors)
             self.skip_cache()
 
         # 记录本次缓存对应的数据源，供 get_cached_source() 判断切换

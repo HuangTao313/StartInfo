@@ -720,6 +720,9 @@ class DailyWordsWidget(ExtNetworkWidgetBase):
             return None
 
 # 4.MC 服务器状态
+class MCServerError(Exception):
+    """MC 服务器状态获取失败，message 为用户可读的错误描述。"""
+
 @register(cfg.minecraft_server_checker_switch, 'mc_server_check_switch')
 class MCServerStatusWidget(LocalWidgetBase):
     WIDGET_NAME = 'MCServerStatus'
@@ -752,8 +755,11 @@ class MCServerStatusWidget(LocalWidgetBase):
 
         return results
 
-    def _fetch_data(self) -> dict | None:
-        """同步获取 MC 服务器状态。"""
+    def _fetch_data(self) -> dict:
+        """同步获取 MC 服务器状态。
+
+        :raises MCServerError: 地址未配置或获取失败时抛出，message 可直接展示给用户
+        """
         from mcstatus import JavaServer
 
         ip = cfg.minecraft_server_ip.value
@@ -761,7 +767,7 @@ class MCServerStatusWidget(LocalWidgetBase):
         if not ip or port in [None, '未知', '']:
             self.skip_cache()
             log.error('MC 服务器：请填写完整的服务器地址和端口')
-            return None
+            raise MCServerError('请填写完整的服务器地址和端口')
 
         try:
             server = JavaServer.lookup(f'{ip}:{port}')
@@ -773,23 +779,21 @@ class MCServerStatusWidget(LocalWidgetBase):
         except Exception as e:
             self.skip_cache()
             log.error(f'MC 服务器（同步）：获取失败：{e}')
-            return None
+            raise MCServerError(f'获取失败：{e}') from e
 
-    async def _fetch_data_async(self) -> dict | None:
-        """异步获取 MC 服务器状态。"""
+    async def _fetch_data_async(self) -> dict:
+        """异步获取 MC 服务器状态。
+
+        :raises MCServerError: 地址未配置或获取失败时抛出，message 可直接展示给用户
+        """
         from mcstatus import JavaServer
-
-        if not cfg.minecraft_server_checker_switch.value:
-            self.skip_cache()
-            log.info('MC 服务器：开关未开启，跳过检测')
-            return {}
 
         ip = cfg.minecraft_server_ip.value
         port = cfg.minecraft_server_port.value
         if not ip or port in [None, '未知', '']:
             self.skip_cache()
             log.error('MC 服务器：请填写完整的服务器地址和端口')
-            return None
+            raise MCServerError('请填写完整的服务器地址和端口')
 
         try:
             server = await JavaServer.async_lookup(f'{ip}:{port}')
@@ -801,4 +805,4 @@ class MCServerStatusWidget(LocalWidgetBase):
         except Exception as e:
             self.skip_cache()
             log.error(f'MC 服务器（异步）：获取失败：{e}')
-            return None
+            raise MCServerError(f'获取失败：{e}') from e
