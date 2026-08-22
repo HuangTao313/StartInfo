@@ -133,7 +133,7 @@ class MyConfig(QConfig):
     )
 
     # 自动关闭弹窗
-    auto_close_switch = ConfigItem('General', 'auto_close_switch', False, BoolValidator())
+    auto_close_switch = ConfigItem('General', 'auto_close_switch', True, BoolValidator())
     auto_close_time = ConfigItem(
         'General', 'auto_close_time', 60,
         IntRangeValidator(min_val=30, max_val=300, default_val=60),
