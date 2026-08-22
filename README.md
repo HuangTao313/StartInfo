@@ -44,11 +44,190 @@
 git clone https://github.com/HuangTao313/StartInfo.git
 cd StartInfo
 ```
+
 使用 uv 同步项目依赖：
 
 ```bash
 uv sync
 ```
+
+### 运行
+
+StartInfo 的源码入口为 `main.py` 和 `settings.py`，可以根据需要直接运行。
+
+**启动主程序：**
+
+```bash
+uv run main.py
+```
+
+**直接启动设置页面：**
+
+```bash
+uv run settings.py
+```
+
+`core` 目录为 StartInfo 的核心功能模块，是项目内部自制的核心库，不作为独立程序运行。
+
+`core` 中的文件由 `main.py`、`settings.py` 等入口间接调用，**无需也不建议直接运行 `core` 目录中的文件**。
+
+
+## 启动参数
+
+StartInfo 支持以下启动参数，可用于调试、故障排查以及特定场景下的功能调用。
+
+以下示例分为两种运行方式：
+
+* **源码运行**：使用 `uv run main.py`，适用于开发和调试。
+* **已编译版本**：使用 `StartInfo.exe`，适用于普通用户。
+
+除特别说明外，两种运行方式支持的启动参数相同。
+
+### `--settings`
+
+跳过主程序流程，直接启动设置页面。
+
+当主程序无法正常启动，但设置页面仍可以正常运行时，可以使用此参数进入设置。
+
+**源码运行：**
+
+```bash
+uv run main.py --settings
+```
+
+**已编译版本：**
+
+```powershell
+StartInfo.exe --settings
+```
+
+### `--updater`
+
+跳过主程序流程，直接启动更新器。
+
+当主程序无法正常启动，但需要进行版本更新时，可以使用此参数单独启动更新器。
+
+**源码运行：**
+
+```bash
+uv run main.py --updater
+```
+
+**已编译版本：**
+
+```powershell
+StartInfo.exe --updater
+```
+
+### `--debug`
+
+临时将本次启动的日志等级强制设置为 `DEBUG`，用于调试和问题排查。
+
+该参数**不会修改设置中保存的日志等级**。不使用 `--debug` 启动时，程序仍会使用设置页面中保存的日志等级。
+
+**源码运行：**
+
+```bash
+uv run main.py --debug
+```
+
+**已编译版本：**
+
+```powershell
+StartInfo.exe --debug
+```
+
+本次启动会使用 `DEBUG` 日志等级；下次正常启动时，仍然使用设置中原本配置的日志等级。
+
+`--debug` 不属于启动入口参数，可以与 `--settings` 或 `--updater` 同时使用：
+
+```bash
+uv run main.py --settings --debug
+uv run main.py --updater --debug
+```
+
+已编译版本：
+
+```powershell
+StartInfo.exe --settings --debug
+StartInfo.exe --updater --debug
+```
+
+### `--startup`
+
+用于标识 StartInfo 是否由**开机自启动项**启动。
+
+该参数主要由 StartInfo 的开机启动功能自动添加，通常不需要用户手动指定。
+
+启用开机自启动后，StartInfo 创建的启动项会自动附加 `--startup` 参数。程序启动时可以根据该参数判断当前启动是否属于开机自启动，并由此配合开机次数组件统计开机次数。
+
+已编译版本的启动项实际使用形式类似：
+
+```powershell
+StartInfo.exe --startup
+```
+
+> `--startup` 属于内部用途参数，一般情况下无需手动添加或修改。
+
+
+
+### 参数优先级
+
+`--settings` 和 `--updater` 属于不同的启动入口，**两者不能同时生效**。
+
+如果同时指定：
+
+```bash
+uv run main.py --settings --updater
+```
+
+则 `--settings` 优先，程序会直接进入设置页面，`--updater` 不会执行。
+
+`--debug` 不属于启动入口，可以与 `--settings` 或 `--updater` 同时使用。
+
+例如：
+
+```bash
+uv run main.py --settings --debug
+uv run main.py --updater --debug
+```
+
+## 模板文件
+
+StartInfo 支持接收 Jinja2 模板文件路径作为启动参数。
+
+可以将模板文件直接拖拽到 StartInfo 的程序图标上。StartInfo 启动后会识别传入的模板文件，并询问是否将该模板添加到模板目录。
+
+该功能主要用于方便用户快速添加自定义模板。
+
+## 日志与调试
+
+StartInfo 使用 Loguru 记录运行日志。
+
+默认日志等级为 `WARNING`，因此正常运行时不会记录大量普通运行信息。
+
+日志文件默认保留 **3 天**，过期日志会自动清理。
+
+如果遇到程序运行异常，可以使用 `--debug` 参数启动程序，以记录更详细的 DEBUG 级别日志，并在反馈问题或提交 Issue 时附上相关日志。
+
+## 更新机制
+
+StartInfo 支持多个更新源：
+
+* GitHub
+* GitHub 镜像站
+* 阿里云 OSS
+
+其中阿里云 OSS 更新源不仅用于下载更新包，还提供版本检查接口。
+
+为了避免更新接口被频繁请求，StartInfo 会对版本检查结果进行本地缓存。
+
+版本信息缓存默认有效期为 **1 小时**。在缓存有效期间，再次检查更新不会重新请求服务器。
+
+因此，如果 StartInfo 已经检查过一次更新，即使之后立即发布了新版本，用户也可能需要等待当前缓存过期后才能检测到新版本。
+
+这是为了降低更新接口的请求压力，并避免更新接口被频繁请求。
+
 
 ## 和风天气配置
 
@@ -98,14 +277,6 @@ API Key 请直接填写控制台提供的 Key，无需添加引号或其他内�
 
 > 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets.py](core/widgets.py)。
 
-## 更新
-
-StartInfo 支持多个更新源，目前包括：
-
-- GitHub
-- GitHub 镜像站
-- 阿里云 OSS
-
 ## 开源协议
 
 本项目采用 GNU GPLv3.0 许可证开源。
@@ -143,9 +314,9 @@ StartInfo 主要使用以下项目：
 
 <p>
   <a href="https://github.com/HuangTao313">
-    <img src="https://github.com/HuangTao313.png" width="60px" alt="HuangTao">
+    <img src="https://github.com/HuangTao313.png" width="60px" alt="HuangTao" style="border-radius: 50%;">
   </a>
   <a href="https://github.com/Yuuka-doesnt-know">
-    <img src="https://github.com/Yuuka-doesnt-know.png" width="60px" alt="Yukka-doesnt-know">
+    <img src="https://github.com/Yuuka-doesnt-know.png" width="60px" alt="Yukka-doesnt-know" style="border-radius: 50%;">
   </a>
 </p>
