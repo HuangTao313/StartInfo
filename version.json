@@ -6,6 +6,6 @@
     "force_full_update": true,
     "full_package": {
         "url": "https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Setup.exe",
-        "sha256": "e92c56d0fb7b9cff71561de6131e3fd1a4da01b2b1d54e459d1b9c1ff8b15ed2"
+        "sha256": "0c1b55e06851ebd727f167e8941973cc34ad169a8d2ca820eb86accac9560e97"
     }
 }
