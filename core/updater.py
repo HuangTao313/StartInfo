@@ -51,11 +51,13 @@ def get_version_file() -> bool:
         return False
 
     try:
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=10.0, follow_redirects=True) as client:
             response = client.get(url)
             response.raise_for_status()
             existing_data = response.json()
             existing_data['get_time'] = int(time.time())
+            # 记录本次使用的更新源，供缓存判断是否需要换源重新获取
+            existing_data['update_source'] = cfg.update_source.value
             with open(VERSION_PATH, 'w', encoding='utf-8') as f:
                 json.dump(existing_data, f, ensure_ascii=False, indent=4)
         log.info(f"更新器-已成功获取版本文件: {VERSION_PATH}")
@@ -120,8 +122,11 @@ def download_file(url: str, filename: str, show_progress: bool = True) -> Path |
         pool=300.0,
     )
 
+    log.debug(f'下载url:{url}')
+
     try:
-        with httpx.Client(timeout=timeout) as client:
+        # follow_redirects: 跟随 302 重定向（如 GitHub releases 的 /latest/download/ 链接）
+        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
             with client.stream("GET", url) as resp:
                 resp.raise_for_status()
 
@@ -290,25 +295,33 @@ def perform_update(update_info: dict) -> None:
     # 应用（此函数会启动安装程序并退出当前进程）
     apply_full_update(update_file_path)
 
-async def check_update_logic() -> tuple[bool, dict, str | None]:
+async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, str | None]:
     """
     【核心逻辑】仅检查更新，不触发任何控制台或 UI 弹窗
     返回: (是否有更新, 更新信息字典, 错误信息)
         错误信息为 None 表示检查正常完成（可能没有更新）
         错误信息非 None 表示检查失败，调用方应提示出错而不是"已是最新版本"
+    :param force_refresh: True 时跳过缓存，强制从当前更新源重新获取版本文件
     """
     try:
         # 1. 版本文件维护逻辑
-        if not VERSION_PATH.exists():
-            if not await asyncio.to_thread(get_version_file):
-                return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
-        else:
+        need_fetch = force_refresh or not VERSION_PATH.exists()
+        if not need_fetch:
             version_data = lib.read_json(VERSION_PATH)
-            # 过期检查（1小时）
-            if int(time.time()) - version_data.get('get_time', 0) >= 3600:
-                if not await asyncio.to_thread(get_version_file):
-                    log.warning("更新器-静默检查失败：无法获取远程版本")
-                    return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
+            cache_expired = int(time.time()) - version_data.get('get_time', 0) >= 3600
+            # 缓存是旧更新源获取的，切换更新源后必须重新获取
+            source_changed = version_data.get('update_source') != cfg.update_source.value
+            need_fetch = cache_expired or source_changed
+            if source_changed:
+                log.info(
+                    f"更新器-更新源已切换"
+                    f"（{version_data.get('update_source')} → {cfg.update_source.value}），重新获取版本文件"
+                )
+
+        if need_fetch:
+            if not await asyncio.to_thread(get_version_file):
+                log.warning("更新器-静默检查失败：无法获取远程版本")
+                return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
 
         # 2. 联网并比对
         if not lib.is_internet():

@@ -597,7 +597,7 @@ class NetworkWidgetBase(WidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
-                with httpx.Client(timeout=self.REQUEST_TIMEOUT) as client:
+                with httpx.Client(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = client.get(
                         self.API_URL,
                         params=self.PARAMS,
@@ -647,7 +647,7 @@ class NetworkWidgetBase(WidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
-                async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT) as client:
+                async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = await client.get(
                         self.API_URL,
                         params=self.PARAMS,
@@ -756,7 +756,7 @@ class ExtNetworkWidgetBase(WidgetBase):
 
         for attempt in range(total_attempts):
             try:
-                with httpx.Client(timeout=self.REQUEST_TIMEOUT) as client:
+                with httpx.Client(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = client.get(
                         url,
                         params=api_config.get('params'),
@@ -819,7 +819,7 @@ class ExtNetworkWidgetBase(WidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
-                async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT) as client:
+                async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = await client.get(
                         url,
                         params=api_config.get('params'),
