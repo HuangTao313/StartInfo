@@ -2,17 +2,15 @@ import os
 import sys
 import asyncio
 import subprocess
-import time
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 import core.base_lib as lib
-import core.init_app as init_app
+import core.startup as startup
 import core.ui as ui
 from core.config import cfg
 from core.base_lib import log
-from core.widgets import (BirthdayWidget, ExtNetworkWidgetBase, MCServerStatusWidget,
-                          NetworkWidgetBase, global_date)
-from core.widgets_core import registered_widgets
+from core.widgets import BirthdayWidget, MCServerStatusWidget, global_date
+from core.widgets_core import registered_widgets, NetworkWidgetBase, ExtNetworkWidgetBase
 
 # 加载模板
 def load_template(data: dict[str, str]) -> str | None:
@@ -69,9 +67,9 @@ def load_template(data: dict[str, str]) -> str | None:
 def init():
     """程序初始化"""
     # 检查开机启动项是否存在
-    if not init_app.is_shortcut_exist():
+    if not startup.is_shortcut_exist():
         if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
-            init_app.create_shortcut()
+            startup.create_shortcut()
             log.info('主程序-用户已添加开机启动项')
 
 def handle_j2_template(j2_file_path: Path):
@@ -290,4 +288,4 @@ if __name__ == '__main__':
         raise
 
     # main() 正常返回后（设置窗口等已在内部自行管理事件循环），直接退出
-    sys.exit(0)
+    sys.exit()

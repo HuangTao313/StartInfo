@@ -1,3 +1,4 @@
+"""开机启动项管理（Windows 快捷方式 / macOS LaunchAgent）。"""
 import os
 import plistlib
 import subprocess

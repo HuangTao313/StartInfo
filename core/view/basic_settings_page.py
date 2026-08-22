@@ -14,7 +14,7 @@ from .ui_widgets import (BirthdayEditBox, CalendarSettingCard, CitySearchBox,
                          ExtSwitchSettingCard)
 from .. import base_lib as lib
 from ..config import cfg, qconfig
-from ..init_app import create_shortcut, is_shortcut_exist, remove_shortcut
+from ..startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..ui import log
 
 
