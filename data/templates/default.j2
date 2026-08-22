@@ -11,7 +11,7 @@
 
 {# --- 日期时间 --- #}
 {%- if datetime_switch -%}
-★今天是{{ date }}{% if lunar_date_switch %} {{ lunar_date }}{% endif %} {{ weekday }}{% if other_date_switch %} 第{{ week_num }}周 第{{ day_num }}天{% endif %}
+★今天是{{ date }}{% if lunar_date_switch %} {{ lunar_date }}{% endif %} 星期{{ weekday }}{% if other_date_switch %} 第{{ week_num }}周 第{{ day_num }}天{% endif %}
 {% if holiday_switch %}节假日：{{ holiday }}{% if solar_term_switch %} | {% endif %}{% endif %}{% if solar_term_switch %}24节气：{{ solar_term }}{% endif %}{% if daily_character_switch %}
 🎲今日人品：{{ character }}{% endif %}
 {% if other_date_switch %}今年已过{{ year_progress }} 还剩{{ year_remain }}{% endif %}
