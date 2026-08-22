@@ -12,11 +12,11 @@ venv/
 .idea/
 
 # CLI工具缓存
-./.codewhale
-./.deepseek
+.codewhale/
+.deepseek/
 
 # 日志目录
-./data/logs
+data/logs/
 
 # 其他
 其他/
@@ -24,5 +24,11 @@ venv/
 # 组件缓存
 data/db/widgets_cache.db
 
+# 更新检查缓存
+data/json/version.json
+
 # 设置
 data/json/config.json
+
+# 开发工具目录
+.zcode/
