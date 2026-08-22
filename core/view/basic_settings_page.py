@@ -9,8 +9,8 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             PushSettingCard, SettingCardGroup)
 
 from .setting_card_base import BaseSettingPage
-from .ui_widgets import (CalendarSettingCard, CitySearchBox, ExpandGroupCard,
-                         ListEditingBox, Notify, TextSettingCard,
+from .ui_widgets import (BirthdayEditBox, CalendarSettingCard, CitySearchBox,
+                         ExpandGroupCard, ListEditingBox, Notify, TextSettingCard,
                          ZhSwitchSettingCard)
 from .. import base_lib as lib
 from ..config import cfg, qconfig
@@ -230,8 +230,8 @@ class BasicSettingsPage(BaseSettingPage):
             config_item=cfg.birthday_wishes_switch, parent=birthdayGroup,
         )
         self.birthdayListCard = PrimaryPushSettingCard(
-            text='编辑生日列表', icon=FIF.SEARCH, title='编辑生日列表',
-            content=r'编辑生日列表(目前仅支持手动更改.\data\json\config.json的BirthdayWishes\birthday_dict字典)',
+            text='编辑生日列表', icon=FIF.CALENDAR, title='编辑生日列表',
+            content='添加或删除生日记录，双击表格可修改名称与生日',
             parent=birthdayGroup,
         )
         birthdayGroup.addSettingCards([
@@ -407,7 +407,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
         self.weatherRefreshTimeCard.textChanged.connect(self._onWeatherRefreshTimeChanged)
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
-        self.birthdayListCard.clicked.connect(self._openConfigFile)
+        self.birthdayListCard.clicked.connect(self._onEditBirthdayList)
         self.mcServerDataRefreshIntervalCard.textChanged.connect(
             self._onMcServerDataRefreshIntervalChanged,
         )
@@ -615,6 +615,18 @@ class BasicSettingsPage(BaseSettingPage):
             Notify.error(content=widget.last_error, title=fail_title, parent=self)
         else:
             Notify.success(content=success_msg, parent=self)
+
+    def _onEditBirthdayList(self) -> None:
+        birthday_dict = cfg.birthday_dict.value
+        box = BirthdayEditBox(parent=self)
+        # 如果用户点击保存
+        if box.exec():
+            # 如果新列表不与原列表相等
+            if box.result != birthday_dict:
+                # 执行保存逻辑
+                qconfig.set(cfg.birthday_dict, box.result, save=True)
+                Notify.success('已保存新的生日列表', parent=self)
+                log.info(f'设置-已保存新的生日列表：{box.result}')
 
     def _onEditFriendsList(self) -> None:
         friends_list = cfg.minecraft_server_friends_list.value

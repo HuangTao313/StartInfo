@@ -3,14 +3,16 @@ import sqlite3
 from pathlib import Path
 from typing import Union
 
-from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize
+from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize, QPersistentModelIndex
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QListWidgetItem
+from PySide6.QtWidgets import (QAbstractItemDelegate, QAbstractItemView,
+                               QHeaderView, QListWidgetItem, QTableWidgetItem)
 from qasync import asyncSlot
 from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
                             SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
                             SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
-                            ExpandGroupSettingCard, Action, CommandBar, FluentIcon)
+                            ExpandGroupSettingCard, Action, CommandBar, FluentIcon,
+                            ZhDatePicker, TableWidget, TableItemDelegate)
 
 from .switch_button import IndicatorPosition, SwitchButton
 from ..base_lib import log
@@ -424,7 +426,6 @@ class ListEditingBox(MessageBoxBase):
             QSize(18, 18)
         )
 
-
         # 元素输入框
         self.lineEdit = LineEdit()
         # 设置提示文本
@@ -621,6 +622,255 @@ class ListEditingBox(MessageBoxBase):
             self.listWidget.item(i).text()
             for i in range(self.listWidget.count())
         ]
+
+        super().accept()
+
+
+class BirthdayTableDelegate(TableItemDelegate):
+    """ 生日表格委托：生日列以 ZhDatePicker 作为单元格编辑器 """
+
+    # 生日列下标（第 0 列为名称）
+    DATE_COLUMN = 1
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # 正在编辑的单元格，供 initStyleOption 隐藏底层文本
+        self._editingIndex = QPersistentModelIndex()
+
+    def createEditor(self, parent, option, index):
+        """双击生日单元格时创建日期选择器，名称列沿用默认文本编辑器"""
+        self._editingIndex = QPersistentModelIndex(index)
+        if index.column() != self.DATE_COLUMN:
+            return super().createEditor(parent, option, index)
+
+        editor = ZhDatePicker(parent)
+        self._setEditorDate(editor, index)
+        # 用户在滚轮面板中确认新日期后，立即提交并关闭编辑器
+        editor.dateChanged.connect(lambda: self._commitEditor(editor))
+        return editor
+
+    def setEditorData(self, editor, index):
+        """编辑开始时把单元格日期同步到编辑器"""
+        if index.column() != self.DATE_COLUMN:
+            super().setEditorData(editor, index)
+            return
+
+        self._setEditorDate(editor, index)
+
+    def setModelData(self, editor, model, index):
+        """编辑结束时把选择器日期写回单元格"""
+        if index.column() != self.DATE_COLUMN:
+            super().setModelData(editor, model, index)
+            return
+
+        date = editor.getDate()
+        if date.isValid():
+            model.setData(index, date, Qt.UserRole)
+            model.setData(index, date.toString(Qt.ISODate), Qt.DisplayRole)
+
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        # 日期单元格编辑期间不绘制底层文本，避免与半透明的日期选择器重叠
+        if index.column() == self.DATE_COLUMN and self._isEditing(index):
+            option.text = ''
+
+    def updateEditorGeometry(self, editor, option, index):
+        super().updateEditorGeometry(editor, option, index)
+        if index.column() == self.DATE_COLUMN:
+            # 编辑器遮盖的区域不会自动重绘，主动刷新以隐藏底层文本
+            self.parent().viewport().update()
+
+    def _isEditing(self, index) -> bool:
+        """判断指定单元格是否正处于编辑状态"""
+        view = self.parent()
+        if not isinstance(view, QAbstractItemView):
+            return False
+        # 以视图编辑状态为总开关：编辑结束（含取消/焦点移出）后必然失效
+        return (view.state() == QAbstractItemView.EditingState
+                and self._editingIndex == index)
+
+    def _setEditorDate(self, editor: ZhDatePicker, index):
+        """把单元格 UserRole 中保存的 QDate 直接同步给选择器（不经字符串转换）"""
+        date = index.data(Qt.UserRole)
+        if isinstance(date, QDate) and date.isValid():
+            editor.setDate(date)
+
+    def _commitEditor(self, editor):
+        """提交编辑器数据并结束编辑"""
+        self.commitData.emit(editor)
+        self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
+
+
+class BirthdayEditBox(MessageBoxBase):
+    """ 生日列表编辑弹窗
+
+    用法（与 ListEditingBox 一致，弹窗本身不写配置，由调用方保存）：
+        box = BirthdayEditBox(parent=self)
+        if box.exec():
+            if box.result != cfg.birthday_dict.value:
+                qconfig.set(cfg.birthday_dict, box.result, save=True)
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # 用户点击保存后的最终结果 {姓名: 'YYYYMMDD'}，取消时保持为空
+        self.result = {}
+
+        # 1. 设置弹窗宽高
+        self.widget.setMinimumWidth(500)
+        self.widget.setFixedHeight(600)
+
+        # 2. 设置弹窗底部按钮
+        self.yesButton.setText('保存')
+        self.cancelButton.setText('取消')
+
+        # 3. 标题与提示
+        self.titleLabel = SubtitleLabel('编辑生日列表')
+        self.hintLabel = BodyLabel('双击名称或生日可编辑')
+
+        # 4. 工具栏（修改通过双击表格完成，无需单独按钮）
+        self.commandBar = CommandBar()
+        self.commandBar.setToolButtonStyle(
+            Qt.ToolButtonTextBesideIcon
+        )
+
+        self.commandBar.setIconSize(
+            QSize(18, 18)
+        )
+
+        self.addButton = Action(
+            FluentIcon.ADD,
+            '添加',
+            triggered=self.addItem
+        )
+
+        self.deleteButton = Action(
+            FluentIcon.DELETE,
+            '删除',
+            enabled=False,
+            triggered=self.deleteItem
+        )
+
+        self.commandBar.addActions(
+            [
+                self.addButton,
+                self.deleteButton,
+            ]
+        )
+
+        # 5. 生日表格
+        self.tableWidget = TableWidget(self)
+        self.tableWidget.setColumnCount(2)
+        self.tableWidget.setHorizontalHeaderLabels(['名称', '生日'])
+        self.tableWidget.verticalHeader().hide()
+        # 仅双击 / F2 触发编辑
+        self.tableWidget.setEditTriggers(
+            QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed)
+        # 生日列使用日期选择器编辑器
+        self.tableWidget.setItemDelegate(BirthdayTableDelegate(self.tableWidget))
+        self.tableWidget.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        # 日期选择器编辑器较宽，生日列给固定宽度
+        self.tableWidget.setColumnWidth(1, 260)
+
+        # 6. 从配置加载生日列表（编辑期间不修改原配置）
+        self._loadBirthdays(cfg.birthday_dict.value)
+
+        # 7. 添加布局
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.hintLabel)
+        self.viewLayout.addWidget(self.commandBar)
+        self.viewLayout.addWidget(self.tableWidget)
+
+        # 8. 绑定信号与槽
+        self.tableWidget.itemSelectionChanged.connect(self._updateButtonState)
+        self.tableWidget.currentItemChanged.connect(
+            lambda current, previous: self._updateButtonState())
+
+    def _loadBirthdays(self, birthday_dict: dict) -> None:
+        """把 cfg.birthday_dict（{姓名: 'YYYYMMDD'}）填充到表格"""
+        for name, birthday_str in birthday_dict.items():
+            self._appendRow(str(name), self._parseBirthday(birthday_str))
+
+    @staticmethod
+    def _parseBirthday(birthday_str) -> QDate:
+        """把配置中的 'YYYYMMDD' 生日字符串转为 QDate，无法解析时返回无效 QDate"""
+        if isinstance(birthday_str, str) and len(birthday_str) == 8 and birthday_str.isdigit():
+            date = QDate(int(birthday_str[:4]), int(birthday_str[4:6]), int(birthday_str[6:8]))
+            if date.isValid():
+                return date
+
+        log.warning(f'生日列表-无法解析的生日格式: {birthday_str}')
+        return QDate()
+
+    def _appendRow(self, name: str, date: QDate) -> None:
+        """在表格末尾追加一行生日记录"""
+        row = self.tableWidget.rowCount()
+        self.tableWidget.insertRow(row)
+        self.tableWidget.setItem(row, 0, QTableWidgetItem(name))
+
+        # 显示用 ISO 文本，同时在 UserRole 保存 QDate 供编辑器同步
+        date_item = QTableWidgetItem(
+            date.toString(Qt.ISODate) if date.isValid() else '未设置')
+        date_item.setData(Qt.UserRole, date)
+        self.tableWidget.setItem(row, 1, date_item)
+
+    def _updateButtonState(self):
+        """根据当前选中状态更新按钮"""
+        self.deleteButton.setEnabled(self.tableWidget.currentRow() >= 0)
+
+    def addItem(self, checked=False) -> None:
+        """添加一条生日记录（默认生日为今天）并直接进入名称编辑"""
+        row = self.tableWidget.rowCount()
+        self._appendRow('', QDate.currentDate())
+        self.tableWidget.setCurrentCell(row, 0)
+        self.tableWidget.editItem(self.tableWidget.item(row, 0))
+
+    def deleteItem(self, checked=False) -> None:
+        """删除当前选中的生日记录"""
+        row = self.tableWidget.currentRow()
+
+        # 未选中任何记录时直接返回
+        if row < 0:
+            return
+
+        self.tableWidget.removeRow(row)
+        self._updateButtonState()
+
+    def validate(self) -> bool:
+        """保存前校验：名称非空且不重复、日期有效"""
+        names = set()
+
+        for row in range(self.tableWidget.rowCount()):
+            name = self.tableWidget.item(row, 0).text().strip()
+
+            if not name:
+                Notify.warning(content=f'第 {row + 1} 行的名称不能为空', parent=self)
+                return False
+
+            # 配置以名称为字典键，重名会互相覆盖
+            if name in names:
+                Notify.warning(content=f'名称重复：{name}，生日列表以名称为唯一标识', parent=self)
+                return False
+
+            names.add(name)
+
+            date = self.tableWidget.item(row, 1).data(Qt.UserRole)
+            if not (isinstance(date, QDate) and date.isValid()):
+                Notify.warning(content=f'{name} 的生日无效，请双击生日单元格重新选择', parent=self)
+                return False
+
+        return True
+
+    def accept(self):
+        """读取表格最终数据并关闭弹窗（不直接写入配置，由调用方保存）"""
+        self.result = {}
+
+        for row in range(self.tableWidget.rowCount()):
+            name = self.tableWidget.item(row, 0).text().strip()
+            date = self.tableWidget.item(row, 1).data(Qt.UserRole)
+            # 保持配置原有格式 {姓名: 'YYYYMMDD'}
+            self.result[name] = date.toString('yyyyMMdd')
 
         super().accept()
 
