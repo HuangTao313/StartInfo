@@ -213,14 +213,14 @@ def error_dialog(text: str) -> None:
     # 打开日志文件
     elif not yn:
         try:
-            if lib.LOG_PATH.exists():
-                os.startfile(lib.LOG_PATH.parent)
-                os.startfile(lib.LOG_PATH)
-                log.info(f'已打开日志文件：{lib.LOG_PATH}')
+            if lib.LOG_FILE_PATH.exists():
+                os.startfile(lib.LOG_FILE_PATH.parent)
+                os.startfile(lib.LOG_FILE_PATH)
+                log.info(f'已打开日志文件：{lib.LOG_FILE_PATH}')
 
             else:
-                log.error(f'打开日志文件失败 - 日志文件不存在：{lib.LOG_PATH}')
-                dialog('打开日志文件失败╥﹏╥...', f'日志文件不存在：{lib.LOG_PATH}')
+                log.error(f'打开日志文件失败 - 日志文件不存在：{lib.LOG_FILE_PATH}')
+                dialog('打开日志文件失败╥﹏╥...', f'日志文件不存在：{lib.LOG_FILE_PATH}')
 
         except Exception as e:
             log.error(f'打开日志文件失败：{e}')

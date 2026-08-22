@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # =============================================================================
 # 路径获取函数
@@ -41,8 +42,9 @@ DOWNLOAD_PATH: Path = DATA_FOLDER_PATH / 'download'
 # =============================================================================
 # 具体文件路径
 # =============================================================================
-LOG_PATH: Path = LOG_FOLDER_PATH / 'log.log'               # log.log 的路径
-DATA_FILE_PATH: Path = JSON_PATH / 'data.json'             # data.json 的路径
+# 拼接日志文件名
+log_file_name = f'{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log'
+LOG_FILE_PATH: Path = LOG_FOLDER_PATH / log_file_name               # log.log 的路径
 CONFIG_FILE_PATH: Path = JSON_PATH / 'config.json'         # 配置文件路径
 API_FILE_PATH: Path = JSON_PATH / 'api.json'                    # api_key.json 的路径
 EMOJI_PATH: Path = JSON_PATH / 'emoji.json'                # emoji 文件路径

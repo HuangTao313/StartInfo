@@ -10,10 +10,9 @@ import shlex
 import shutil
 import socket
 import subprocess
-import sys
 import time
+from sys import argv
 from ctypes.wintypes import HANDLE, DWORD, BOOL
-from typing import Any, Dict
 from typing import Union
 
 from loguru import logger
@@ -24,21 +23,23 @@ from .paths import *
 # 涉及 cfg 的必须留在后面
 WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 
-# 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
-logger.add(
-    LOG_PATH,
-    enqueue=True,
-    rotation='1 day',
-    retention='3 days',
-    encoding='utf-8',
-    level=cfg.log_level.value)
-log = logger
-
 # 获取全局启动参数
-global_argv = sys.argv
+global_argv = argv
 
 # 获取系统环境信息
 system = platform.system()
+
+# 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
+log_level = 'DEBUG' if '--debug' in global_argv else cfg.log_level.value
+
+logger.add(
+    sink=LOG_FILE_PATH,
+    enqueue=True,
+    retention='3 days',
+    encoding='utf-8',
+    level=log_level,
+    delay=True)
+log = logger
 
 # 读取单个json文件
 def read_json(file_path: Union[str, Path]) -> dict:
