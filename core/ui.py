@@ -7,16 +7,20 @@ import time
 from pathlib import Path
 from typing import List
 
-from PySide6.QtCore import QTimer, Qt, QLocale
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import QApplication, QFileDialog
+from PySide6.QtCore import QTranslator
 from qasync import QEventLoop
-from qfluentwidgets import Dialog, Theme, setTheme, setThemeColor, FluentTranslator
+from qfluentwidgets import Dialog, Theme, setTheme, setThemeColor
 
 from . import base_lib as lib
 from .config import cfg
 
 # 日志
 log = lib.log
+
+# 翻译文件
+TRANSLATION_FILE_PATH = str(lib.DATA_FOLDER_PATH / 'i18n' / 'qfluentwidgets.zh_CN.qm')
 
 class AppManager:
     _instance = None
@@ -36,12 +40,10 @@ class AppManager:
             # 2. 将其设置为全局的 asyncio 事件循环
             asyncio.set_event_loop(self._loop)
 
-            # # 设置 Qt 全局区域为中文，影响日历等原生控件的日期/月份显示
-            # QLocale.setDefault(QLocale('zh_CN'))
-            #
-            # # 创建翻译器实例，生命周期必须和 app 相同
-            # self._translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
-            # self._app.installTranslator(self._translator)
+            # 设置全局语言为中文
+            self.translator = QTranslator()
+            self.translator.load(TRANSLATION_FILE_PATH)
+            self._app.installTranslator(self.translator)
 
             self._apply_theme()
         return self._app

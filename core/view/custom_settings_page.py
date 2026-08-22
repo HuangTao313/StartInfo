@@ -8,10 +8,10 @@ from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             RadioButton, SettingCardGroup, HyperlinkCard)
 
 from .setting_card_base import BaseSettingPage
-from .ui_widgets import Notify, ZhSwitchSettingCard
+from .ui_widgets import Notify, ExtSwitchSettingCard
 from .. import base_lib as lib
 from .. import ui
-from ..config import cfg, qconfig
+from ..config import cfg
 
 
 class CustomSettingsPage(BaseSettingPage):
@@ -34,7 +34,7 @@ class CustomSettingsPage(BaseSettingPage):
             parent=self.themeGroup,
         )
 
-        self.useWinThemeColor = ZhSwitchSettingCard(
+        self.useWinThemeColor = ExtSwitchSettingCard(
             icon=FIF.PALETTE, title='使用系统主题色',
             content='使用系统主题色', config_item=cfg.use_win_theme_color,
             parent=self.themeGroup,
@@ -47,7 +47,7 @@ class CustomSettingsPage(BaseSettingPage):
         )
         self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
 
-        self.micaEffectSwitchCard = ZhSwitchSettingCard(
+        self.micaEffectSwitchCard = ExtSwitchSettingCard(
             icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明(仅支持Windows11)',
             config_item=cfg.mica_effect_switch, parent=self.themeGroup,
         )

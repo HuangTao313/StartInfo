@@ -11,7 +11,7 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
 from .setting_card_base import BaseSettingPage
 from .ui_widgets import (BirthdayEditBox, CalendarSettingCard, CitySearchBox,
                          ExpandGroupCard, ListEditingBox, Notify, TextSettingCard,
-                         ZhSwitchSettingCard)
+                         ExtSwitchSettingCard)
 from .. import base_lib as lib
 from ..config import cfg, qconfig
 from ..init_app import create_shortcut, is_shortcut_exist, remove_shortcut
@@ -29,13 +29,13 @@ class BasicSettingsPage(BaseSettingPage):
         # ── 基本设置 ──
         generalGroup = SettingCardGroup('基本设置', self.scrollWidget)
 
-        self.startupCard = ZhSwitchSettingCard(
+        self.startupCard = ExtSwitchSettingCard(
             FIF.POWER_BUTTON, '开机自启', '是否开机启动',
             config_item=None, parent=generalGroup,
         )
         self.startupCard.setChecked(is_shortcut_exist())
 
-        self.autoCloseCard = ZhSwitchSettingCard(
+        self.autoCloseCard = ExtSwitchSettingCard(
             FIF.CLOSE, '主窗口自动关闭', '主窗口在一段后自动关闭，程序结束运行',
             config_item=cfg.auto_close_switch, parent=generalGroup,
         )
@@ -70,7 +70,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 日期和时间 ──
         dateTimeGroup = SettingCardGroup('日期和时间', self.scrollWidget)
-        self.datetimeSwitchCard = ZhSwitchSettingCard(
+        self.datetimeSwitchCard = ExtSwitchSettingCard(
             icon=FIF.DATE_TIME, title='日期和时间组件',
             content='显示当前的日期、时间以及其他信息',
             config_item=cfg.datetime_switch, parent=dateTimeGroup,
@@ -82,23 +82,23 @@ class BasicSettingsPage(BaseSettingPage):
             parent=dateTimeGroup,
         )
 
-        self.lunarDateSwitchCard = ZhSwitchSettingCard(
+        self.lunarDateSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='显示农历信息', content='例如：农历二月十九',
             config_item=cfg.lunar_date_switch, parent=self.dateTimeDetailCard,
         )
 
-        self.solarTermSwitchCard = ZhSwitchSettingCard(
+        self.solarTermSwitchCard = ExtSwitchSettingCard(
             icon=FIF.LEAF, title='显示24节气信息', content='例如：谷雨、春分',
             config_item=cfg.solar_term_switch, parent=self.dateTimeDetailCard,
         )
 
-        self.holidaySwitchCard = ZhSwitchSettingCard(
+        self.holidaySwitchCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='显示节假日信息',
             content='有节日时显示节日，无节日时显示休息日或工作日',
             config_item=cfg.holiday_switch, parent=self.dateTimeDetailCard,
         )
 
-        self.otherDataSwitchCard = ZhSwitchSettingCard(
+        self.otherDataSwitchCard = ExtSwitchSettingCard(
             icon=FIF.MESSAGE, title='显示其他信息',
             content='今年的第几周、第几天以及今年已过进度',
             config_item=cfg.other_date_switch, parent=self.dateTimeDetailCard,
@@ -119,7 +119,7 @@ class BasicSettingsPage(BaseSettingPage):
         # ── 天气 ──
         weatherGroup = SettingCardGroup('天气(需选择城市)', self.scrollWidget)
 
-        self.weatherSwitchCard = ZhSwitchSettingCard(
+        self.weatherSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CLOUD, title='天气组件', content='显示当前城市的天气信息',
             config_item=cfg.weather_switch, parent=weatherGroup,
         )
@@ -190,7 +190,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 倒数日 ──
         countdownGroup = SettingCardGroup('倒数日', self.scrollWidget)
-        self.countdownCard = ZhSwitchSettingCard(
+        self.countdownCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='倒数日组件',
             content='在主窗口显示："距离【xx】还有xx天"',
             config_item=cfg.countdown_switch, parent=countdownGroup,
@@ -224,7 +224,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 生日祝福 ──
         birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.scrollWidget)
-        self.birthdayWishesSwitchCard = ZhSwitchSettingCard(
+        self.birthdayWishesSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='生日祝福功能',
             content='在生日当天显示生日祝福',
             config_item=cfg.birthday_wishes_switch, parent=birthdayGroup,
@@ -242,7 +242,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── Minecraft 服务器检测器 ──
         mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.scrollWidget)
-        self.mcServerCheckSwitchCard = ZhSwitchSettingCard(
+        self.mcServerCheckSwitchCard = ExtSwitchSettingCard(
             icon=FIF.GLOBE, title='Minecraft Java版服务器玩家在线情况检测组件',
             content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
             config_item=cfg.minecraft_server_checker_switch, parent=mcGroup,
@@ -302,7 +302,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 每日一言 ──
         wordsGroup = SettingCardGroup('每日一言', self.scrollWidget)
-        self.wordsSwitchCard = ZhSwitchSettingCard(
+        self.wordsSwitchCard = ExtSwitchSettingCard(
             icon=FIF.MESSAGE, title='每日一言组件', content='显示每日一言信息',
             config_item=cfg.words_switch, parent=wordsGroup,
         )
@@ -344,25 +344,25 @@ class BasicSettingsPage(BaseSettingPage):
             parent=otherGroup,
         )
 
-        self.greetingSwitchCard = ZhSwitchSettingCard(
+        self.greetingSwitchCard = ExtSwitchSettingCard(
             icon=FIF.HEART, title='问候语组件',
             content='显示当前时间对应的问候语',
             config_item=cfg.greeting_switch, parent=self.otherDetailCard,
         )
 
-        self.startupTimesSwitchCard = ZhSwitchSettingCard(
+        self.startupTimesSwitchCard = ExtSwitchSettingCard(
             icon=FIF.POWER_BUTTON, title='开机次数组件',
             content='显示开机次数', config_item=cfg.startup_times_switch,
             parent=self.otherDetailCard,
         )
 
-        self.historicalSwitchCard = ZhSwitchSettingCard(
+        self.historicalSwitchCard = ExtSwitchSettingCard(
             icon=FIF.HISTORY, title='历史上的今天组件',
             content='显示历史上的今天信息',
             config_item=cfg.historical_switch, parent=self.otherDetailCard,
         )
 
-        self.dailyCharacterSwitchCard = ZhSwitchSettingCard(
+        self.dailyCharacterSwitchCard = ExtSwitchSettingCard(
             icon=FIF.EXPRESSIVE_INPUT_ENTRY, title='每日人品组件',
             content='显示每日人品',
             config_item=cfg.daily_character_switch, parent=self.otherDetailCard,

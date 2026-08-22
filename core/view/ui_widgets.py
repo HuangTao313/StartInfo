@@ -19,17 +19,16 @@ from ..base_lib import log
 from ..paths import DB_FOLDER_PATH
 from ..config import cfg
 
-
-# 新版有bug
-class ZhSwitchSettingCard(SwitchSettingCard):
+class ExtSwitchSettingCard(SwitchSettingCard):
     """
-    支持中文状态文字的开关设置卡片
+    替换 SwitchButton 的开关设置卡片
+    （状态文字经 tr() 交由外部 qm 翻译文件处理）
     """
     def __init__(self, icon, title, content=None, config_item=None, parent=None):
         super().__init__(icon, title, content, config_item, parent)
         # 用新的 SwitchButton 替换父类创建的开关
         self._replaceSwitchButton()
-        # 初始化时强制同步一次中文
+        # 初始化时强制同步一次状态文字
         self._updateText(self.isChecked())
 
     def _replaceSwitchButton(self):
@@ -55,11 +54,10 @@ class ZhSwitchSettingCard(SwitchSettingCard):
         self.checkedChanged.emit(is_checked)
 
     def _updateText(self, is_checked: bool):
-        # 核心：直接绕过原本的 tr('On')，强制写入中文
-        self.switchButton.setText('启用' if is_checked else '关闭')
+        # 状态文字走标准 tr() 路径，由外部 qm 翻译文件提供译文
+        self.switchButton.setText(self.tr('On') if is_checked else self.tr('Off'))
 
     def setValue(self, is_checked: bool):
-        # 彻底重写父类的逻辑，干掉那个烦人的 self.tr('On')
         if self.configItem:
             qconfig.set(self.configItem, is_checked)
 
