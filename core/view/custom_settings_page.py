@@ -25,7 +25,7 @@ class CustomSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 主题 ──
-        self.themeGroup = SettingCardGroup('主题', self.scrollWidget)
+        self.themeGroup = SettingCardGroup('主题', self.contentWidget)
 
         self.themeCard = ComboBoxSettingCard(
             configItem=cfg.theme, icon=FIF.CONSTRACT, title='主题',
@@ -64,7 +64,7 @@ class CustomSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(self.themeGroup)
 
         # ── 模板 ──
-        self.templateGroup = SettingCardGroup('模板', self.scrollWidget)
+        self.templateGroup = SettingCardGroup('模板', self.contentWidget)
 
         template_files = lib.get_template_files()
         self.templateCard = OptionsSettingCard(

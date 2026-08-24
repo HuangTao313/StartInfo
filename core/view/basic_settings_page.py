@@ -27,7 +27,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 基本设置 ──
-        generalGroup = SettingCardGroup('基本设置', self.scrollWidget)
+        generalGroup = SettingCardGroup('基本设置', self.contentWidget)
 
         self.startupCard = ExtSwitchSettingCard(
             FIF.POWER_BUTTON, '开机自启', '是否开机启动',
@@ -69,7 +69,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(generalGroup)
 
         # ── 日期和时间 ──
-        dateTimeGroup = SettingCardGroup('日期和时间', self.scrollWidget)
+        dateTimeGroup = SettingCardGroup('日期和时间', self.contentWidget)
         self.datetimeSwitchCard = ExtSwitchSettingCard(
             icon=FIF.DATE_TIME, title='日期和时间组件',
             content='显示当前的日期、时间以及其他信息',
@@ -117,7 +117,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(dateTimeGroup)
 
         # ── 天气 ──
-        weatherGroup = SettingCardGroup('天气(需选择城市)', self.scrollWidget)
+        weatherGroup = SettingCardGroup('天气(需选择城市)', self.contentWidget)
 
         self.weatherSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CLOUD, title='天气组件', content='显示当前城市的天气信息',
@@ -189,7 +189,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(weatherGroup)
 
         # ── 倒数日 ──
-        countdownGroup = SettingCardGroup('倒数日', self.scrollWidget)
+        countdownGroup = SettingCardGroup('倒数日', self.contentWidget)
         self.countdownCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='倒数日组件',
             content='在主窗口显示："距离【xx】还有xx天"',
@@ -223,7 +223,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(countdownGroup)
 
         # ── 生日祝福 ──
-        birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.scrollWidget)
+        birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.contentWidget)
         self.birthdayWishesSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='生日祝福功能',
             content='在生日当天显示生日祝福',
@@ -241,7 +241,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(birthdayGroup)
 
         # ── Minecraft 服务器检测器 ──
-        mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.scrollWidget)
+        mcGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.contentWidget)
         self.mcServerCheckSwitchCard = ExtSwitchSettingCard(
             icon=FIF.GLOBE, title='Minecraft Java版服务器玩家在线情况检测组件',
             content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
@@ -301,7 +301,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(mcGroup)
 
         # ── 每日一言 ──
-        wordsGroup = SettingCardGroup('每日一言', self.scrollWidget)
+        wordsGroup = SettingCardGroup('每日一言', self.contentWidget)
         self.wordsSwitchCard = ExtSwitchSettingCard(
             icon=FIF.MESSAGE, title='每日一言组件', content='显示每日一言信息',
             config_item=cfg.words_switch, parent=wordsGroup,
@@ -336,7 +336,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(wordsGroup)
 
         # ── 其他信息 ──
-        otherGroup = SettingCardGroup('其他信息', self.scrollWidget)
+        otherGroup = SettingCardGroup('其他信息', self.contentWidget)
 
         # 创建手风琴组件
         self.otherDetailCard = ExpandGroupCard(
@@ -378,7 +378,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(otherGroup)
 
         # ── 调试 ──
-        debugGroup = SettingCardGroup('调试', self.scrollWidget)
+        debugGroup = SettingCardGroup('调试', self.contentWidget)
         self.logLevelCard = ComboBoxSettingCard(
             icon=FIF.ALIGNMENT, title='日志等级',
             content='调整程序的日志等级，重启后生效',

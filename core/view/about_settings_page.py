@@ -30,7 +30,7 @@ class AboutSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 关于 ──
-        self.aboutGroup = SettingCardGroup('关于', self.scrollWidget)
+        self.aboutGroup = SettingCardGroup('关于', self.contentWidget)
 
         # 图标（居中）
         if IS_LOGO_EXIST:
