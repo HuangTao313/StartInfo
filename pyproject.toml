@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "HuangTao", email = "Ht2174509658@outlook.com" }
 ]
-requires-python = "==3.13.15"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "httpx>=0.28.1",
     "jinja2>=3.1.6",
