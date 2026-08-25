@@ -17,7 +17,7 @@ from ..config import cfg
 from ..updater import check_update_logic, run_update_process
 
 # 常量
-LOGO_ICON_PATH = lib.DATA_FOLDER_PATH / 'icons' / 'information.ico'
+LOGO_ICON_PATH = lib.DATA_FOLDER_PATH / 'icons' / 'startinfo.ico'
 IS_LOGO_EXIST = LOGO_ICON_PATH.exists()
 
 
@@ -74,8 +74,8 @@ class AboutSettingsPage(BaseSettingPage):
         # 更新源
         self.updateSourceCard = ComboBoxSettingCard(
             icon=FIF.CLOUD_DOWNLOAD, title='更新源',
-            content='选择更新源：阿里云OSS、GitHub、GitHub镜像站',
-            texts=['阿里云OSS', 'GitHub', 'GitHub镜像站'],
+            content='选择更新源：GitHub、GitHub镜像站',
+            texts=['阿里云OSS(不可用)', 'GitHub', 'GitHub镜像站'],
             configItem=cfg.update_source, parent=self.aboutGroup,
         )
 
