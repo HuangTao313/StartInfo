@@ -134,8 +134,7 @@ class AboutSettingsPage(BaseSettingPage):
     async def onUpdateClicked(self):
         self.checkUpdateCard.setEnabled(False)
         try:
-            # 用户主动检查时强制刷新版本文件，避免用到旧更新源的缓存数据
-            update_available, new_version_data, error_msg = await check_update_logic(force_refresh=True)
+            update_available, new_version_data, error_msg = await check_update_logic()
             if error_msg:
                 from .ui_widgets import Notify
                 Notify.error(title='检查更新失败', content=error_msg, parent=self)

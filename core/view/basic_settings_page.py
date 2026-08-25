@@ -486,6 +486,7 @@ class BasicSettingsPage(BaseSettingPage):
         if lib.DOWNLOAD_PATH.exists():
             shutil.rmtree(lib.DOWNLOAD_PATH)
             lib.log.info('已删除下载缓存')
+            Notify.success('已删除下载缓存', parent=self)
             return True
 
         else:

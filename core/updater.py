@@ -308,7 +308,7 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
         need_fetch = force_refresh or not VERSION_PATH.exists()
         if not need_fetch:
             version_data = lib.read_json(VERSION_PATH)
-            cache_expired = int(time.time()) - version_data.get('get_time', 0) >= 3600
+            cache_expired = int(time.time()) - version_data.get('get_time', 0) >= 600
             # 缓存是旧更新源获取的，切换更新源后必须重新获取
             source_changed = version_data.get('update_source') != cfg.update_source.value
             need_fetch = cache_expired or source_changed
