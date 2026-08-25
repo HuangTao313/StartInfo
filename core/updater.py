@@ -7,7 +7,6 @@ import hashlib
 import sys
 from pathlib import Path
 from . import base_lib as lib
-from . import ui
 from .config import cfg
 
 # ==================== 路径定义 ====================
@@ -16,6 +15,11 @@ CURRENT_VERSION_PATH: Path = lib.CURRENT_VERSION_PATH  # 本地已安装版本�
 log = lib.log
 
 api_data = lib.read_json(lib.API_FILE_PATH)
+
+# 非 Windows 平台点击"立即更新"时跳转的 GitHub Releases 页面地址（可在 api.json 中配置）
+GITHUB_RELEASES_URL: str = api_data.get('update_source', {}).get(
+    'github_releases', 'https://github.com/HuangTao313/StartInfo/releases/latest')
+
 # ==================== 保留你原有的函数 ====================
 def get_version_file() -> bool:
     """
@@ -97,19 +101,18 @@ def verify_sha256(file_path: Path, expected_sha256: str) -> bool:
         return False
 
 # ==================== 下载模块 ====================
-def download_file(url: str, filename: str, show_progress: bool = True) -> Path | None:
+async def download_file_async(url: str, filename: str, progress_callback=None) -> Path | None:
     """
-    【使用场景】下载完整更新安装程序
+    【使用场景】异步下载完整更新安装程序
     【输入】
         url: str - 下载链接
         filename: str - 保存文件名（不含路径）
-        show_progress: bool - 是否显示控制台进度条（默认True）
+        progress_callback: Callable[[int, int], None] - 进度回调(downloaded, total)，每次写入数据块后调用
     【输出】Path | None - 成功返回完整路径，失败返回None
     【注意】
       - 自动创建 lib.DOWNLOAD_PATH
-      - 使用 httpx 流式下载（内存友好）
-      - 支持实时控制台进度条
-      - 返回 Path 对象便于后续操作
+      - 使用 httpx.AsyncClient 流式下载（内存友好，不阻塞 UI）
+      - 进度回调在事件循环主线程内执行，可直接更新 Qt 控件
     """
     lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
     output_path = lib.DOWNLOAD_PATH / filename
@@ -126,8 +129,8 @@ def download_file(url: str, filename: str, show_progress: bool = True) -> Path |
 
     try:
         # follow_redirects: 跟随 302 重定向（如 GitHub releases 的 /latest/download/ 链接）
-        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
-            with client.stream("GET", url) as resp:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with client.stream("GET", url) as resp:
                 resp.raise_for_status()
 
                 # 获取文件总大小（用于进度计算）
@@ -135,18 +138,13 @@ def download_file(url: str, filename: str, show_progress: bool = True) -> Path |
 
                 downloaded = 0
                 with open(output_path, 'wb') as f:
-                    for chunk in resp.iter_bytes(chunk_size=8192):  # 8KB/块
+                    async for chunk in resp.aiter_bytes(chunk_size=8192):  # 8KB/块
                         f.write(chunk)
                         downloaded += len(chunk)
 
-                        # 显示进度条
-                        if show_progress and total_size > 0:
-                            percent = min(100, int(downloaded / total_size * 100))
-                            _print_progress_bar(percent, downloaded, total_size)
-
-                # 下载完成，清理进度行
-                if show_progress:
-                    print()  # 换行
+                        # 汇报下载进度
+                        if progress_callback:
+                            progress_callback(downloaded, total_size)
 
                 log.info(f'更新器-下载完成: {filename} ({downloaded} bytes)')
                 return output_path
@@ -166,31 +164,6 @@ def download_file(url: str, filename: str, show_progress: bool = True) -> Path |
             pass
 
     return None
-
-def _print_progress_bar(percent: int, downloaded: int, total: int):
-    """
-    【私有函数】打印控制台进度条
-    【输入】percent: 0-100, downloaded: 已下载字节数, total: 总字节数
-    【输出】无（直接打印到控制台）
-    【格式】[████████████████████████████████████████] 100% (45.6MB / 45.6MB)
-    """
-    bar_length = 40  # 进度条长度
-    filled_length = int(bar_length * percent // 100)
-
-    # 构造进度条字符
-    bar = '█' * filled_length + '-' * (bar_length - filled_length)
-
-    # 格式化文件大小（B → MB/KB）
-    def format_bytes(size: int) -> str:
-        if size < 1024:
-            return f"{size}B"
-        elif size < 1024 * 1024:
-            return f"{size / 1024:.1f}KB"
-        else:
-            return f"{size / (1024 * 1024):.1f}MB"
-
-    # 打印进度（覆盖上一行）
-    print(f"\r[{bar}] {percent:3d}% ({format_bytes(downloaded)} / {format_bytes(total)})", end='', flush=True)
 
 # ==================== 完整更新模块 ====================
 def apply_full_update(installer_path: Path) -> None:
@@ -216,6 +189,7 @@ def apply_full_update(installer_path: Path) -> None:
         subprocess.Popen(['start', '', str(installer_path)], shell=True)
         log.info("更新器-安装程序已启动，更新器即将退出")
         sys.exit(0)  # ⚠️ 关键：立即释放文件锁
+
     except Exception as e:
         log.critical(f"更新器-启动安装程序失败: {e}")
         sys.exit(1)
@@ -278,22 +252,25 @@ def _build_update_info(remote: dict, update_type: str, reason: str) -> dict:
         'reason': reason,
     }
 
-def perform_update(update_info: dict) -> None:
-    """执行完整更新流程（下载 → 校验 → 应用安装程序）"""
+async def perform_update_async(update_info: dict, progress_callback=None) -> tuple[bool, str]:
+    """
+    【异步流程】下载 → 校验 → 应用安装程序
+    返回: (是否成功, 错误信息)；成功时内部会启动安装程序并退出当前进程
+    """
     # 下载
     log.info('更新器-准备完整更新，正在下载...')
-    update_file_path = download_file(update_info['url'], filename='StartInfo.exe')
+    update_file_path = await download_file_async(
+        update_info['url'], filename='setup.exe', progress_callback=progress_callback)
     if not update_file_path:
-        ui.dialog('更新失败', '下载更新包时出错，请稍后重试。')
-        return
+        return False, '下载更新包时出错，请稍后重试。'
 
-    # 校验
-    if not verify_sha256(update_file_path, update_info['sha256']):
-        ui.dialog('更新失败', '更新包校验失败，文件可能已损坏。')
-        return
+    # 校验（放入线程池，避免阻塞 UI）
+    if not await asyncio.to_thread(verify_sha256, update_file_path, update_info['sha256']):
+        return False, '更新包校验失败，文件可能已损坏。'
 
     # 应用（此函数会启动安装程序并退出当前进程）
     apply_full_update(update_file_path)
+    return True, ''
 
 async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, str | None]:
     """
@@ -332,37 +309,3 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
     except Exception as e:
         log.error(f"静默检查异常: {e}")
         return False, {}, f"检查更新异常: {e}"
-
-def run_update_process(update_info: dict) -> None:
-    """
-    【执行逻辑】执行下载替换（窗口已关闭，同步即可）。
-    """
-    perform_update(update_info)
-
-# ==========================================
-# 兼容层：适配旧版设置和直接运行
-# ==========================================
-def start_updater() -> None:
-    """
-    旧版入口：包含检查逻辑和弹窗确认
-    """
-    loop = asyncio.get_event_loop()
-    need_update, update_info, error_msg = loop.run_until_complete(check_update_logic())
-
-    if error_msg:
-        ui.dialog(lib.TITLE, error_msg)
-    elif need_update:
-        text = f"发现新版本：{update_info.get('version', '未知')}\n\n更新内容：\n{update_info.get('changelog', '暂无')}"
-        if ui.dialog('更新器', text, ['立即更新', '取消更新']):
-            run_update_process(update_info)
-        else:
-            log.info('更新器-用户取消更新')
-            lib.restart_program('--settings')
-    else:
-        log.info('更新器-已是最新版本')
-        ui.dialog(lib.TITLE, '更新器-已是最新版本')
-
-if __name__ == '__main__':
-    # 初始化UI
-    ui.app_manager.init_app()
-    start_updater()

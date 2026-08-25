@@ -115,24 +115,6 @@ uv run main.py --settings
 StartInfo.exe --settings
 ```
 
-### `--updater`
-
-跳过主程序流程，直接启动更新器。
-
-当主程序无法正常启动，但需要进行版本更新时，可以使用此参数单独启动更新器。
-
-**源码运行：**
-
-```bash
-uv run main.py --updater
-```
-
-**已编译版本：**
-
-```powershell
-StartInfo.exe --updater
-```
-
 ### `--debug`
 
 临时将本次启动的日志等级强制设置为 `DEBUG`，用于调试和问题排查。
@@ -153,18 +135,16 @@ StartInfo.exe --debug
 
 本次启动会使用 `DEBUG` 日志等级；下次正常启动时，仍然使用设置中原本配置的日志等级。
 
-`--debug` 不属于启动入口参数，可以与 `--settings` 或 `--updater` 同时使用：
+`--debug` 不属于启动入口参数，可以与 `--settings` 同时使用：
 
 ```bash
 uv run main.py --settings --debug
-uv run main.py --updater --debug
 ```
 
 已编译版本：
 
 ```powershell
 StartInfo.exe --settings --debug
-StartInfo.exe --updater --debug
 ```
 
 ### `--startup`
@@ -187,23 +167,12 @@ StartInfo.exe --startup
 
 ### 参数优先级
 
-`--settings` 和 `--updater` 属于不同的启动入口，**两者不能同时生效**。
-
-如果同时指定：
-
-```bash
-uv run main.py --settings --updater
-```
-
-则 `--settings` 优先，程序会直接进入设置页面，`--updater` 不会执行。
-
-`--debug` 不属于启动入口，可以与 `--settings` 或 `--updater` 同时使用。
+`--debug` 不属于启动入口，可以与 `--settings` 同时使用。
 
 例如：
 
 ```bash
 uv run main.py --settings --debug
-uv run main.py --updater --debug
 ```
 
 ## 模板文件

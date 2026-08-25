@@ -256,15 +256,6 @@ if __name__ == '__main__':
             from settings import start_settings
             start_settings()
 
-        # 如果是以--updater参数启动
-        elif '--updater' in lib.global_argv:
-            from core.updater import start_updater
-
-            # 启动更新器
-            start_updater()
-
-            sys.exit()
-
         # 如果是从jinja2模板文件启动
         else:
             j2_file_path = next(

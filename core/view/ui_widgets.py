@@ -1,10 +1,11 @@
+import asyncio
 import functools
 import sqlite3
 from pathlib import Path
 from typing import Union
 
-from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize, QPersistentModelIndex
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize, QPersistentModelIndex, QUrl
+from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import (QAbstractItemDelegate, QAbstractItemView,
                                QHeaderView, QListWidgetItem, QTableWidgetItem)
 from qasync import asyncSlot
@@ -12,12 +13,14 @@ from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageB
                             SubtitleLabel, ListWidget, BodyLabel, InfoBar, InfoBarPosition,
                             SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker,
                             ExpandGroupSettingCard, Action, CommandBar, FluentIcon,
-                            ZhDatePicker, TableWidget, TableItemDelegate)
+                            ZhDatePicker, TableWidget, TableItemDelegate, ProgressBar)
 
 from .switch_button import IndicatorPosition, SwitchButton
+from .. import base_lib as lib
 from ..base_lib import log
 from ..paths import DB_FOLDER_PATH
 from ..config import cfg
+from ..updater import GITHUB_RELEASES_URL, perform_update_async
 
 class ExtSwitchSettingCard(SwitchSettingCard):
     """
@@ -920,3 +923,115 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
                               duration=3000)
         return asyncSlot()(wrapper)
     return deco
+
+def _format_size(size: int) -> str:
+    """把字节数格式化为易读的 B/KB/MB 文本。"""
+    if size < 1024:
+        return f'{size}B'
+    if size < 1024 * 1024:
+        return f'{size / 1024:.1f}KB'
+    return f'{size / (1024 * 1024):.1f}MB'
+
+
+class UpdateDownloadBox(MessageBoxBase):
+    """检查更新确认 + 下载进度弹窗。
+
+    - 初始显示新版本信息与「立即更新/取消更新」按钮。
+    - Windows：点击「立即更新」后清除文案，切换为下载进度条，异步下载安装包。
+    - 非 Windows：点击「立即更新」跳转 GitHub Releases 页面并关闭弹窗。
+    """
+
+    def __init__(self, update_info: dict, parent=None):
+        super().__init__(parent)
+        self.update_info = update_info
+        self._last_percent = -1
+
+        # ── 初始：新版本信息 ──
+        self.titleLabel = SubtitleLabel('发现新版本')
+        self.contentLabel = BodyLabel(
+            f'版本号：{update_info.get('version', '获取失败')}\n'
+            f'发布日期：{update_info.get('release_date', '获取失败')}\n'
+            f'更新日志：\n{update_info.get('changelog', '暂无更新日志')}',
+            self,
+        )
+        self.contentLabel.setWordWrap(True)
+
+        # ── 下载进度（初始隐藏）──
+        self.progressLabel = BodyLabel('正在下载新版本安装包：0%', self)
+        self.progressBar = ProgressBar(self)
+        self.progressBar.setRange(0, 100)
+        self.progressBar.setValue(0)
+
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.contentLabel)
+        self.viewLayout.addWidget(self.progressLabel)
+        self.viewLayout.addWidget(self.progressBar)
+
+        self.yesButton.setText('立即更新')
+        self.cancelButton.setText('取消更新')
+        self.widget.setMinimumWidth(480)
+
+        self.progressLabel.hide()
+        self.progressBar.hide()
+
+        # 基类的按钮连接的是名称混淆的私有方法，这里断开后接管点击
+        self.yesButton.clicked.disconnect()
+        self.cancelButton.clicked.disconnect()
+        self.yesButton.clicked.connect(self._onYesClicked)
+        self.cancelButton.clicked.connect(self._onCancelClicked)
+
+    def _onYesClicked(self, checked: bool = False):
+        if lib.system != 'Windows':
+            # 非 Windows：跳转到 GitHub 最新构建的 Releases 页面
+            QDesktopServices.openUrl(QUrl(GITHUB_RELEASES_URL))
+            self.accept()
+            return
+
+        # Windows：清除文案，切换为下载进度视图
+        self._switch_to_download_view()
+        asyncio.ensure_future(self._download_and_install())
+
+    def _onCancelClicked(self, checked: bool = False):
+        self.reject()
+
+    def _switch_to_download_view(self):
+        """清除文案，切换为下载进度视图。"""
+        self.titleLabel.setText('正在更新')
+        self.contentLabel.hide()
+        self.progressLabel.setText('正在下载新版本安装包：0%')
+        self.progressLabel.show()
+        self.progressBar.show()
+        self.yesButton.hide()
+        self.cancelButton.hide()
+
+    async def _download_and_install(self):
+        try:
+            success, error_msg = await perform_update_async(
+                self.update_info, progress_callback=self._on_download_progress)
+        except Exception as e:
+            log.error(f'更新器-更新过程异常: {e}')
+            success, error_msg = False, f'更新过程发生异常：{e}'
+
+        if not success:
+            self._show_download_error(error_msg)
+
+    def _on_download_progress(self, downloaded: int, total: int):
+        if total > 0:
+            percent = min(100, int(downloaded / total * 100))
+            # 整数百分比去重，避免 ProgressBar 动画频繁重启导致卡顿
+            if percent != self._last_percent:
+                self._last_percent = percent
+                self.progressBar.setValue(percent)
+            self.progressLabel.setText(
+                f'正在下载新版本安装包：{percent}%'
+                f' ({_format_size(downloaded)} / {_format_size(total)})')
+        else:
+            self.progressLabel.setText(
+                f'正在下载新版本安装包：{_format_size(downloaded)}')
+
+    def _show_download_error(self, error_msg: str):
+        self.titleLabel.setText('下载失败')
+        self.progressLabel.setText(error_msg)
+        self.progressBar.error()  # 进度条置为错误状态（红色）
+        self.cancelButton.setText('关闭')
+        self.cancelButton.show()

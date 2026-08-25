@@ -14,12 +14,10 @@ from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
 from .setting_card_base import BaseSettingPage
 from .. import base_lib as lib
 from ..config import cfg
-from ..updater import check_update_logic, run_update_process
+from ..updater import check_update_logic
 
 # 常量
 LOGO_ICON_PATH = lib.DATA_FOLDER_PATH / 'icons' / 'startinfo.ico'
-IS_LOGO_EXIST = LOGO_ICON_PATH.exists()
-
 
 class AboutSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
@@ -33,7 +31,7 @@ class AboutSettingsPage(BaseSettingPage):
         self.aboutGroup = SettingCardGroup('关于', self.contentWidget)
 
         # 图标（居中）
-        if IS_LOGO_EXIST:
+        if LOGO_ICON_PATH.exists():
             self.image_label = SubtitleLabel()
             pixmap = QPixmap(LOGO_ICON_PATH)
             self.image_label.setPixmap(pixmap)
@@ -139,18 +137,10 @@ class AboutSettingsPage(BaseSettingPage):
                 from .ui_widgets import Notify
                 Notify.error(title='检查更新失败', content=error_msg, parent=self)
             elif update_available:
-                content = (
-                    f'版本号：{new_version_data.get('version', '获取失败')}\n'
-                    f'发布日期：{new_version_data.get('release_date', '获取失败')}\n'
-                    f'更新日志：\n{new_version_data.get('changelog', '暂无更新日志')}'
-                )
-                box = MessageBox('发现新版本', content, self)
-                box.yesButton.setText('立即更新')
-                box.cancelButton.setText('取消更新')
-                if box.exec():
-                    lib.log.info('>>> 准备接入更新流程...')
-                    self.window().close()
-                    run_update_process(new_version_data)
+                from .ui_widgets import UpdateDownloadBox
+                box = UpdateDownloadBox(new_version_data, self)
+                self._updateBox = box  # 持有引用，防止被垃圾回收
+                box.show()  # 非模态：qasync 下 exec() 会阻塞事件循环，导致下载进度无法刷新
             else:
                 from .ui_widgets import Notify
                 Notify.info(content='当前已经是最新版本', parent=self)

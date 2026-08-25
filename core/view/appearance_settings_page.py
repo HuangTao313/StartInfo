@@ -14,9 +14,9 @@ from .. import ui
 from ..config import cfg
 
 
-class CustomSettingsPage(BaseSettingPage):
+class AppearanceSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
-        super().__init__(parent=parent, object_name='custom_settings_page')
+        super().__init__(parent=parent, object_name='appearance_settings_page')
 
         self.parent_window = parent
 

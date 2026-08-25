@@ -10,7 +10,7 @@ import core.ui as ui
 from core.config import cfg
 from core.view.about_settings_page import AboutSettingsPage
 from core.view.basic_settings_page import BasicSettingsPage
-from core.view.custom_settings_page import CustomSettingsPage
+from core.view.appearance_settings_page import AppearanceSettingsPage
 
 # 图标
 SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'
@@ -36,14 +36,14 @@ class SettingsWindow(FluentWindow):
 
         # 1. 创建启动页面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(96, 96))
+        self.splashScreen.setIconSize(QSize(64, 64))
 
         # 2. 在创建其他子页面前先显示主界面
         self.show()
 
         # 3.创建子界面
         self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, '基本设置')
-        self.addSubInterface(CustomSettingsPage(self), FluentIcon.BRUSH, '个性化')
+        self.addSubInterface(AppearanceSettingsPage(self), FluentIcon.BRUSH, '个性化')
         self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于',NavigationItemPosition.BOTTOM)
 
         # 4. 隐藏启动页面

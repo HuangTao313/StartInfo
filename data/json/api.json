@@ -49,6 +49,7 @@
     "xxapi_history_url": "https://v2.xxapi.cn/api/history",
     "update_source": {
         "github": "https://raw.githubusercontent.com/HuangTao313/StartInfo/main/version.json",
-        "github_mirror_prefix": "https://gh-proxy.org/"
+        "github_mirror_prefix": "https://gh-proxy.org/",
+        "github_releases": "https://github.com/HuangTao313/StartInfo/releases/latest"
     }
 }
