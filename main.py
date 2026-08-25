@@ -9,7 +9,7 @@ import core.startup as startup
 import core.ui as ui
 from core.config import cfg
 from core.base_lib import log
-from core.widgets import BirthdayWidget, MCServerStatusWidget, global_date
+from core.widgets import BirthdayWidget, MCServerInfoWidget, global_date
 from core.widgets_core import registered_widgets, NetworkWidgetBase, ExtNetworkWidgetBase
 
 # 加载模板
@@ -144,11 +144,11 @@ async def main() -> None:
 
     results = {}
     # ── 联网组件并发，本地组件同步 ──
-    # 特例：ExtNetworkWidgetBase 直接继承 WidgetBase(非 NetworkWidgetBase)，但也支持异步；
+    # 特例：ExtNetworkWidgetBase 直接继承 LocalWidgetBase(非 NetworkWidgetBase)，但也支持异步；
     #       MCServerStatus 基于 mcstatus 库(非 HTTP)，库本身支持异步
     async_tasks, async_widgets, sync_widgets = [], [], []
     for widget in active:
-        if isinstance(widget, (NetworkWidgetBase, ExtNetworkWidgetBase, MCServerStatusWidget)):
+        if isinstance(widget, (NetworkWidgetBase, ExtNetworkWidgetBase, MCServerInfoWidget)):
             async_widgets.append(widget)
             async_tasks.append(widget.get_data_async())
 
