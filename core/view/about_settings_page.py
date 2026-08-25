@@ -66,7 +66,7 @@ class AboutSettingsPage(BaseSettingPage):
         # 检查更新
         self.checkUpdateCard = PrimaryPushSettingCard(
             text='检查更新', icon=FIF.UPDATE, title='检查更新',
-            content='检查新版本并下载', parent=self.aboutGroup,
+            content='检查新版本并下载', parent=self.aboutGroup
         )
 
         # 更新源
@@ -74,7 +74,7 @@ class AboutSettingsPage(BaseSettingPage):
             icon=FIF.CLOUD_DOWNLOAD, title='更新源',
             content='选择更新源：GitHub、GitHub镜像站',
             texts=['GitHub', 'GitHub镜像站'],
-            configItem=cfg.update_source, parent=self.aboutGroup,
+            configItem=cfg.update_source, parent=self.aboutGroup
         )
 
         # 项目GitHub仓库
@@ -82,13 +82,13 @@ class AboutSettingsPage(BaseSettingPage):
             icon=FIF.GITHUB, title='此项目的GitHub仓库',
             content='打开此项目的GitHub仓库',
             url='https://github.com/HuangTao313/StartInfo',
-            text='打开', parent=self.aboutGroup,
+            text='打开', parent=self.aboutGroup
         )
 
         # 卸载
         self.uninstallCard = PrimaryPushSettingCard(
             text='卸载', icon=FIF.DELETE, title='卸载',
-            content='卸载本程序', parent=self.aboutGroup,
+            content='卸载本程序', parent=self.aboutGroup
         )
 
         self.aboutGroup.addSettingCards([
@@ -96,7 +96,7 @@ class AboutSettingsPage(BaseSettingPage):
             self.updateSourceCard,
             self.githubCard,
             self.uninstallCard,
-            self.changelog,
+            self.changelog
         ])
         self.expandLayout.addWidget(self.aboutGroup)
         self.finalise()

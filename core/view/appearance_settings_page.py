@@ -31,25 +31,25 @@ class AppearanceSettingsPage(BaseSettingPage):
             configItem=cfg.theme, icon=FIF.CONSTRACT, title='主题',
             content='调整软件的外观颜色',
             texts=['浅色主题', '深色主题', '跟随系统'],
-            parent=self.themeGroup,
+            parent=self.themeGroup
         )
 
         self.useWinThemeColor = ExtSwitchSettingCard(
             icon=FIF.PALETTE, title='使用系统主题色',
             content='使用系统主题色', config_item=cfg.use_win_theme_color,
-            parent=self.themeGroup,
+            parent=self.themeGroup
         )
 
         self.themeColorCard = ColorSettingCard(
             configItem=cfg.theme_color, icon=FIF.PALETTE,
             title='主题色', content='自定义程序主题色，调整前请先关闭【使用系统主题色】',
-            parent=self.themeGroup,
+            parent=self.themeGroup
         )
         self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
 
         self.micaEffectSwitchCard = ExtSwitchSettingCard(
             icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明(仅支持Windows11)',
-            config_item=cfg.mica_effect_switch, parent=self.themeGroup,
+            config_item=cfg.mica_effect_switch, parent=self.themeGroup
         )
         # 非Windows系统云母效果开关默认锁定
         if lib.system != 'Windows':
@@ -59,7 +59,7 @@ class AppearanceSettingsPage(BaseSettingPage):
             self.themeCard,
             self.useWinThemeColor,
             self.themeColorCard,
-            self.micaEffectSwitchCard,
+            self.micaEffectSwitchCard
         ])
         self.expandLayout.addWidget(self.themeGroup)
 
@@ -70,32 +70,32 @@ class AppearanceSettingsPage(BaseSettingPage):
         self.templateCard = OptionsSettingCard(
             configItem=cfg.template_file, icon=FIF.LABEL, title='模板',
             content='选择主界面使用的模板', texts=template_files,
-            parent=self.templateGroup,
+            parent=self.templateGroup
         )
 
         self.importTemplateCard = PushSettingCard(
             text='导入模板', icon=FIF.DOWNLOAD,
             title='导入模板', content='导入Jinja2模板',
-            parent=self.templateGroup,
+            parent=self.templateGroup
         )
 
         self.refreshTemplateCard = PrimaryPushSettingCard(
             text='刷新模板列表', icon=FIF.SYNC,
             title='刷新模板列表', content='刷新模板列表',
-            parent=self.templateGroup,
+            parent=self.templateGroup
         )
 
         self.openTemplateFolderCard = PrimaryPushSettingCard(
             text='打开模板文件夹', icon=FIF.FOLDER,
             title='打开模板文件夹', content='打开模板文件夹',
-            parent=self.templateGroup,
+            parent=self.templateGroup
         )
 
         self.openTemplateDocCard = HyperlinkCard(
             icon=FIF.DICTIONARY, title='模板自定义文档',
             content='打开模板自定义文档',
             url='https://github.com/HuangTao313/StartInfo/blob/main/docs/template-customization.md',
-            text='打开', parent=self.templateGroup,
+            text='打开', parent=self.templateGroup
         )
 
         self.templateGroup.addSettingCards([
@@ -103,7 +103,7 @@ class AppearanceSettingsPage(BaseSettingPage):
             self.importTemplateCard,
             self.refreshTemplateCard,
             self.openTemplateFolderCard,
-            self.openTemplateDocCard,
+            self.openTemplateDocCard
         ])
         self.expandLayout.addWidget(self.templateGroup)
         self.finalise()
