@@ -124,7 +124,7 @@ def _get_template_files() -> list:
 # 配置类
 # ===========================================================================
 
-class MyConfig(QConfig):
+class StartInfoConfig(QConfig):
     # =========================== General ===========================
     # 模板
     template_file = OptionsConfigItem(
@@ -164,86 +164,95 @@ class MyConfig(QConfig):
     mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', True, BoolValidator())
 
     # =========================== 日期和时间 ===========================
-    datetime_switch = ConfigItem('DateTime', 'switch', True, BoolValidator())
-    lunar_date_switch = ConfigItem('DateTime', 'lunar_date_switch', False, BoolValidator())
-    solar_term_switch = ConfigItem('DateTime', 'solar_term_switch', False, BoolValidator())
-    holiday_switch = ConfigItem('DateTime', 'holiday_switch', True, BoolValidator())
-    other_date_switch = ConfigItem('DateTime', 'other_date_switch', False, BoolValidator())
+    datetime_switch = ConfigItem('DateTimeWidget', 'switch', True, BoolValidator())
+    lunar_date_switch = ConfigItem('DateTimeWidget', 'lunar_date_switch', False, BoolValidator())
+    solar_term_switch = ConfigItem('DateTimeWidget', 'solar_term_switch', False, BoolValidator())
+    holiday_switch = ConfigItem('DateTimeWidget', 'holiday_switch', True, BoolValidator())
+    other_date_switch = ConfigItem('DateTimeWidget', 'other_date_switch', False, BoolValidator())
 
     # =========================== 天气 ===========================
     # 城市信息默认值（按天气数据源分别存储）
     DEFAULT_CITY_NAMES = {'qweather': '北京', 'xiaomi_weather': '北京'}
     DEFAULT_CITY_IDS = {'qweather': '101010100', 'xiaomi_weather': '101010100'}
 
-    weather_switch = ConfigItem('Weather', 'switch', False, BoolValidator())
+    weather_switch = ConfigItem('WeatherWidget', 'switch', False, BoolValidator())
     city_name = ConfigItem(
-        'Weather', 'city_name', DEFAULT_CITY_NAMES,
+        'WeatherWidget', 'city_name', DEFAULT_CITY_NAMES,
         CityDictValidator(DEFAULT_CITY_NAMES),
     )
     city_id = ConfigItem(
-        'Weather', 'city_id', DEFAULT_CITY_IDS,
+        'WeatherWidget', 'city_id', DEFAULT_CITY_IDS,
         CityDictValidator(DEFAULT_CITY_IDS),
     )
-    qweather_api_host = ConfigItem('Weather', 'qweather_api_host', '' ,StringValidator(default=''))
-    qweather_api_key = ConfigItem('Weather', 'qweather_api_key', '', StringValidator(default=''))
-    weather_interval = ConfigItem(
-        'Weather', 'interval', 30,
+    qweather_api_host = ConfigItem('WeatherWidget', 'qweather_api_host', '' ,StringValidator(default=''))
+    qweather_api_key = ConfigItem('WeatherWidget', 'qweather_api_key', '', StringValidator(default=''))
+    weather_data_refresh_interval = ConfigItem(
+        'WeatherWidget', 'data_refresh_interval', 30,
         IntRangeValidator(min_val=15, max_val=60, default_val=30),
     )
     weather_source = OptionsConfigItem(
-        'Weather', 'source', 'xiaomi_weather',
+        'WeatherWidget', 'source', 'xiaomi_weather',
         OptionsValidator(['xiaomi_weather', 'qweather']),
     )
 
     # =========================== 倒数日 ===========================
-    countdown_switch = ConfigItem('Countdown', 'switch', False, BoolValidator())
-    countdown_name = ConfigItem('Countdown', 'name', '', StringValidator(default=''))
-    countdown_date = ConfigItem('Countdown', 'date', '', StringValidator(default=''))
+    countdown_switch = ConfigItem('CountdownDayWidget', 'switch', False, BoolValidator())
+    countdown_name = ConfigItem('CountdownDayWidget', 'name', '', StringValidator(default=''))
+    countdown_date = ConfigItem('CountdownDayWidget', 'date', '', StringValidator(default=''))
 
     # =========================== 生日祝福 ===========================
-    birthday_wishes_switch = ConfigItem('BirthdayWishes', 'switch', False, BoolValidator())
-    birthday_dict = ConfigItem('BirthdayWishes', 'birthday_dict', {'黄桃': '20100403'})
+    birthday_wishes_switch = ConfigItem('BirthdayWishesWidget', 'switch', False, BoolValidator())
+    birthday_dict = ConfigItem('BirthdayWishesWidget', 'birthday_dict', {'黄桃': '20100403'})
 
     # =========================== MC服务器检测 ===========================
-    minecraft_server_checker_switch = ConfigItem(
-        'MinecraftJavaServerChecker', 'switch', False, BoolValidator(),
+    mc_server_info_switch = ConfigItem(
+        'MCServerInfoWidget', 'switch', False, BoolValidator(),
     )
-    minecraft_server_name = ConfigItem(
-        'MinecraftJavaServerChecker', 'server_name', '',
+    mc_server_name = ConfigItem(
+        'MCServerInfoWidget', 'server_name', '',
         StringValidator(default=''),
     )
-    minecraft_server_ip = ConfigItem(
-        'MinecraftJavaServerChecker', 'server_ip', '',
+    mc_server_ip = ConfigItem(
+        'MCServerInfoWidgetWidget', 'server_ip', '',
         StringValidator(default=''),
     )
-    minecraft_server_port = ConfigItem(
-        'MinecraftJavaServerChecker', 'server_port', '25565',
+    mc_server_port = ConfigItem(
+        'MCServerInfoWidget', 'server_port', '25565',
         StringValidator(default='25565'),
     )
-    minecraft_server_friends_list = ConfigItem(
-        'MinecraftJavaServerChecker', 'friends_list', [],
+    mc_server_friends_list = ConfigItem(
+        'MCServerInfoWidget', 'friends_list', [],
     )
-    minecraft_server_data_refresh_interval = ConfigItem(
-        'MinecraftJavaServerChecker', 'data_refresh_interval', 60,
+    mc_server_data_refresh_interval = ConfigItem(
+        'MCServerInfoWidget', 'data_refresh_interval', 60,
         IntRangeValidator(min_val=5, default_val=60),
     )
 
     # =========================== 每日一言 ===========================
-    words_switch = ConfigItem('EveryDayWords', 'switch', True, BoolValidator())
+    words_switch = ConfigItem('EveryDayWordsWidget', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
-        'EveryDayWords', 'source', 'hitokoto',
+        'EveryDayWordsWidget', 'source', 'hitokoto',
         OptionsValidator(['hitokoto', 'iciba']),
     )
 
-    # =========================== InformationSwitch (组件开关) ===========================
-    greeting_switch = ConfigItem('InformationSwitch', 'greeting', True, BoolValidator())
-    startup_times_switch = ConfigItem('InformationSwitch', 'startup_times', True, BoolValidator())
-    historical_switch = ConfigItem('InformationSwitch', 'historical', False, BoolValidator())
-    daily_character_switch = ConfigItem(
-        'InformationSwitch', 'daily_character', False, BoolValidator(),
+    # =========================== GitHub仓库信息 ===========================
+    github_repo_switch = ConfigItem('GitHubRepoWidget', 'switch', False, BoolValidator())
+    github_repo_owner = ConfigItem('GitHubRepoInfoWidget', 'repo_owner', '', StringValidator(default=''))
+    github_repo_name = ConfigItem('GitHubRepoInfoWidget', 'repo_name', '', StringValidator(default=''))
+    github_repo_data_refresh_interval = ConfigItem(
+        'GitHubRepoInfoWidget', 'data_refresh_interval', 1,
+        IntRangeValidator(min_val=1, max_val=24, default_val=1),
     )
 
-cfg = MyConfig()
+    # =========================== InformationSwitch (组件开关) ===========================
+    greeting_switch = ConfigItem('InformationSwitch', 'greeting_widget', True, BoolValidator())
+    startup_times_switch = ConfigItem('InformationSwitch', 'startup_times_widget', True, BoolValidator())
+    historical_switch = ConfigItem('InformationSwitch', 'historical_widget', False, BoolValidator())
+    daily_character_switch = ConfigItem(
+        'InformationSwitch', 'daily_character_widget', False, BoolValidator(),
+    )
+
+cfg = StartInfoConfig()
 qconfig.load(lib.CONFIG_FILE_PATH, cfg)
 
-__all__ = ['cfg', 'qconfig', 'MyConfig']
+__all__ = ['cfg', 'qconfig', 'StartInfoConfig']

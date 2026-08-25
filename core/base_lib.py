@@ -20,8 +20,6 @@ from loguru import logger
 from .config import cfg
 from .paths import *
 
-# 涉及 cfg 的必须留在后面
-WEATHER_DATA_EXPIRE_TIME: int = cfg.weather_interval.value * 60
 
 # 获取全局启动参数
 global_argv = argv
