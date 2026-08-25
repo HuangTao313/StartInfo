@@ -1,8 +1,19 @@
-# 开机速览 StartInfo
+<div align="center">
 
-一个基于 PySide6 + QFluentWidgets 开发的桌面信息展示工具。
+<img src="docs/images/startinfo.png" alt="StartInfo Logo" width="18%">
 
-## 功能
+<h1>StartInfo</h1>
+
+<p>一个基于 PySide6 + QFluentWidgets 开发的桌面信息展示工具。</p>
+
+[![星标](https://img.shields.io/github/stars/HuangTao313/StartInfo?style=for-the-badge&color=orange&label=星标)](https://github.com/HuangTao313/StartInfo)
+[![开源许可证](https://img.shields.io/github/license/HuangTao313/StartInfo?style=for-the-badge&color=darkgreen&label=开源许可证)](LICENSE)
+[![下载量](https://img.shields.io/github/downloads/HuangTao313/StartInfo/total.svg?style=for-the-badge&color=green&label=下载量)](https://github.com/HuangTao313/StartInfo/releases)
+[![最新版本](https://img.shields.io/github/v/release/HuangTao313/StartInfo?style=for-the-badge&label=最新版本)](https://github.com/HuangTao313/StartInfo/releases)
+
+</div>
+
+# 功能
 
 * 天气与空气质量
 * 日期、时间、农历、24 节气、节假日
@@ -11,7 +22,7 @@
 * Minecraft 服务器信息
 * 更多功能……
 
-## 效果展示
+## 截图
 
 <table>
   <tr>
@@ -256,21 +267,16 @@ API Key 请直接填写控制台提供的 Key，无需添加引号或其他内�
 
 > 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets.py](core/widgets.py)。
 
-## 开源协议
-
-本项目采用 GNU GPLv3.0 许可证开源。
-
-完整许可证内容请参见项目根目录的 [LICENSE](LICENSE) 文件。
-
 ## 依赖
 
 StartInfo 主要使用以下项目：
 
 - [Python](https://www.python.org/)
 - [PySide6](https://doc.qt.io/qtforpython-6/gettingstarted.html#getting-started)
-- [QFluentWidgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6)
+- [PySide6-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6)
+- [Loguru](https://github.com/Delgan/loguru)
 
-# AI 辅助开发
+## AI 辅助开发
 
 本项目开发过程中使用了 AI 辅助编程（Vibe Coding），包括代码编写、重构、调试、问题分析等。
 
@@ -285,7 +291,12 @@ StartInfo 主要使用以下项目：
 - ### 接口与资料
 
 - [XiaomiWeather API](https://github.com/huanghui0906/API/blob/master/XiaomiWeather.md) — 小米天气接口资料参考
-- [Icons8](https://icons8.com/) — 程序图标资源
+
+### 图标资源
+
+- [AppIcon Forge](https://github.com/zhangyu1818/appicon-forge) — 用于生成应用程序图标
+- [Material Design Icons](https://github.com/google/material-design-icons) — 主程序图标资源来源
+- [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) — 设置窗口图标资源来源
 
 ## 贡献者
 
@@ -299,3 +310,13 @@ StartInfo 主要使用以下项目：
     <img src="https://github.com/Yuuka-doesnt-know.png" width="60px" alt="Yukka-doesnt-know" style="border-radius: 50%;">
   </a>
 </p>
+
+## 版权
+
+本项目采用 GNU GPLv3.0 许可证开源。
+
+完整许可证内容请参见项目根目录的 [LICENSE](LICENSE) 文件。
+
+#
+
+Copyright © 2023-2026 HuangTao313. Licensed under GPL-3.0.
