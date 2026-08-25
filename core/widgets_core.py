@@ -1,5 +1,5 @@
 """
-组件框架 —— WidgetBase / LocalWidgetBase / NetworkWidgetBase
+组件框架 —— LocalWidgetBase / LocalWidgetBase / NetworkWidgetBase
 
 核心理念：
     子类声明意图（WIDGET_NAME / NEED_CACHE / LOCAL_INTERVAL），
@@ -350,10 +350,10 @@ def register(switch: ConfigItem, template_key: str | None = None,
 
 
 # =============================================================================
-# 基类
+# 本地组件基类
 # =============================================================================
 
-class WidgetBase:
+class LocalWidgetBase:
     """组件基类 —— 提供缓存模板方法。
 
     子类覆写点：
@@ -374,6 +374,14 @@ class WidgetBase:
         # 确保数据库已初始化（幂等）
         self._skip_cache_flag = False
         CacheManager.init_db()
+
+    # ------------------------------------------------------------------
+    # 通用工具
+    # ------------------------------------------------------------------
+
+    def _fmt(self, value, suffix: str = '') -> str:
+        """格式化可选字段：缺失(None)时返回空串，避免渲染出 'None℃' 这类脏数据。"""
+        return f'{value}{suffix}' if value is not None else ''
 
     # ------------------------------------------------------------------
     # 缓存辅助（开发者可直接调用，但通常不需要）
@@ -524,26 +532,10 @@ class WidgetBase:
 
 
 # =============================================================================
-# 本地组件基类
-# =============================================================================
-
-class LocalWidgetBase(WidgetBase):
-    """本地组件基类 —— 数据不依赖网络。"""
-
-    def _fetch_data(self) -> dict:
-        raise NotImplementedError(
-            f'{self.__class__.__name__} 必须覆写 _fetch_data()'
-        )
-
-    async def _fetch_data_async(self) -> dict:
-        return self._fetch_data()
-
-
-# =============================================================================
 # 联网组件基类
 # =============================================================================
 
-class NetworkWidgetBase(WidgetBase):
+class NetworkWidgetBase(LocalWidgetBase):
     """联网组件基类 —— 封装 httpx 同步/异步请求。
 
     子类覆写点：
@@ -586,6 +578,7 @@ class NetworkWidgetBase(WidgetBase):
         """发出同步 GET 请求并返回解析后的数据。"""
         # 检查是否联网
         if not is_internet():
+            self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
@@ -636,6 +629,7 @@ class NetworkWidgetBase(WidgetBase):
         """
         # 检查是否联网
         if not is_internet():
+            self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
@@ -690,8 +684,33 @@ class APIConfig(TypedDict, total=False):
     headers: dict[str, Any] | None
     parse_func: str
 
-class ExtNetworkWidgetBase(WidgetBase):
-    """支持多数据源、多 API 的高级联网组件基类"""
+class ExtNetworkWidgetBase(LocalWidgetBase):
+    """高级联网组件基类 —— 支持多数据源、多 API 并发调度。
+
+    在 NetworkWidgetBase 的基础上，把「单个 URL + 单个解析函数」扩展为
+    「数据源 → 多个 API」的配置结构：组件根据 CONFIG_ITEM 切换数据源，
+    一次请求当前数据源下的全部 API，并把各自解析结果合并为一个字典。
+
+    子类覆写点：
+        _parse_xxx(raw_data: dict) → dict | None   # 由 API 配置的 parse_func 指定
+                                                    # 返回 None 表示解析失败
+
+    类变量（子类直接覆写）：
+        API_DATA:   dict[str, dict[str, APIConfig]] | None = None
+                    # 数据源 → API名称 → API配置（url / params / headers / parse_func）
+        CONFIG_ITEM: ConfigItem | None = None
+                    # 数据源切换配置项（多数据源必须绑定；
+                    # 单数据源可省略，自动取唯一数据源）
+        RETRY_COUNT: int = 2              # 单个 API 失败后重试次数（总共请求 count+1 次）
+        RETRY_DELAY: float = 1.0          # 重试间隔（秒）
+        REQUEST_TIMEOUT: float = 5.0      # 单次请求超时时间（秒）
+
+    便捷属性：
+        DATA_SOURCE       # 当前数据源名称（CONFIG_ITEM.value；
+                          # 未绑定且只有一个数据源时自动取该数据源）
+        CURRENT_API_DATA  # 当前数据源的全部 API 配置
+        last_error        # 最近一次获取失败的用户可读错误信息（成功时为空字符串）
+    """
     # 数据源 → API名称 → API配置
     API_DATA: dict[str, dict[str, APIConfig]] | None = None
 
@@ -707,10 +726,18 @@ class ExtNetworkWidgetBase(WidgetBase):
     # --------------------------------------------------------------
     @property
     def DATA_SOURCE(self) -> str:
-        if self.CONFIG_ITEM is None:
-            raise AttributeError(f'组件 [{self.WIDGET_NAME}] 未配置 CONFIG_ITEM')
+        # 绑定 CONFIG_ITEM 时以配置值为准
+        if self.CONFIG_ITEM is not None:
+            return self.CONFIG_ITEM.value
 
-        return self.CONFIG_ITEM.value
+        # 未绑定 CONFIG_ITEM 时：仅当 API_DATA 只有一个数据源才可自动推断
+        if self.API_DATA and len(self.API_DATA) == 1:
+            return next(iter(self.API_DATA))
+
+        raise AttributeError(
+            f'组件 [{self.WIDGET_NAME}] 未配置 CONFIG_ITEM，'
+            f'且数据源多于一个，无法确定当前数据源'
+        )
 
     @property
     def CURRENT_API_DATA(self) -> dict[str, APIConfig]:
@@ -868,6 +895,7 @@ class ExtNetworkWidgetBase(WidgetBase):
         # 检查是否联网
         if not is_internet():
             self.last_error = '当前未联网，无法获取数据'
+            self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
@@ -907,6 +935,7 @@ class ExtNetworkWidgetBase(WidgetBase):
         # 检查是否联网
         if not is_internet():
             self.last_error = '当前未联网，无法获取数据'
+            self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
 
