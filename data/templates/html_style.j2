@@ -160,6 +160,17 @@
     </div>
     {%- endif -%}
 
+    {# --- GitHub 仓库信息卡片 --- #}
+    {%- if github_repo_switch -%}
+    <div class="card">
+        <div class="card-main">GitHub仓库： {{ repo_name }}</div>
+        <div class="card-detail">
+            ⭐ Stars: {{ repo_stars }} · 🍴 Forks: {{ forks }}
+            {%- if last_tag %}<br>📦 最新版本: {{ last_tag }}{% endif %}
+        </div>
+    </div>
+    {%- endif -%}
+
     <div class="content">
         {# --- 5.1 问候语组件 --- #}
         {%- if greeting_switch -%}

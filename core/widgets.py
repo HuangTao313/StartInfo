@@ -3,13 +3,15 @@ import time
 
 from datetime import datetime
 
+import httpx
+
 from lunar_python import Lunar, Solar
 from lunar_python.util import HolidayUtil
 from typing import Any
 
 from . import base_lib as lib
 from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
-                           register)
+                           APIConfig, register)
 from .config import cfg
 
 # StartInfo内置组件
@@ -115,6 +117,7 @@ class DateTimeWidget(LocalWidgetBase):
 
         except Exception as e:
             log.error(f'[{self.WIDGET_NAME}] 获取阳历日期失败：{str(e)}')
+            return None
             
     def _get_lunar_date(self) -> dict[str, str] | None:
         """获取农历日期"""
@@ -147,12 +150,7 @@ class DateTimeWidget(LocalWidgetBase):
 
         except Exception as e:
             log.error(f'[{self.WIDGET_NAME}] 获取其他信息失败:{str(e)}')
-            return {
-                'week_num': '',
-                'day_num': '',
-                'year_progress': '',
-                'year_remain': ''
-            }
+            return None
 
     def _get_solar_term(self) -> dict[str, str | Any] | dict[str, str]:
         """获取24节气信息"""
@@ -165,7 +163,7 @@ class DateTimeWidget(LocalWidgetBase):
 
         except Exception as e:
             log.error(f'[{self.WIDGET_NAME}] 获取24节气失败:{e}')
-            return {'solar_term': ''}
+            return None
 
     def _get_holiday(self) -> dict[str, str | Any] | dict[str, str]:
         """获取节假日信息"""
@@ -192,12 +190,12 @@ class DateTimeWidget(LocalWidgetBase):
 
         except Exception as e:
             log.error(f'[{self.WIDGET_NAME}] 获取节假日信息失败:{str(e)}')
-            return {'holiday': ''}
+            return None
 
     def _fetch_data(self) -> dict[str, str] | None:
         """合并所有信息"""
-        # 阳历日期和时间默认显示
-        data = self._get_date()
+        # 阳历日期和时间默认显示（helper 异常返回 None 时兜底为空字典，避免 None.update 崩溃）
+        data = self._get_date() or {}
         data.update(self._get_time())
 
         # 按需获取需要显示的信息
@@ -210,9 +208,10 @@ class DateTimeWidget(LocalWidgetBase):
 
         for switch, func in info_config:
             if switch.value:
-                data.update(func())
+                data.update(func() or {})
 
         return data
+
 
 # 2.倒数日
 @register(cfg.countdown_switch, 'countdown_switch')
@@ -257,6 +256,7 @@ class CountDownDayWidget(LocalWidgetBase):
         # 用户设置的日期格式错误，返回 False
         except ValueError:
             return {'is_countdown_available': False}
+
 
 # 3.生日
 @register(cfg.birthday_wishes_switch)  # 生日无模板开关，不注入
@@ -326,6 +326,7 @@ class BirthdayWidget(LocalWidgetBase):
         # 没有人今天生日，返回None
         return None
 
+
 # 4.问候语
 @register(cfg.greeting_switch, 'greeting_switch')
 class GreetingWidget(LocalWidgetBase):
@@ -336,6 +337,7 @@ class GreetingWidget(LocalWidgetBase):
         hour = int(time.strftime('%H', global_time))
         greeting = '早上好！' if 6 <= hour < 11 else '中午好！' if 11 <= hour < 12 else '下午好！' if 12 <= hour < 18 else '晚上好！'
         return {'greeting': greeting}
+
 
 # 5.开机次数
 @register(cfg.startup_times_switch, 'startup_times_switch')
@@ -385,6 +387,7 @@ class StartupTimesWidget(LocalWidgetBase):
             times = self._read_cache_value('times')
             return {'startup_times': times}
 
+
 # 6.今日人品
 @register(cfg.daily_character_switch, 'daily_character_switch')
 class DailyCharacterWidget(LocalWidgetBase):
@@ -428,11 +431,8 @@ class WeatherWidget(ExtNetworkWidgetBase):
     # 基本信息
     WIDGET_NAME = 'Weather'
     NEED_CACHE = True
-    LOCAL_INTERVAL = f'{cfg.weather_interval.value}m'
+    LOCAL_INTERVAL = f'{cfg.weather_data_refresh_interval.value}m'
     CONFIG_ITEM = cfg.weather_source
-    # city_id旧值迁移
-    if isinstance(cfg.city_id.value, str):
-        cfg.set(cfg.city_id, {'qweather': cfg.city_id.value, 'xiaomi_weather': ''})
 
     # 动态获取city_id，避免在初次启动选择城市后仍使用旧值
     @property
@@ -551,36 +551,35 @@ class WeatherWidget(ExtNetworkWidgetBase):
     def _parse_qweather_weather(self, raw_data: dict) -> dict | None:
         """解析和风天气的天气数据"""
         now = raw_data.get('now')
-        if now:
-            try:
-                weather = now['text']
-                weather_emoji = self._get_weather_emoji(weather)
-
-                return {
-                    'city_name': cfg.city_name.value[cfg.weather_source.value],
-                    'weather': weather,
-                    'temperature': f'{now['temp']}℃',
-                    'feels_like': f'{now['feelsLike']}℃',
-                    'humidity': f'{now['humidity']}%',
-                    'wind_direction': now['windDir'],
-                    'wind_speed': f'{now['windSpeed']}km/h',
-                    'weather_emoji': weather_emoji,
-                }
-
-            except Exception as e:
-                log.error(f'天气：解析失败:{e}')
-                return {'city_name': cfg.city_name.value[cfg.weather_source.value]}
-
-        else:
+        if not now:
             self.skip_cache()
-            log.error('天气：获取失败')
+            log.error(f'[{self.WIDGET_NAME}] 和风天气-天气信息获取失败')
             return None
+
+        # 必需字段：天气类型缺失视为失败，不缓存
+        weather = now.get('text')
+        if not weather:
+            self.skip_cache()
+            log.error(f'[{self.WIDGET_NAME}] 和风天气-天气信息缺少 text 字段')
+            return None
+
+        # text 多处使用提前取出；其余字段单层且只用一次 → 内联
+        return {
+            'city_name': cfg.city_name.value[cfg.weather_source.value],
+            'weather': weather,
+            'temperature': self._fmt(now.get('temp'), '℃'),
+            'feels_like': self._fmt(now.get('feelsLike'), '℃'),
+            'humidity': self._fmt(now.get('humidity'), '%'),
+            'wind_direction': self._fmt(now.get('windDir')),
+            'wind_speed': self._fmt(now.get('windSpeed'), 'km/h'),
+            'weather_emoji': self._get_weather_emoji(weather),
+        }
 
     def _parse_qweather_air_quality(self, raw_data: dict) -> dict | None:
         """解析和风天气的空气质量数据"""
         now = raw_data.get('now')
         if now:
-            air_level = now['category']
+            air_level = now.get('category', '')
             pm25 = now.get('pm2p5', '')
             air_quality_text = f'{air_level}(PM2.5 指数:{pm25})'
 
@@ -588,48 +587,64 @@ class WeatherWidget(ExtNetworkWidgetBase):
 
         else:
             self.skip_cache()
-            log.error('空气质量：获取失败')
+            log.error(f'[{self.WIDGET_NAME}] 和风天气-空气质量信息获取失败')
             return None
 
     def _parse_xiaomi_weather(self, raw_data: dict) -> dict | None:
+        """解析小米天气数据（天气代码需映射为中文，另含 AQI 换算）"""
         current = raw_data.get('current')
-        if current:
-            # 小米天气API返回的天气是代码，需要另外解析
-            weather = api['xiaomi_weather']['weather_status'].get(current['weather'], '未知')
-            weather_emoji = self._get_weather_emoji(weather)
-            temp_data = current['temperature']
-            feels_data = current['feelsLike']
-            wind_data = current['wind']
-
-            result = {
-                'city_name': cfg.city_name.value[cfg.weather_source.value],
-                'weather': weather,
-                'temperature': f'{temp_data['value']}{temp_data['unit']}',
-                'feels_like': f'{feels_data['value']}{feels_data['unit']}',
-                'humidity': f'{current['humidity']['value']}%',
-                'wind_direction': self._convert_wind_direction(wind_data['direction']['value']),
-                'wind_speed': f'{wind_data['speed']['value']}km/h',
-                'weather_emoji': weather_emoji,
-            }
-
-            # 空气质量：小米接口无 category 字段，按 AQI 指数换算等级
-            try:
-                aqi_data = raw_data['aqi']
-                if aqi_data and aqi_data['aqi']:
-                    aqi = int(aqi_data['aqi'])
-                    pm25 = aqi_data.get('pm25', '')
-                    result['air_quality'] = f'{self._aqi_to_level(aqi)}(PM2.5 指数:{pm25})'
-
-            except (TypeError, ValueError) as e:
-                self.skip_cache()
-                log.error(f'空气质量：解析失败:{e}')
-
-            return result
-
-        else:
+        if not current:
             self.skip_cache()
-            log.error('天气：获取失败')
+            log.error(f'[{self.WIDGET_NAME}] 小米天气信息获取失败')
             return None
+
+        # 必需字段：天气代码缺失视为失败，不缓存
+        weather_code = current.get('weather')
+        if weather_code is None:
+            self.skip_cache()
+            log.error(f'[{self.WIDGET_NAME}] 小米天气-缺少 weather 字段')
+            return None
+
+        # 天气代码需映射为中文；其余嵌套字段（≥2 层）提前取出
+        weather = api['xiaomi_weather']['weather_status'].get(weather_code, '未知')
+        temp_data = current.get('temperature')
+        feels_data = current.get('feelsLike')
+        humidity_data = current.get('humidity')
+        wind_data = current.get('wind')
+
+        temp = temp_data.get('value') if temp_data else None
+        temp_unit = temp_data.get('unit') if temp_data else ''
+        feels = feels_data.get('value') if feels_data else None
+        feels_unit = feels_data.get('unit') if feels_data else ''
+        humidity = humidity_data.get('value') if humidity_data else None
+        direction = wind_data.get('direction', {}) if wind_data else {}
+        speed = wind_data.get('speed', {}) if wind_data else {}
+
+        result = {
+            'city_name': cfg.city_name.value[cfg.weather_source.value],
+            'weather': weather,
+            'temperature': self._fmt(temp, temp_unit),
+            'feels_like': self._fmt(feels, feels_unit),
+            'humidity': self._fmt(humidity, '%'),
+            'wind_direction': self._convert_wind_direction(direction.get('value')),
+            'wind_speed': self._fmt(speed.get('value'), 'km/h'),
+            'weather_emoji': self._get_weather_emoji(weather),
+        }
+
+        # 空气质量：可选字段，小米接口无 category，按 AQI 指数换算等级
+        # 缺失/损坏时只省略 air_quality，不影响天气主数据缓存
+        aqi_data = raw_data.get('aqi')
+        aqi_value = aqi_data.get('aqi') if aqi_data else None
+        if aqi_value:
+            try:
+                aqi = int(aqi_value)
+                pm25 = aqi_data.get('pm25', '')
+                result['air_quality'] = f'{self._aqi_to_level(aqi)}(PM2.5 指数:{pm25})'
+            except (TypeError, ValueError):
+                log.warning(f'[{self.WIDGET_NAME}] 小米天气-空气质量指数异常: {aqi_value}')
+
+        return result
+
 
 # 2.历史上的今天
 @register(cfg.historical_switch, 'historical_switch')
@@ -641,24 +656,30 @@ class TodayInHistoryWidget(NetworkWidgetBase):
 
     def _parse_data(self, raw_data: dict) -> dict | None:
         """解析数据"""
-        if raw_data['code'] == 200:
-            history_data = raw_data['data']
-            if len(history_data) > 0:
-                history = history_data[0].split()
-                # 格式化输出信息
-                return {
-                    'historical_date': history[0],
-                    'historical_event': history[1]
-                }
-
-            else:
-                log.error(f'[{self.WIDGET_NAME}] 没有找到历史上的今天的信息')
-                self.skip_cache()
-                return None
-        else:
+        if raw_data.get('code') != 200:
             self.skip_cache()
             log.error(f'[{self.WIDGET_NAME}] 请求失败')
             return None
+
+        history_data = raw_data.get('data')
+        if not history_data or not isinstance(history_data, list):
+            log.error(f'[{self.WIDGET_NAME}] 没有找到历史上的今天的信息')
+            self.skip_cache()
+            return None
+
+        # 依赖 "日期 事件" 空格分隔格式
+        history = history_data[0].split() if isinstance(history_data[0], str) else []
+        if len(history) < 2:
+            log.error(f'[{self.WIDGET_NAME}] 历史上的今天数据格式异常')
+            self.skip_cache()
+            return None
+
+        # 格式化输出信息
+        return {
+            'historical_date': history[0],
+            'historical_event': history[1]
+        }
+
 
 # 3.每日一言
 @register(cfg.words_switch, 'words_switch')
@@ -719,22 +740,23 @@ class DailyWordsWidget(ExtNetworkWidgetBase):
             log.error('每日一言：获取失败')
             return None
 
-# 4.MC 服务器状态
-class MCServerError(Exception):
-    """MC 服务器状态获取失败，message 为用户可读的错误描述。"""
 
-@register(cfg.minecraft_server_checker_switch, 'mc_server_check_switch')
-class MCServerStatusWidget(LocalWidgetBase):
+# 4.MC 服务器信息
+class MCServerError(Exception):
+    """MC 服务器信息获取失败，message 为用户可读的错误描述。"""
+
+@register(cfg.mc_server_info_switch, 'mc_server_check_switch')
+class MCServerInfoWidget(LocalWidgetBase):
     WIDGET_NAME = 'MCServerStatus'
     NEED_CACHE = True
-    LOCAL_INTERVAL = f'{cfg.minecraft_server_data_refresh_interval.value}s'
+    LOCAL_INTERVAL = f'{cfg.mc_server_data_refresh_interval.value}s'
 
     def _build_status(self, status) -> dict:
         """从 mcstatus 的 status 对象提取公共字段。"""
-        friends = cfg.minecraft_server_friends_list.value
+        friends = cfg.mc_server_friends_list.value
 
         results = {
-            'mc_server_name': cfg.minecraft_server_name.value,
+            'mc_server_name': cfg.mc_server_name.value,
             'is_mc_server_online': True,
             'mc_server_current': status.players.online,
             'mc_server_max': status.players.max,
@@ -762,8 +784,8 @@ class MCServerStatusWidget(LocalWidgetBase):
         """
         from mcstatus import JavaServer
 
-        ip = cfg.minecraft_server_ip.value
-        port = cfg.minecraft_server_port.value
+        ip = cfg.mc_server_ip.value
+        port = cfg.mc_server_port.value
         if not ip or port in [None, '未知', '']:
             self.skip_cache()
             log.error('MC 服务器：请填写完整的服务器地址和端口')
@@ -788,8 +810,8 @@ class MCServerStatusWidget(LocalWidgetBase):
         """
         from mcstatus import JavaServer
 
-        ip = cfg.minecraft_server_ip.value
-        port = cfg.minecraft_server_port.value
+        ip = cfg.mc_server_ip.value
+        port = cfg.mc_server_port.value
         if not ip or port in [None, '未知', '']:
             self.skip_cache()
             log.error('MC 服务器：请填写完整的服务器地址和端口')
@@ -806,3 +828,77 @@ class MCServerStatusWidget(LocalWidgetBase):
             self.skip_cache()
             log.error(f'MC 服务器（异步）：获取失败：{e}')
             raise MCServerError(f'获取失败：{e}') from e
+
+
+# 5.GitHub仓库信息
+@register(cfg.github_repo_switch, 'github_repo_switch')
+class GitHubRepoInfoWidget(ExtNetworkWidgetBase):
+    WIDGET_NAME = 'GitHubRepoInfo'
+    NEED_CACHE = True
+    LOCAL_INTERVAL = f'{cfg.github_repo_data_refresh_interval.value}h'
+
+    # 动态获取API_DATA
+    @property
+    def API_DATA(self) -> dict[str, dict[str, dict[str, str]]]:
+        base_url = f'{api['github_rest_api_prefix']}{cfg.github_repo_owner.value}/{cfg.github_repo_name.value}'
+        return {
+            'github_rest_api': {
+                'common': {
+                    'url': base_url,
+                    'parse_func': '_parse_common'
+                },
+                'releases': {
+                    'url': f'{base_url}/releases/latest',
+                    'parse_func': '_parse_releases'
+                }
+            }
+        }
+
+    def _parse_common(self, raw_data: dict) -> dict[str, Any | None] | None:
+        """解析common部分的数据"""
+        if not raw_data:
+            self.skip_cache()
+            return None
+
+        return {
+            'repo_name': cfg.github_repo_name.value,
+            'repo_stars': raw_data.get('stargazers_count'),
+            'forks': raw_data.get('forks_count'),
+        }
+
+    def _parse_releases(self, raw_data: dict) -> dict | None:
+        """处理 releases 部分的数据（/releases/latest 返回单个 release 对象）"""
+        if not isinstance(raw_data, dict):
+            self.skip_cache()
+            return None
+
+        return {'last_tag': raw_data.get('tag_name') or ''}
+
+    def _request_api(self, api_name: str, api_config: APIConfig) -> dict | None:
+        try:
+            return super()._request_api(api_name, api_config)
+        except ConnectionError as e:
+            if self._is_releases_404(api_name, e):
+                # 仓库从未发布过 release：/releases/latest 返回 404，视为无最新版本
+                log.info(f'[{self.WIDGET_NAME}] 仓库暂无 release，跳过最新版本')
+                return {'last_tag': ''}
+            raise
+
+    async def _request_api_async(self, api_name: str, api_config: APIConfig) -> dict | None:
+        try:
+            return await super()._request_api_async(api_name, api_config)
+        except ConnectionError as e:
+            if self._is_releases_404(api_name, e):
+                log.info(f'[{self.WIDGET_NAME}] 仓库暂无 release，跳过最新版本')
+                return {'last_tag': ''}
+            raise
+
+    @staticmethod
+    def _is_releases_404(api_name: str, exc: ConnectionError) -> bool:
+        """判断是否为 releases 接口的 404（仓库从未发布过 release）。"""
+        cause = exc.__cause__
+        return (
+            api_name == 'releases'
+            and isinstance(cause, httpx.HTTPStatusError)
+            and cause.response.status_code == 404
+        )

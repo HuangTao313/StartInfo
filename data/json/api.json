@@ -47,6 +47,7 @@
         }
     },
     "xxapi_history_url": "https://v2.xxapi.cn/api/history",
+    "github_rest_api_prefix": "https://api.github.com/repos/",
     "update_source": {
         "github": "https://raw.githubusercontent.com/HuangTao313/StartInfo/main/version.json",
         "github_mirror_prefix": "https://gh-proxy.org/",

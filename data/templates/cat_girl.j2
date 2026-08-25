@@ -61,6 +61,14 @@
 {{ "\n" }}
 {%- endif -%}
 
+{%- if github_repo_switch -%}
+⭐️ฅ🐾 GitHub仓库：{{ repo_name }} ฅ⭐️
+⭐ Stars：{{ repo_stars }} | 🍴 Forks：{{ forks }}
+{%- if last_tag %} 📦 最新版本：{{ last_tag }}{% endif %}
+喵✨~
+{{ "\n" }}
+{%- endif -%}
+
 {%- if historical_switch -%}
 ⭐️历史上的今天⭐️
 {{ historical_date }}
