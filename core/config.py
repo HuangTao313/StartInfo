@@ -146,8 +146,8 @@ class MyConfig(QConfig):
     )
     # 更新源
     update_source = OptionsConfigItem(
-        'General', 'update_source', 'aliyun_oss',
-        OptionsValidator(['aliyun_oss', 'github', 'github_mirror']),
+        'General', 'update_source', 'github',
+        OptionsValidator(['github', 'github_mirror']),
     )
 
     # 日志等级
