@@ -11,7 +11,7 @@ from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, MessageBox, PrimaryPushSettingCard,
                             SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel)
 
-from .setting_card_base import BaseSettingPage
+from .ui_widgets import BaseSettingPage
 from .. import base_lib as lib
 from ..config import cfg
 from ..updater import check_update_logic

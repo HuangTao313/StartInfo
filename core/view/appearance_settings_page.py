@@ -7,8 +7,7 @@ from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
                             RadioButton, SettingCardGroup, HyperlinkCard)
 
-from .setting_card_base import BaseSettingPage
-from .ui_widgets import Notify, ExtSwitchSettingCard
+from .ui_widgets import BaseSettingPage, Notify, ExtSwitchSettingCard
 from .. import base_lib as lib
 from .. import ui
 from ..config import cfg
@@ -122,7 +121,8 @@ class AppearanceSettingsPage(BaseSettingPage):
     # 主题
     # ------------------------------------------------------------------
 
-    def _onThemeChanged(self, theme_type: str):
+    @staticmethod
+    def _onThemeChanged(theme_type: str):
         ui.app_manager.refresh_theme(theme_type)
 
     def _onUseWinThemeColorChanged(self):
@@ -205,5 +205,6 @@ class AppearanceSettingsPage(BaseSettingPage):
         self._update_options_setting_card(self.templateCard, templates_list)
         Notify.success(f'已刷新模板列表，发现 {len(templates_list)} 个文件', parent=self)
 
-    def _onOpenTemplateFolderClicked(self):
+    @staticmethod
+    def _onOpenTemplateFolderClicked():
         os.startfile(lib.TEMPLATE_FOLDER_PATH)

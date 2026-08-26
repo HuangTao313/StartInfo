@@ -423,7 +423,8 @@ class LocalWidgetBase:
     # 通用工具
     # ------------------------------------------------------------------
 
-    def _fmt(self, value, suffix: str = '') -> str:
+    @staticmethod
+    def _fmt(value, suffix: str = '') -> str:
         """格式化可选字段：缺失(None)时返回空串，避免渲染出 'None℃' 这类脏数据。"""
         return f'{value}{suffix}' if value is not None else ''
 
@@ -892,12 +893,12 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
                     time.sleep(self.RETRY_DELAY)
 
                 else:
-                    msg = (f'组件 [{self.WIDGET_NAME}] API [{api_name}] 获取数据失败')
+                    msg = f'组件 [{self.WIDGET_NAME}] API [{api_name}] 获取数据失败'
                     log.error(f'{msg}: {exc}')
                     raise ConnectionError(f'{msg}: {exc}') from exc
 
             except Exception as exc:
-                msg = (f'组件 [{self.WIDGET_NAME}] API [{api_name}] 发生未知错误')
+                msg = f'组件 [{self.WIDGET_NAME}] API [{api_name}] 发生未知错误'
                 log.error(f'{msg}: {exc}')
                 raise RuntimeError(f'{msg}: {exc}') from exc
 

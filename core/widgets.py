@@ -48,7 +48,8 @@ class DateTimeWidget(LocalWidgetBase):
     NEED_CACHE = False
     lunar = Lunar.fromDate(global_now)
 
-    def _get_time_emoji(self,current_time) -> str:
+    @staticmethod
+    def _get_time_emoji(current_time) -> str:
         """
         获取当前时间emoji
         Args:
@@ -152,7 +153,7 @@ class DateTimeWidget(LocalWidgetBase):
             log.error(f'[{self.WIDGET_NAME}] 获取其他信息失败:{str(e)}')
             return None
 
-    def _get_solar_term(self) -> dict[str, str | Any] | dict[str, str]:
+    def _get_solar_term(self) -> dict | None:
         """获取24节气信息"""
         try:
             solar_term = self.lunar.getJieQi()
@@ -165,7 +166,7 @@ class DateTimeWidget(LocalWidgetBase):
             log.error(f'[{self.WIDGET_NAME}] 获取24节气失败:{e}')
             return None
 
-    def _get_holiday(self) -> dict[str, str | Any] | dict[str, str]:
+    def _get_holiday(self) -> dict | None:
         """获取节假日信息"""
         try:
             solar = Solar.fromDate(global_now)
@@ -486,7 +487,8 @@ class WeatherWidget(ExtNetworkWidgetBase):
             }
         }
 
-    def _get_weather_emoji(self,weather_type) -> str:
+    @staticmethod
+    def _get_weather_emoji(weather_type) -> str:
         """获取天气emoji"""
         weather_type = str(weather_type).strip()
 
@@ -516,7 +518,8 @@ class WeatherWidget(ExtNetworkWidgetBase):
         # 3. 完全未知类型：返回默认天气（阴天）
         return '☁️'
 
-    def _convert_wind_direction(self, value) -> str:
+    @staticmethod
+    def _convert_wind_direction(value) -> str:
         """将风向角度转为中文风向（如 141.0 → 东南风），与和风天气的风向格式统一"""
         try:
             angle = float(value) % 360
@@ -529,7 +532,8 @@ class WeatherWidget(ExtNetworkWidgetBase):
         index = int((angle + 22.5) // 45) % 8
         return directions[index]
 
-    def _aqi_to_level(self, aqi: int) -> str:
+    @staticmethod
+    def _aqi_to_level(aqi: int) -> str:
         """按 AQI 指数划分等级(与和风天气的 category 一致)"""
         if aqi <= 50:
             return '优'

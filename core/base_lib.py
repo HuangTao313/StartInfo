@@ -79,7 +79,7 @@ SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{TITLE}.lnk'  # 开机启动项路径
 _is_internet_cache: tuple[bool, float] | None = None
 _INTERNET_CACHE_TTL: float = 60.0  # 缓存有效秒数
 
-def is_internet(timeout: float = 3.0) -> bool:
+def is_internet(timeout: float = 3.0) -> bool | float:
     """
     检测网络连通性（使用阿里云公共 DNS，自动缓存结果）
 

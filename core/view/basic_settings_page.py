@@ -8,10 +8,9 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup)
 
-from .setting_card_base import BaseSettingPage
 from .ui_widgets import (BirthdayEditBox, CalendarSettingCard, CitySearchBox,
                          ExpandGroupCard, ListEditingBox, Notify, TextSettingCard,
-                         ExtSwitchSettingCard)
+                         ExtSwitchSettingCard, BaseSettingPage)
 from .. import base_lib as lib
 from ..config import cfg, qconfig
 from ..startup import create_shortcut, is_shortcut_exist, remove_shortcut
@@ -540,7 +539,8 @@ class BasicSettingsPage(BaseSettingPage):
             self.repoDataRefreshTimeCard
         )
 
-    def _onOpenLogFolderClicked(self):
+    @staticmethod
+    def _onOpenLogFolderClicked():
         os.startfile(lib.LOG_FOLDER_PATH)
 
     def _onDeleteDownloadTempClicked(self) -> bool | None:
@@ -643,8 +643,8 @@ class BasicSettingsPage(BaseSettingPage):
     @asyncSlot()
     async def _onRefreshMCServer(self):
         self.mcServerDataRefreshCard.setEnabled(False)
+        from core.widgets import MCServerError, MCServerInfoWidget
         try:
-            from core.widgets import MCServerError, MCServerInfoWidget
             mc = MCServerInfoWidget()
             data = await mc.get_data_async(force_refresh=True)
 

@@ -198,7 +198,7 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定'], timeout: i
 
     # 显示对话框并返回结果
     result = dialog.exec()
-    return result
+    return bool(result)
 
 # 文件选择对话框
 def file_dialog(title: str, directory: str = '', filter: str = 'All Files (*)') -> Path | None:
@@ -292,4 +292,4 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
 
     # 显示对话框并返回结果
     result = dialog_instance.exec()
-    return result
+    return bool(result)
