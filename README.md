@@ -2,7 +2,7 @@
 
 <img src="docs/images/startinfo.png" alt="StartInfo Logo" width="18%">
 
-<h1>StartInfo</h1>
+<h1>开机速览 / StartInfo</h1>
 
 <p>一个基于 PySide6 + QFluentWidgets 开发的桌面信息展示工具。</p>
 
@@ -13,6 +13,19 @@
 
 </div>
 
+<p align="center">
+简体中文 | <a href="docs/README_en.md">English</a>
+</p>
+
+> [!WARNING]
+> **低频维护公告**
+>
+> 由于学业安排变化，作者后续可投入项目维护的时间有限，因此本项目将在未来进入低频维护状态。
+>
+> 项目仍会继续维护，但新功能开发和版本更新可能主要集中于寒暑假等较长假期。
+>
+> 如发现 Bug 或有改进建议，欢迎提交 Issue；如果您有能力参与开发，也欢迎提交 Pull Request。
+
 # 功能
 
 * 天气与空气质量
@@ -22,12 +35,12 @@
 * Minecraft 服务器信息
 * 更多功能……
 
-## 截图
+# 截图
 
 <table>
   <tr>
-    <td style="text-align: center;">主界面</td>
-    <td style="text-align: center;">设置界面</td>
+    <td style="text-align: center;">主界面（深色模式）</td>
+    <td style="text-align: center;">设置界面（深色模式）</td>
   </tr>
   <tr>
     <td><img src="docs/images/main-window.png" width="100%" /></td>
@@ -35,12 +48,12 @@
   </tr>
 </table>
 
-## 下载
+# 下载
 
 目前提供 Windows 安装版和便携版。
 
 
-### Windows
+## Windows
 
 **系统要求：**
 
@@ -61,7 +74,7 @@
 > 
 > macOS 已完成相关功能适配，但目前暂未提供 macOS 构建版本。
 
-## 从源码运行
+# 从源码运行
 
 首先克隆项目：
 
@@ -76,7 +89,7 @@ cd StartInfo
 uv sync
 ```
 
-### 运行
+## 运行
 
 StartInfo 的源码入口为 `main.py` 和 `settings.py`，可以根据需要直接运行。
 
@@ -97,7 +110,7 @@ uv run settings.py
 `core` 中的文件由 `main.py`、`settings.py` 等入口间接调用，**无需也不建议直接运行 `core` 目录中的文件**。
 
 
-## 启动参数
+# 启动参数
 
 StartInfo 支持以下启动参数，可用于调试、故障排查以及特定场景下的功能调用。
 
@@ -119,7 +132,7 @@ StartInfo.exe 参数
 
 ---
 
-### `--settings`
+## `--settings`
 
 跳过主程序流程，直接启动设置页面。
 
@@ -133,7 +146,7 @@ StartInfo.exe --settings
 
 ---
 
-### `--debug`
+## `--debug`
 
 临时将本次启动的日志等级强制设置为 `DEBUG`，用于调试和问题排查。
 
@@ -157,7 +170,7 @@ StartInfo.exe --settings --debug
 
 ---
 
-### `--startup`
+## `--startup`
 
 用于标识 StartInfo 是否由**开机自启动项**启动。
 
@@ -175,7 +188,7 @@ StartInfo.exe --startup
 
 ---
 
-### 参数组合
+## 参数组合
 
 StartInfo 支持同时传入多个启动参数。
 
@@ -229,7 +242,7 @@ StartInfo.exe --settings D:\example.j2
 
 ---
 
-## 日志与调试
+# 日志与调试
 
 StartInfo 使用 Loguru 记录运行日志。
 
@@ -238,7 +251,8 @@ StartInfo 使用 Loguru 记录运行日志。
 日志文件默认保留 **3 天**，过期日志会自动清理。
 
 如果遇到程序运行异常，可以使用 `--debug` 参数启动程序，以记录更详细的 DEBUG 级别日志，并在反馈问题或提交 Issue 时附上相关日志。
-## 更新机制
+
+# 更新机制
 
 StartInfo 支持多个更新源：
 
@@ -253,11 +267,11 @@ StartInfo 支持多个更新源：
 
 这是为了降低更新接口的请求压力，并避免更新接口被频繁请求。
 
-## 和风天气配置
+# 和风天气配置
 
 如果使用和风天气作为天气数据源，需要在设置中配置自己的 API Host 和 API Key。
 
-### 获取 API Host 和 API Key
+## 获取 API Host 和 API Key
 
 1. 前往 [和风天气开发平台](https://dev.qweather.com/) 注册并登录账号。
 2. 创建项目并获取 API Key。
@@ -265,7 +279,7 @@ StartInfo 支持多个更新源：
 
 StartInfo 需要同时使用 API Host 和 API Key 才能正常请求和风天气 API。
 
-### 在 StartInfo 中配置
+## 在 StartInfo 中配置
 
 打开 StartInfo 的设置页面，在天气相关设置中填写：
 
@@ -288,20 +302,26 @@ API Key 请直接填写控制台提供的 Key，无需添加引号或其他内�
 
 如果暂时不使用和风天气，可以切换至小米天气数据源。
 
-## 安全说明
+# 安全说明
 
 项目历史提交中曾出现过部分 API Key，目前这些 Key 均已全部重置并失效。
 
 使用相关 API 时，请配置自己的 API Key。
 
-## 文档
+# AI 辅助开发
+
+本项目开发过程中使用了 AI 辅助编程（Vibe Coding），包括代码编写、重构、调试、问题分析等。
+
+项目的整体设计、功能规划、代码审查与最终维护由作者负责。
+
+# 文档
 
 - [模板自定义文档](docs/template-customization.md)
 - [组件开发文档](docs/widget-development.md)
 
 > 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets.py](core/widgets.py)。
 
-## 依赖
+# 依赖
 
 StartInfo 主要使用以下项目：
 
@@ -310,13 +330,7 @@ StartInfo 主要使用以下项目：
 - [PySide6-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6)
 - [Loguru](https://github.com/Delgan/loguru)
 
-## AI 辅助开发
-
-本项目开发过程中使用了 AI 辅助编程（Vibe Coding），包括代码编写、重构、调试、问题分析等。
-
-项目的整体设计、功能规划、代码审查与最终维护由作者负责。
-
-## 致谢
+# 致谢
 
 感谢以下项目和资源：
 
@@ -326,7 +340,7 @@ StartInfo 主要使用以下项目：
 
 - [XiaomiWeather API](https://github.com/huanghui0906/API/blob/master/XiaomiWeather.md) — 小米天气接口资料参考
 
-### 图标资源
+## 图标资源
 
 - [AppIcon Forge](https://github.com/zhangyu1818/appicon-forge) — 用于生成应用程序图标
 - [Material Design Icons](https://github.com/google/material-design-icons) — 主程序图标资源来源
@@ -345,7 +359,7 @@ StartInfo 主要使用以下项目：
   </a>
 </p>
 
-## 版权
+# 版权
 
 本项目采用 GNU GPLv3.0 许可证开源。
 

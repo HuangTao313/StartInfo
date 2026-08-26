@@ -271,7 +271,7 @@ def restart_program(args: str = ""):
         cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"{extra_args}'
 
         # 破坏性操作：强制杀掉当前进程，记录后以后台静默方式执行 CMD 命令
-        log.warning(f'主程序即将强制重启 (PID={current_pid}, 参数="{args or "无"}")')
+        log.info(f'主程序即将重启 (PID={current_pid}, 参数="{args or "无"}")')
         subprocess.Popen(cmd, shell=True)
 
         # 4. 当前程序立即退出
