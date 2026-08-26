@@ -147,24 +147,16 @@ class AppearanceSettingsPage(BaseSettingPage):
     def _onImportTemplateClicked(self):
         template_file_path = ui.file_dialog('选择模版文件', '', 'jinja2模板文件 (*.j2)')
         if template_file_path is not None:
-            is_success, text = lib.import_template(template_file_path)
+            is_success, result_message = lib.import_template(template_file_path)
             if is_success:
                 Notify.success(title='模板导入成功',
                                content=f'已成功导入模板：{template_file_path.name}',
                                parent=self)
                 self._onRefreshTemplateClicked()
 
-    # @staticmethod
-    # def _update_combobox_options(card: ComboBoxSettingCard, new_texts: list):
-    #     old_options = cfg.template_file.value
-    #     new_options = card.configItem.validator.get_options()
-    #     card.comboBox.clear()
-    #     card.optionToText.clear()
-    #     card.optionToText = {o: t for o, t in zip(new_options, new_texts)}
-    #     for text, option in zip(new_texts, new_options):
-    #         card.comboBox.addItem(text, userData=option)
-    #     if old_options in card.optionToText:
-    #         card.comboBox.setCurrentText(card.optionToText[old_options])
+            else:
+                Notify.error(result_message, parent=self)
+
 
     @staticmethod
     def _update_options_setting_card(card: OptionsSettingCard, new_texts: list):
