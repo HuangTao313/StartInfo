@@ -147,13 +147,28 @@ var color = $.NSColor.controlAccentColor.colorUsingColorSpace(
     except Exception:
         return '#0078d4'  # 读取失败时的保底蓝色
 
-def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
+def _setup_auto_close(dialog_instance: Dialog, seconds: int | bool) -> None:
+    """
+    为对话框设置自动关闭定时器；seconds 为 False 或 <=0 时禁用
+
+    :param dialog_instance: 目标对话框
+    :param seconds: 倒计时秒数 (int) 或 禁用状态 (False)
+    """
+    if seconds is not False and seconds > 0:
+        # 定时器必须挂到对话框下方：无父对象且无持有时会被 GC，导致定时器永不触发
+        auto_close_timer = QTimer(dialog_instance)
+        auto_close_timer.setSingleShot(True)
+        auto_close_timer.timeout.connect(dialog_instance.accept)
+        auto_close_timer.start(seconds * 1000)
+
+def dialog(title: str, content: str, buttons: List[str] = ['确定'], timeout: int | bool = False) -> bool:
     """
     安全的消息框函数 - 使用单例 QApplication
 
     :param title: 弹窗标题
     :param content: 弹窗内容
     :param buttons: 按钮列表 (默认 ['确定'])
+    :param timeout: 自动关闭秒数 (int) 或 禁用状态 (False, 默认)
     :return: True if confirmed, False otherwise
     """
     app_manager.get_app()
@@ -167,12 +182,17 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定']) -> bool:
         dialog.yesButton.setText(buttons[0])
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
+
     elif long == 2:
         # 双按钮
         dialog.yesButton.setText(buttons[0])
         dialog.cancelButton.setText(buttons[1])
+
     else:
         raise ValueError('按钮列表长度不能超过 2')
+
+    # 自动关闭（仅在 timeout 为正数时生效）
+    _setup_auto_close(dialog, timeout)
 
     # 显示对话框并返回结果
     result = dialog.exec()
@@ -251,7 +271,8 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     dialog_instance.contentLabel.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
     # 3. 动态时间更新逻辑 (保持开启)
-    timer = QTimer()
+    # 定时器挂到对话框下方，避免局部变量被 GC 后时钟停止刷新
+    timer = QTimer(dialog_instance)
 
     def update_time():
         new_time = time.strftime('%H:%M:%S', time.localtime())
@@ -263,24 +284,9 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
     timer.start(1000)
     dialog_instance.finished.connect(timer.stop)
 
-    # 4. 自动关闭功能 - 核心逻辑修改
+    # 4. 自动关闭功能
     # 只有当 auto_close_seconds 不是 False 且 大于 0 时才启动定时器
-    if auto_close_seconds is not False and auto_close_seconds > 0:
-        auto_close_timer = QTimer()
-        auto_close_timer.setSingleShot(True)
-
-        def auto_close():
-            """自动关闭对话框"""
-            dialog_instance.accept()
-
-        auto_close_timer.timeout.connect(auto_close)
-        auto_close_timer.start(auto_close_seconds * 1000)
-
-        # 确保手动关闭时也销毁这个定时器
-        dialog_instance.finished.connect(auto_close_timer.stop)
-    else:
-        # 如果是 False，这里什么都不做，窗口将一直保持开启直到手动点击
-        pass
+    _setup_auto_close(dialog_instance, auto_close_seconds)
 
     # 显示对话框并返回结果
     result = dialog_instance.exec()

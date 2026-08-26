@@ -239,9 +239,9 @@ if __name__ == '__main__':
     if lib.system == 'Windows':
         checker = lib.WinSingleInstance(name='Local\\StartInfo')
         if checker.is_running:
-            # 显示提示
-            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！')
-            log.warning('主程序-检测到多开，请勿重复启动')
+            # 显示提示（5秒后自动关闭）
+            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！', timeout=5)
+            log.warning('检测到多开，请勿重复启动')
             sys.exit()
 
     # 当config.json不存在时，视为第一次启动，询问用户是否将程序添加到开机启动项
