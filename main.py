@@ -65,14 +65,6 @@ def load_template(data: dict[str, str]) -> str | None:
 
     return f'模板加载失败：找不到可用模板'
 
-def init():
-    """程序初始化"""
-    # 检查开机启动项是否存在
-    if not startup.is_shortcut_exist():
-        if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
-            startup.create_shortcut()
-            log.info('用户已添加开机启动项')
-
 def handle_j2_template(j2_file_path: Path):
     """处理 .j2 模板文件的逻辑"""
     # 提示用户选择操作
@@ -255,10 +247,6 @@ if __name__ == '__main__':
             ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！', timeout=5)
             log.warning('检测到多开，请勿重复启动')
             sys.exit()
-
-    # 当config.json不存在时，视为第一次启动，询问用户是否将程序添加到开机启动项
-    if not lib.CONFIG_FILE_PATH.exists():
-        init()
 
     # 检测是否带有启动参数(args列表的长度>1)
     elif len(lib.global_argv) > 1:
