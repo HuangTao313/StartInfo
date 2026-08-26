@@ -101,12 +101,23 @@ uv run settings.py
 
 StartInfo 支持以下启动参数，可用于调试、故障排查以及特定场景下的功能调用。
 
-以下示例分为两种运行方式：
+启动参数的使用方式如下：
 
-* **源码运行**：使用 `uv run main.py`，适用于开发和调试。
-* **已编译版本**：使用 `StartInfo.exe`，适用于普通用户。
+**源码运行：**
 
-除特别说明外，两种运行方式支持的启动参数相同。
+```bash
+uv run main.py 参数
+```
+
+**已编译版本：**
+
+```powershell
+StartInfo.exe 参数
+```
+
+以下参数在两种运行方式下均有效。
+
+---
 
 ### `--settings`
 
@@ -114,17 +125,13 @@ StartInfo 支持以下启动参数，可用于调试、故障排查以及特定�
 
 当主程序无法正常启动，但设置页面仍可以正常运行时，可以使用此参数进入设置。
 
-**源码运行：**
-
-```bash
-uv run main.py --settings
-```
-
-**已编译版本：**
+示例：
 
 ```powershell
 StartInfo.exe --settings
 ```
+
+---
 
 ### `--debug`
 
@@ -132,31 +139,23 @@ StartInfo.exe --settings
 
 该参数**不会修改设置中保存的日志等级**。不使用 `--debug` 启动时，程序仍会使用设置页面中保存的日志等级。
 
-**源码运行：**
-
-```bash
-uv run main.py --debug
-```
-
-**已编译版本：**
+示例：
 
 ```powershell
 StartInfo.exe --debug
 ```
 
-本次启动会使用 `DEBUG` 日志等级；下次正常启动时，仍然使用设置中原本配置的日志等级。
+本次启动会使用 `DEBUG` 日志等级；下次正常启动时，仍然使用设置页面中原本配置的日志等级。
 
-`--debug` 不属于启动入口参数，可以与 `--settings` 同时使用：
+`--debug` 不属于启动入口参数，可以与其他参数同时使用。
 
-```bash
-uv run main.py --settings --debug
-```
-
-已编译版本：
+例如：
 
 ```powershell
 StartInfo.exe --settings --debug
 ```
+
+---
 
 ### `--startup`
 
@@ -164,9 +163,9 @@ StartInfo.exe --settings --debug
 
 该参数主要由 StartInfo 的开机启动功能自动添加，通常不需要用户手动指定。
 
-启用开机自启动后，StartInfo 创建的启动项会自动附加 `--startup` 参数。程序启动时可以根据该参数判断当前启动是否属于开机自启动，并由此配合开机次数组件统计开机次数。
+程序启动时，开机次数组件会根据是否存在 `--startup` 参数判断当前启动是否属于开机自启动，并进行对应统计。
 
-已编译版本的启动项实际使用形式类似：
+开机启动项实际使用形式类似：
 
 ```powershell
 StartInfo.exe --startup
@@ -174,25 +173,61 @@ StartInfo.exe --startup
 
 > `--startup` 属于内部用途参数，一般情况下无需手动添加或修改。
 
+---
 
+### 参数组合
 
-### 参数优先级
+StartInfo 支持同时传入多个启动参数。
 
-`--debug` 不属于启动入口，可以与 `--settings` 同时使用。
+当前支持的参数包括：
+
+```
+--settings
+--debug
+--startup
+```
 
 例如：
 
-```bash
-uv run main.py --settings --debug
+```powershell
+StartInfo.exe --settings --debug --startup
 ```
+
+参数处理逻辑如下：
+
+- `--settings` 属于启动入口参数，会优先进入设置页面。
+- `--debug` 只影响本次启动的日志等级，可以与其他参数同时使用。
+- `--startup` 由开机次数组件独立处理，可以与其他参数同时存在。
+
+普通用户通常无需手动组合多个参数。
+
+---
 
 ## 模板文件
 
 StartInfo 支持接收 Jinja2 模板文件路径作为启动参数。
 
-可以将模板文件直接拖拽到 StartInfo 的程序图标上。StartInfo 启动后会识别传入的模板文件，并询问是否将该模板添加到模板目录。
+可以将模板文件直接拖拽到 StartInfo 的程序图标上。
+
+例如：
+
+```powershell
+StartInfo.exe D:\example.j2
+```
+
+程序启动后会识别传入的模板文件，并询问是否导入和启用该模板。
 
 该功能主要用于方便用户快速添加自定义模板。
+
+如果同时传入模板路径和其他启动参数：
+
+```powershell
+StartInfo.exe --settings D:\example.j2
+```
+
+则 `--settings` 优先处理，程序会直接进入设置页面，不会执行模板导入流程。
+
+---
 
 ## 日志与调试
 
@@ -203,7 +238,6 @@ StartInfo 使用 Loguru 记录运行日志。
 日志文件默认保留 **3 天**，过期日志会自动清理。
 
 如果遇到程序运行异常，可以使用 `--debug` 参数启动程序，以记录更详细的 DEBUG 级别日志，并在反馈问题或提交 Issue 时附上相关日志。
-
 ## 更新机制
 
 StartInfo 支持多个更新源：

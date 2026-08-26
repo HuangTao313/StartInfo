@@ -34,7 +34,7 @@ class AppManager:
 
     def init_app(self):
         if self._app is None:
-            self._app = QApplication(sys.argv)
+            self._app = QApplication(lib.global_argv)
             log.debug('QApplication初始化')
             # 1.创建 qasync 的事件循环
             self._loop = QEventLoop(self._app)

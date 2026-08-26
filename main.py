@@ -260,7 +260,7 @@ if __name__ == '__main__':
         # 如果是从jinja2模板文件启动
         else:
             j2_file_path = next(
-                (Path(arg) for arg in sys.argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
+                (Path(arg) for arg in lib.global_argv[1:] if arg.endswith('.j2') and Path(arg).is_file()),
                 None
             )
             if j2_file_path:
