@@ -84,13 +84,11 @@ class AppManager:
         setThemeColor(color_value, save=True)
 
     def get_app(self) -> QApplication:
-            if self._app is None:
-                self.init_app()
-            return self._app
+        # init_app 自带惰性守卫并总是返回 _app，直接委托即可
+        return self.init_app()
 
     def get_loop(self) -> QEventLoop:
-        if self._app is None:
-            self.init_app()
+        self.get_app()
         return self._loop
 
 # 全局 AppManager 实例

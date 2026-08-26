@@ -61,9 +61,9 @@ class SettingsWindow(FluentWindow):
 
 
 def start_settings():
-    app = ui.app_manager.get_app()
-    w = SettingsWindow()
-    w.show()
+    ui.app_manager.init_app()
+    window = SettingsWindow()
+    window.show()
     loop = ui.app_manager.get_loop()
     with loop:
         loop.run_forever()
