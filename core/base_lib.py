@@ -39,6 +39,11 @@ logger.add(
     delay=True)
 log = logger
 
+# 配置文件在导入 config 模块时已加载（qconfig.load 早于本文件 sink 初始化），
+# 故在此补记，保证启动阶段的配置文件加载行为也在日志中可追踪
+log.debug(f'加载配置文件: {CONFIG_FILE_PATH}')
+log.debug('配置文件加载完成')
+
 # 读取单个json文件
 def read_json(file_path: Union[str, Path]) -> dict:
     path = Path(file_path)
@@ -128,6 +133,7 @@ class WinSingleInstance:
         self.handle = self._create_mutex(None, False, name)
         # 如果 GetLastError 返回 183 (ERROR_ALREADY_EXISTS)，说明互斥体已存在
         self.is_first = not (self.handle is None or self._get_error() == 183)
+        log.debug(f'多开检测: {"首次实例" if self.is_first else "已有实例在运行"} (互斥体: {name})')
 
         # 自动清理 - 无论如何都注册清理，确保句柄被正确释放
         atexit.register(self._close_handle, self.handle)
@@ -263,7 +269,8 @@ def restart_program(args: str = ""):
         # start 重新拉起程序
         cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"{extra_args}'
 
-        # 3. 以后台静默方式执行 CMD 命令
+        # 破坏性操作：强制杀掉当前进程，记录后以后台静默方式执行 CMD 命令
+        log.warning(f'主程序即将强制重启 (PID={current_pid}, 参数="{args or "无"}")')
         subprocess.Popen(cmd, shell=True)
 
         # 4. 当前程序立即退出

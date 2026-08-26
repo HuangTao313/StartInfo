@@ -35,17 +35,21 @@ class AppManager:
     def init_app(self):
         if self._app is None:
             self._app = QApplication(sys.argv)
+            log.debug('QApplication初始化')
             # 1.创建 qasync 的事件循环
             self._loop = QEventLoop(self._app)
             # 2. 将其设置为全局的 asyncio 事件循环
             asyncio.set_event_loop(self._loop)
+            log.debug('将QT事件循环设置为全局 asyncio 事件循环')
 
             # 设置全局语言为中文
             self.translator = QTranslator()
             self.translator.load(TRANSLATION_FILE_PATH)
             self._app.installTranslator(self.translator)
+            log.debug('设置语言为中文')
 
             self._apply_theme()
+            log.debug('初始化主题')
         return self._app
 
     def _apply_theme(self):

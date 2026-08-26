@@ -55,6 +55,7 @@ def get_version_file() -> bool:
         return False
 
     try:
+        log.debug(f'更新器-获取远程版本文件: {url}')
         with httpx.Client(timeout=10.0, follow_redirects=True) as client:
             response = client.get(url)
             response.raise_for_status()
@@ -116,6 +117,8 @@ async def download_file_async(url: str, filename: str, progress_callback=None) -
     """
     lib.DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
     output_path = lib.DOWNLOAD_PATH / filename
+
+    log.debug(f'更新器-下载开始: {filename}')
 
     # 请求超时设置
     timeout = httpx.Timeout(
@@ -220,6 +223,7 @@ def check_update() -> tuple[bool, dict]:
         return False, {}
 
     # 版本比较
+    log.debug(f'更新器-检查更新: 当前版本={current_ver}, 远程版本={remote_ver}')
     if remote_ts <= current_ts:
         log.info(f"更新器-已是最新版本(当前: {current_ver}, 远程: {remote_ver})")
         return False, {}
@@ -280,6 +284,7 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
         错误信息非 None 表示检查失败，调用方应提示出错而不是"已是最新版本"
     :param force_refresh: True 时跳过缓存，强制从当前更新源重新获取版本文件
     """
+    log.debug(f'更新器-开始检查更新 (force_refresh={force_refresh})')
     try:
         # 1. 版本文件维护逻辑
         need_fetch = force_refresh or not VERSION_PATH.exists()

@@ -23,6 +23,7 @@ def load_template(data: dict[str, str]) -> str | None:
     if data.get('birthday_star'):
         # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
         templates_to_try = ['birthday_wishes.j2', lib.get_template_path().name, 'default.j2']
+        log.info('使用生日模板')
 
     else:
         # 无生日信息：尝试当前激活的模板，然后是默认模板
@@ -33,7 +34,7 @@ def load_template(data: dict[str, str]) -> str | None:
             template = env.get_template(template_name)
             result = template.render(**data)
 
-            log.info(f'主程序-已加载模版：{template_name}')
+            log.info(f'已加载模版：{template_name}')
             return result
 
         except Exception as e:
@@ -53,12 +54,12 @@ def load_template(data: dict[str, str]) -> str | None:
 
             # 如果是生日模板加载失败，记录日志并继续尝试下一个模板
             elif template_name == 'birthday_wishes.j2':
-                log.warning(f'主程序-生日模板加载失败：{str(e)}，尝试使用其他模板')
+                log.warning(f'生日模板加载失败：{str(e)}，尝试使用其他模板')
 
             # 如果是默认模板也加载失败，弹窗报错并记录日志
             elif template_name == 'default.j2':
                 error_text = f'默认模板加载失败：{str(e)}'
-                log.error(f'主程序-{error_text}')
+                log.error(error_text)
                 ui.error_dialog(error_text)
                 sys.exit()
 
@@ -70,7 +71,7 @@ def init():
     if not startup.is_shortcut_exist():
         if ui.dialog(lib.TITLE, '检测到第一次启动，是否将程序添加到开机启动项(・ω・)', ['是', '否']):
             startup.create_shortcut()
-            log.info('主程序-用户已添加开机启动项')
+            log.info('用户已添加开机启动项')
 
 def handle_j2_template(j2_file_path: Path):
     """处理 .j2 模板文件的逻辑"""
@@ -80,11 +81,12 @@ def handle_j2_template(j2_file_path: Path):
         f'检测到jinja2模板文件：{j2_file_path.name}，请选择对该模板文件的操作：',
         ['导入模板', '编辑模板']
     )
+    log.debug(f'检测到jinja2模板文件：{j2_file_path.name}')
 
     # 编辑模板
     if not user_choice:
-        log.info('(主程序-启动模式：编辑模板文件)')
-        # 尝试使用VsCode打开模板文件
+        log.info('(启动模式：编辑模板文件)')
+        # 尝试使用VSCode打开模板文件
         try:
             import shutil
             # 1. 查找 VS Code 的真实路径
@@ -93,18 +95,18 @@ def handle_j2_template(j2_file_path: Path):
             if vsc_path:
                 # 2. 使用找到的绝对路径执行（关键！）
                 subprocess.run([vsc_path, str(j2_file_path)], check=True)
-                log.info(f'主程序-已使用 VSCode 打开模板文件：{j2_file_path}')
+                log.info(f'已使用 VSCode 打开模板文件：{j2_file_path}')
             else:
                 raise FileNotFoundError('VS Code 未安装或未添加到系统 PATH')
 
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            log.error(f'主程序-无法使用 VSCode 打开模板文件: {e}')
+            log.error(f'无法使用 VSCode 打开模板文件: {e}')
             # 回退到记事本（可选）
             try:
                 subprocess.run(['notepad.exe', str(j2_file_path)], check=True)
-                log.info(f'主程序-已使用记事本打开模板文件：{j2_file_path}')
+                log.info(f'已使用记事本打开模板文件：{j2_file_path}')
             except Exception as fallback_e:
-                log.error(f'主程序-回退到记事'
+                log.error(f'回退到记事'
                           f'本也失败了: {fallback_e}')
                 ui.error_dialog(f'无法打开模板文件，请手动编辑：{j2_file_path}')
 
@@ -114,10 +116,11 @@ def handle_j2_template(j2_file_path: Path):
     # 导入模板
     is_success, result_message = lib.import_template(j2_file_path)
     if not is_success:
-        log.error(f'主程序-模板导入失败：{result_message}')
+        log.error(f'模板导入失败：{result_message}')
         ui.error_dialog(result_message)
         return
 
+    log.info(f'已导入模板{j2_file_path.name}')
     # 询问是否立即激活模板
     activate_choice = ui.dialog(
         lib.TITLE,
@@ -134,13 +137,14 @@ def handle_j2_template(j2_file_path: Path):
     is_activate_success, activate_result = lib.activate_template(j2_file_path)
     # 如果启用失败
     if not is_activate_success:
-        log.error(f'主程序-启用模板失败：{activate_result}')
+        log.error(f'启用模板失败：{activate_result}')
         ui.error_dialog(activate_result)
 
 async def main() -> None:
     """程序主函数"""
     # 创建所有已启用的组件实例（组件在 core/widgets.py 中用 @register 注册）
     active = [info.cls() for info in registered_widgets if info.switch.value]
+    log.debug(f'启用组件: {[info.cls.WIDGET_NAME for info in registered_widgets if info.switch.value]}')
 
     results = {}
     # ── 联网组件并发，本地组件同步 ──
@@ -149,6 +153,7 @@ async def main() -> None:
     async_tasks, async_widgets, sync_widgets = [], [], []
     for widget in active:
         if isinstance(widget, (NetworkWidgetBase, ExtNetworkWidgetBase, MCServerInfoWidget)):
+            log.debug(f'获取组件数据: {widget.WIDGET_NAME}')
             async_widgets.append(widget)
             async_tasks.append(widget.get_data_async())
 
@@ -157,6 +162,7 @@ async def main() -> None:
 
     # ── 并发获取 ──
     if async_tasks:
+        log.debug('启动并发获取流程')
         async_values = await asyncio.gather(*async_tasks, return_exceptions=True)
         for comp, val in zip(async_widgets, async_values):
             if isinstance(val, Exception):
@@ -165,7 +171,10 @@ async def main() -> None:
                 results[comp.WIDGET_NAME] = val
 
     # ── 同步获取 ──
+    if sync_widgets:
+        log.debug('启动同步获取流程')
     for comp in sync_widgets:
+        log.debug(f'获取组件数据: {comp.WIDGET_NAME}')
         try:
             data = comp.get_data()
             if data is not None:
@@ -175,6 +184,7 @@ async def main() -> None:
             log.error(f'{comp.WIDGET_NAME} 获取失败: {e}')
 
     # ── 聚合为 Jinja2 字典 ──
+    log.debug('合并数据')
     jinja2_data = {}
     for data in results.values():
         if isinstance(data, dict):
@@ -189,6 +199,7 @@ async def main() -> None:
         jinja2_data.pop('life_days', None)
 
     # ── 注入开关状态 ──
+    log.debug('注入开关状态')
     switch_keys = {}
     for info in registered_widgets:
         if info.template_key:
@@ -208,7 +219,7 @@ async def main() -> None:
 
     # ── 渲染模板 → 弹窗 ──
     text = load_template(jinja2_data)
-    log.info('主程序-数据加载完成')
+    log.info('数据加载完成')
 
     auto_close_mode = cfg.auto_close_time.value if cfg.auto_close_switch.value else False
     box = ui.main_window(text, auto_close_mode)
@@ -221,15 +232,16 @@ async def main() -> None:
                 break
 
     if box:
-        log.info('主程序-用户点击确定，程序正常结束')
+        log.info('用户点击确定，程序正常结束')
         sys.exit()
     else:
-        log.info('主程序-用户打开设置')
+        log.info('用户打开设置')
         from settings import start_settings
         start_settings()
 
 if __name__ == '__main__':
-    # 初始化
+    log.debug('StartInfo 开始启动')
+    # QApplication初始化
     ui.app_manager.init_app()
     # 使用共享事件循环
     loop = asyncio.get_event_loop()
@@ -253,6 +265,7 @@ if __name__ == '__main__':
         # 如果是以--settings参数启动
         if '--settings' in lib.global_argv:
             # 启动设置
+            log.debug('通过--settings参数启动')
             from settings import start_settings
             start_settings()
 

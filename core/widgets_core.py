@@ -30,12 +30,55 @@ import sqlite3
 import time
 from dataclasses import dataclass
 from typing import Any, TypedDict
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
 from .base_lib import log, is_internet
 from .paths import DB_FOLDER_PATH
 from .config import ConfigItem
+
+
+# =============================================================================
+# 日志脱敏
+# =============================================================================
+
+# 出现在 URL 查询参数或请求参数中的敏感字段名（小写），记录日志时一律掩码
+_SENSITIVE_PARAM_KEYS = frozenset({
+    'key', 'api_key', 'apikey', 'appkey', 'token', 'access_token',
+    'secret', 'client_secret', 'sign', 'password', 'authorization', 'auth',
+})
+
+
+def _mask_url(url: str) -> str:
+    """掩码 URL 查询参数中的敏感字段，避免 API Key 等泄露到日志。
+
+    直接在原始 query 上替换，避免 urlencode 重新编码占位符。
+    """
+    if not url:
+        return url
+    parts = urlsplit(url)
+    if not parts.query:
+        return url
+    masked_pairs = []
+    for pair in parts.query.split('&'):
+        key, sep, value = pair.partition('=')
+        if sep and key.lower() in _SENSITIVE_PARAM_KEYS:
+            masked_pairs.append(f'{key}=***')
+        else:
+            masked_pairs.append(pair)
+    query = '&'.join(masked_pairs)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
+
+
+def _mask_params(params: dict | None) -> dict | None:
+    """掩码请求参数字典中的敏感字段值。"""
+    if not params:
+        return params
+    return {
+        k: ('***' if str(k).lower() in _SENSITIVE_PARAM_KEYS else v)
+        for k, v in params.items()
+    }
 
 
 # =============================================================================
@@ -361,12 +404,12 @@ class LocalWidgetBase:
         _fetch_data_async()  → 异步获取数据，返回 dict
 
     配置属性（类变量，子类覆写）：
-        WIDGET_NAME:    str   = 'StartInfo组件'   # 组件标识
+        WIDGET_NAME:    str   = '未命名组件'   # 组件标识
         NEED_CACHE:     bool  = False             # 是否启用缓存
         LOCAL_INTERVAL: str   = '1s'              # 缓存有效期，如 '1h' / '5m' / '0'(永不过期)
     """
 
-    WIDGET_NAME: str = 'StartInfo组件'
+    WIDGET_NAME: str = '未命名组件'
     NEED_CACHE: bool = False
     LOCAL_INTERVAL: str = '1s'
 
@@ -374,6 +417,7 @@ class LocalWidgetBase:
         # 确保数据库已初始化（幂等）
         self._skip_cache_flag = False
         CacheManager.init_db()
+        log.debug(f'组件[{self.WIDGET_NAME}] 初始化')
 
     # ------------------------------------------------------------------
     # 通用工具
@@ -590,6 +634,11 @@ class NetworkWidgetBase(LocalWidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
+                log.debug(
+                    f'[{self.WIDGET_NAME}] 请求 API: '
+                    f'url={_mask_url(self.API_URL)} params={_mask_params(self.PARAMS)}'
+                )
+                start_time = time.monotonic()
                 with httpx.Client(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = client.get(
                         self.API_URL,
@@ -597,10 +646,14 @@ class NetworkWidgetBase(LocalWidgetBase):
                         headers=self.HEADERS,
                     )
                     response.raise_for_status()
+                    elapsed = time.monotonic() - start_time
+                    log.debug(
+                        f'[{self.WIDGET_NAME}] API 响应: '
+                        f'status={response.status_code} elapsed={elapsed:.2f}s'
+                    )
                     return self._parse_data(response.json())
 
             except httpx.HTTPError as exc:
-                # last_exc = exc
                 if attempt < total_attempts - 1:
                     log.warning(
                         f'[{self.WIDGET_NAME}] 请求失败（{attempt+1}/{total_attempts}），'
@@ -641,6 +694,11 @@ class NetworkWidgetBase(LocalWidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
+                log.debug(
+                    f'[{self.WIDGET_NAME}] 请求 API: '
+                    f'url={_mask_url(self.API_URL)} params={_mask_params(self.PARAMS)}'
+                )
+                start_time = time.monotonic()
                 async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = await client.get(
                         self.API_URL,
@@ -648,6 +706,11 @@ class NetworkWidgetBase(LocalWidgetBase):
                         headers=self.HEADERS,
                     )
                     response.raise_for_status()
+                    elapsed = time.monotonic() - start_time
+                    log.debug(
+                        f'[{self.WIDGET_NAME}] API 响应: '
+                        f'status={response.status_code} elapsed={elapsed:.2f}s'
+                    )
                     return self._parse_data(response.json())
 
             except httpx.HTTPError as exc:
@@ -783,6 +846,11 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
 
         for attempt in range(total_attempts):
             try:
+                log.debug(
+                    f'[{self.WIDGET_NAME}] 请求 API [{api_name}]: '
+                    f'url={_mask_url(url)} params={_mask_params(api_config.get("params"))}'
+                )
+                start_time = time.monotonic()
                 with httpx.Client(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = client.get(
                         url,
@@ -796,10 +864,20 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
                     func_name = api_config.get('parse_func')
 
                     if func_name is None:
+                        elapsed = time.monotonic() - start_time
+                        log.debug(
+                            f'[{self.WIDGET_NAME}] API [{api_name}] 响应: '
+                            f'status={response.status_code} elapsed={elapsed:.2f}s'
+                        )
                         return raw_data
 
                     # 根据字符串获取实例方法
                     parse_func = getattr(self, func_name)
+                    elapsed = time.monotonic() - start_time
+                    log.debug(
+                        f'[{self.WIDGET_NAME}] API [{api_name}] 响应: '
+                        f'status={response.status_code} elapsed={elapsed:.2f}s'
+                    )
                     return parse_func(raw_data)
 
             except httpx.HTTPError as exc:
@@ -846,6 +924,11 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
         total_attempts = self.RETRY_COUNT + 1
         for attempt in range(total_attempts):
             try:
+                log.debug(
+                    f'[{self.WIDGET_NAME}] 请求 API [{api_name}]: '
+                    f'url={_mask_url(url)} params={_mask_params(api_config.get('params'))}'
+                )
+                start_time = time.monotonic()
                 async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT, follow_redirects=True) as client:
                     response = await client.get(
                         url,
@@ -856,6 +939,12 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
                     response.raise_for_status()
                     raw_data = response.json()
                     func_name = api_config.get('parse_func')
+
+                    elapsed = time.monotonic() - start_time
+                    log.debug(
+                        f'[{self.WIDGET_NAME}] API [{api_name}] 响应: '
+                        f'status={response.status_code} elapsed={elapsed:.2f}s'
+                    )
 
                     if func_name is None:
                         return raw_data

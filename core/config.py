@@ -1,8 +1,11 @@
+from loguru import logger
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
                             ColorConfigItem, ConfigItem, BoolValidator,
                             qconfig, ConfigValidator)
 
 from . import paths as lib
+
+log = logger
 
 
 # ===========================================================================
@@ -254,5 +257,25 @@ class StartInfoConfig(QConfig):
 
 cfg = StartInfoConfig()
 qconfig.load(lib.CONFIG_FILE_PATH, cfg)
+
+# ===========================================================================
+# 配置写入统一日志
+# qfluentwidgets 的所有设置卡片（含 qconfig.set / cfg.set）都经由 QConfig.set
+# 落盘，补丁这一个方法即可覆盖全部写路径。只记字段路径、不记值，
+# 避免 API Key、Token 等敏感数据进入日志。
+# ===========================================================================
+_orig_config_set = QConfig.set
+
+
+def _logged_config_set(self, item, value, save=True, copy=True):
+    # 与原始实现保持一致：值未变化时跳过，避免写日志噪声
+    if getattr(item, 'value', object()) == value:
+        return _orig_config_set(self, item, value, save=save, copy=copy)
+
+    log.debug(f'配置项变更: {item.key} (save={save})')
+    return _orig_config_set(self, item, value, save=save, copy=copy)
+
+
+QConfig.set = _logged_config_set
 
 __all__ = ['cfg', 'qconfig', 'StartInfoConfig']
