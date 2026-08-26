@@ -1,6 +1,6 @@
 [project]
 name = "startinfo"
-version = "2.4.3"
+version = "2.4.2"
 description = "一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。"
 readme = "README.md"
 authors = [
