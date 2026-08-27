@@ -51,8 +51,8 @@
     <td style="text-align: center;">Settings Window(Dark Mode)</td>
   </tr>
   <tr>
-    <td><img src="docs/images/main-window.png" width="100%" /></td>
-    <td><img src="docs/images/settings.png" width="100%" /></td>
+    <td><img src="images/main-window.png" width="100%" /></td>
+    <td><img src="images/settings.png" width="100%" /></td>
   </tr>
 </table>
 
