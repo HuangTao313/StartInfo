@@ -239,7 +239,7 @@ class StartInfoConfig(QConfig):
     )
 
     # =========================== GitHub仓库信息 ===========================
-    github_repo_switch = ConfigItem('GitHubRepoWidget', 'switch', False, BoolValidator())
+    github_repo_switch = ConfigItem('GitHubRepoInfoWidget', 'switch', False, BoolValidator())
     github_repo_owner = ConfigItem('GitHubRepoInfoWidget', 'repo_owner', '', StringValidator(default=''))
     github_repo_name = ConfigItem('GitHubRepoInfoWidget', 'repo_name', '', StringValidator(default=''))
     github_repo_data_refresh_interval = ConfigItem(
