@@ -249,7 +249,7 @@ if __name__ == '__main__':
             sys.exit()
 
     # 检测是否带有启动参数(args列表的长度>1)
-    elif len(lib.global_argv) > 1:
+    if len(lib.global_argv) > 1:
         # 如果是以--settings参数启动
         if '--settings' in lib.global_argv:
             # 启动设置

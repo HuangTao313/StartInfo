@@ -216,7 +216,7 @@ class StartInfoConfig(QConfig):
         StringValidator(default=''),
     )
     mc_server_ip = ConfigItem(
-        'MCServerInfoWidgetWidget', 'server_ip', '',
+        'MCServerInfoWidget', 'server_ip', '',
         StringValidator(default=''),
     )
     mc_server_port = ConfigItem(
@@ -248,11 +248,11 @@ class StartInfoConfig(QConfig):
     )
 
     # =========================== InformationSwitch (组件开关) ===========================
-    greeting_switch = ConfigItem('InformationSwitch', 'greeting_widget', True, BoolValidator())
-    startup_times_switch = ConfigItem('InformationSwitch', 'startup_times_widget', True, BoolValidator())
-    historical_switch = ConfigItem('InformationSwitch', 'historical_widget', False, BoolValidator())
+    greeting_switch = ConfigItem('OtherWidgetsSwitch', 'greeting_widget', True, BoolValidator())
+    startup_times_switch = ConfigItem('OtherWidgetsSwitch', 'startup_times_widget', True, BoolValidator())
+    historical_switch = ConfigItem('OtherWidgetsSwitch', 'historical_widget', False, BoolValidator())
     daily_character_switch = ConfigItem(
-        'InformationSwitch', 'daily_character_widget', False, BoolValidator(),
+        'OtherWidgetsSwitch', 'daily_character_widget', False, BoolValidator(),
     )
 
 cfg = StartInfoConfig()

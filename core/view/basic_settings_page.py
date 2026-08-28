@@ -389,7 +389,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         # 创建手风琴组件
         self.otherDetailCard = ExpandGroupCard(
-            FIF.MORE, '其他信息开关', '问候语、开机次数、时间和日期等信息',
+            FIF.MORE, '其他组件开关', '问候语、开机次数、时间和日期等组件',
             parent=otherGroup
         )
 
