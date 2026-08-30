@@ -205,7 +205,7 @@ class StartInfoConfig(QConfig):
 
     # =========================== 生日祝福 ===========================
     birthday_wishes_switch = ConfigItem('BirthdayWishesWidget', 'switch', False, BoolValidator())
-    birthday_dict = ConfigItem('BirthdayWishesWidget', 'birthday_dict', {'黄桃': '20100403'})
+    birthday_dict = ConfigItem('BirthdayWishesWidget', 'birthday_dict', {})
 
     # =========================== MC服务器检测 ===========================
     mc_server_info_switch = ConfigItem(

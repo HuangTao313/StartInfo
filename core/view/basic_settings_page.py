@@ -385,7 +385,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(githubRepoGroup)
 
         # ── 其他信息 ──
-        otherGroup = SettingCardGroup('其他信息', self.contentWidget)
+        otherGroup = SettingCardGroup('其他组件', self.contentWidget)
 
         # 创建手风琴组件
         self.otherDetailCard = ExpandGroupCard(
@@ -539,9 +539,13 @@ class BasicSettingsPage(BaseSettingPage):
             self.repoDataRefreshTimeCard
         )
 
-    @staticmethod
-    def _onOpenLogFolderClicked():
-        os.startfile(lib.LOG_FOLDER_PATH)
+    def _onOpenLogFolderClicked(self) -> None:
+        if lib.LOG_FOLDER_PATH.exists():
+            os.startfile(lib.LOG_FOLDER_PATH)
+            Notify.success('已打开日志文件夹', parent=self)
+
+        else:
+            Notify.error('日志文件夹不存在', parent=self)
 
     def _onDeleteDownloadTempClicked(self) -> bool | None:
         if lib.DOWNLOAD_PATH.exists():
