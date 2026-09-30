@@ -56,9 +56,10 @@ class AppManager:
         """根据 cfg 的值初始化主题"""
         # 直接读取你 config.py 里的当前值
         theme_mode = cfg.theme.value
-        theme_color_mode = cfg.theme_color.value if not cfg.use_win_theme_color.value else get_real_windows_accent_color()
+        # theme_color_mode = cfg.theme_color.value if not cfg.use_win_theme_color.value else get_theme_color()
+        theme_color = cfg.theme_color.value if cfg.theme_color_mode.value != 'dynamic' else get_theme_color()
         self.refresh_theme(theme_mode)
-        self.refresh_theme_color(theme_color_mode)
+        self.refresh_theme_color(theme_color)
 
     @staticmethod
     def refresh_theme(theme_mode: str):
@@ -94,7 +95,7 @@ class AppManager:
 # 全局 AppManager 实例
 app_manager = AppManager()
 
-def get_real_windows_accent_color() -> str:
+def get_theme_color() -> str:
     """获取系统的主题色"""
     try:
         # 如果系统是Windows

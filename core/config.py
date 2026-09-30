@@ -162,7 +162,10 @@ class StartInfoConfig(QConfig):
         'Appearance', 'theme', 'dynamic',
         OptionsValidator(['light', 'dark', 'dynamic']),
     )
-    use_win_theme_color = ConfigItem('Appearance', 'use_win_theme_color', True, BoolValidator())
+    theme_color_mode = OptionsConfigItem(
+        'Appearance', 'theme_color_mode', 'dynamic',
+        OptionsValidator(['dynamic', 'custom']),
+    )
     theme_color = ColorConfigItem('Appearance', 'theme_color', '#0078d4')
     mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', True, BoolValidator())
 

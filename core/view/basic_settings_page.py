@@ -4,6 +4,7 @@ import os
 import shutil
 
 from qasync import asyncSlot
+from PySide6.QtCore import QTimer
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup)
@@ -116,17 +117,17 @@ class BasicSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(dateTimeGroup)
 
         # ── 天气 ──
-        weatherGroup = SettingCardGroup('天气(需选择城市)', self.contentWidget)
+        self.weatherGroup = SettingCardGroup('天气(需选择城市)', self.contentWidget)
 
         self.weatherSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CLOUD, title='天气组件', content='显示当前城市的天气信息',
-            config_item=cfg.weather_switch, parent=weatherGroup
+            config_item=cfg.weather_switch, parent=self.weatherGroup
         )
 
         # 创建手风琴组件
         self.weatherDetailCard = ExpandGroupCard(
             FIF.MORE, '天气组件详细配置', '数据源、城市、刷新间隔',
-            parent=weatherGroup
+            parent=self.weatherGroup
         )
 
         self.weatherSourceCard = ComboBoxSettingCard(
@@ -176,16 +177,15 @@ class BasicSettingsPage(BaseSettingPage):
             self.weatherSourceCard,
             self.cityChooseCard,
             self.weatherRefreshTimeCard,
-            self.weatherRefreshCard,
-            self.qweatherApiHostCard,
-            self.qweatherApiKeyCard,
-            self.qweatherConsoleCard
+            self.weatherRefreshCard
         ])
-        weatherGroup.addSettingCards([
+        self.weatherGroup.addSettingCards([
             self.weatherSwitchCard,
             self.weatherDetailCard
         ])
-        self.expandLayout.addWidget(weatherGroup)
+        self.expandLayout.addWidget(self.weatherGroup)
+        # 和风天气专属卡片按当前数据源决定是否显示
+        self._update_qweather_cards_visibility()
 
         # ── 倒数日 ──
         countdownGroup = SettingCardGroup('倒数日', self.contentWidget)
@@ -453,6 +453,7 @@ class BasicSettingsPage(BaseSettingPage):
         self.autoCloseTimer.textChanged.connect(self._onAutoCloseTimeChanged)
         self.deleteDownloadTempCard.clicked.connect(self._onDeleteDownloadTempClicked)
         cfg.weather_source.valueChanged.connect(self._onWeatherSourceChanged)
+        cfg.weather_source.valueChanged.connect(self._update_qweather_cards_visibility)
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
         self.weatherRefreshTimeCard.textChanged.connect(self._onWeatherRefreshTimeChanged)
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
@@ -582,6 +583,55 @@ class BasicSettingsPage(BaseSettingPage):
                         parent=self
                     )
                     self._onRefreshWeather()
+
+    def _update_qweather_cards_visibility(self):
+        """和风天气专属配置卡片仅在数据源为和风天气时显示。"""
+        show = cfg.weather_source.value == 'qweather'
+        changed = False
+        for card in (self.qweatherApiHostCard,
+                     self.qweatherApiKeyCard,
+                     self.qweatherConsoleCard):
+            in_list = card in self.weatherDetailCard.widgets
+            if show and not in_list:
+                self.weatherDetailCard.addGroupWidget(card)
+                card.show()
+                changed = True
+            elif not show and in_list:
+                self.weatherDetailCard.removeGroupWidget(card)
+                # removeGroupWidget 只会从布局移除，不会隐藏控件，
+                # 若不隐藏，卡片会以浮动子控件的形式叠在手风琴左上角
+                card.hide()
+                changed = True
+            elif not show:
+                card.hide()
+
+        if changed:
+            QTimer.singleShot(0, self._refresh_weather_detail_layout)
+
+    def _refresh_weather_detail_layout(self):
+        """卡片增删后重算手风琴与天气分组高度，触发布局重排。
+
+        手风琴展开时高度由内部动画驱动，内容变化后不会自动更新；
+        这里直接按内部视图的实际 sizeHint 重设固定高度并复位滚动条，
+        再让天气分组 adjustSize，使页面 ExpandLayout 重排下方卡片。
+        注意：库自带的 _adjustViewSize 用的是各控件未受约束的 sizeHint
+        （固定高度卡片会偏小），故不用它，改取 viewLayout 的 sizeHint。
+        """
+        acc = self.weatherDetailCard
+        acc.expandAni.stop()
+
+        acc.viewLayout.activate()
+        content_h = acc.viewLayout.sizeHint().height()
+        acc.spaceWidget.setFixedHeight(content_h)
+
+        if acc.isExpand:
+            acc.verticalScrollBar().setValue(0)
+            acc.setFixedHeight(acc.card.height() + content_h)
+        else:
+            acc.setFixedHeight(acc.card.height())
+
+        self.weatherGroup.adjustSize()
+        self.weatherGroup.updateGeometry()
 
     @asyncSlot()
     async def _onWeatherSourceChanged(self):

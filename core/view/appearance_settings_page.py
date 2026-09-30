@@ -5,7 +5,7 @@ import os
 from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             FluentIcon as FIF, OptionsSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
-                            RadioButton, SettingCardGroup, HyperlinkCard)
+                            RadioButton, SettingCardGroup, HyperlinkCard, qconfig)
 
 from .ui_widgets import BaseSettingPage, Notify, ExtSwitchSettingCard
 from .. import base_lib as lib
@@ -33,18 +33,28 @@ class AppearanceSettingsPage(BaseSettingPage):
             parent=self.themeGroup
         )
 
-        self.useWinThemeColor = ExtSwitchSettingCard(
-            icon=FIF.PALETTE, title='使用系统主题色',
-            content='使用系统主题色', config_item=cfg.use_win_theme_color,
+        self.themeColorModeCard = ComboBoxSettingCard(
+            icon=FIF.PALETTE, title='主题色',
+            content='跟随系统或自定义', configItem=cfg.theme_color_mode,
+            texts=['跟随系统', '自定义'],
             parent=self.themeGroup
         )
 
+        # Linux下由于发行版众多，无法做到获取系统主题色，因而禁用这个功能，强制自定义主题色
+        if lib.system == 'Linux':
+            # 如果配置文件已修改为跟随系统，改回自定义模式
+            if cfg.theme_color_mode.value == 'dynamic':
+                qconfig.set(cfg.theme_color_mode, 'custom', save=True)
+
+            self.themeColorModeCard.setEnabled(False)
+
         self.themeColorCard = ColorSettingCard(
             configItem=cfg.theme_color, icon=FIF.PALETTE,
-            title='主题色', content='自定义程序主题色，调整前请先关闭【使用系统主题色】',
+            title='自定义主题色', content='自定义程序主题色',
             parent=self.themeGroup
         )
-        self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
+        # 仅在主题色模式为「自定义」时显示该卡片
+        self.themeColorCard.setVisible(cfg.theme_color_mode.value == 'custom')
 
         self.micaEffectSwitchCard = ExtSwitchSettingCard(
             icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明(仅支持Windows11)',
@@ -56,7 +66,7 @@ class AppearanceSettingsPage(BaseSettingPage):
 
         self.themeGroup.addSettingCards([
             self.themeCard,
-            self.useWinThemeColor,
+            self.themeColorModeCard,
             self.themeColorCard,
             self.micaEffectSwitchCard
         ])
@@ -110,7 +120,7 @@ class AppearanceSettingsPage(BaseSettingPage):
     def _connect_signals(self):
         """连接信号与槽。"""
         cfg.theme.valueChanged.connect(self._onThemeChanged)
-        cfg.use_win_theme_color.valueChanged.connect(self._onUseWinThemeColorChanged)
+        cfg.theme_color_mode.valueChanged.connect(self._onThemeColorModeChanged)
         cfg.theme_color.valueChanged.connect(self._onThemeColorChanged)
         cfg.mica_effect_switch.valueChanged.connect(self.parent_window.set_mica_enabled)
         self.importTemplateCard.clicked.connect(self._onImportTemplateClicked)
@@ -125,20 +135,21 @@ class AppearanceSettingsPage(BaseSettingPage):
     def _onThemeChanged(theme_type: str):
         ui.app_manager.refresh_theme(theme_type)
 
-    def _onUseWinThemeColorChanged(self):
-        if cfg.use_win_theme_color.value:
-            theme_color = ui.get_real_windows_accent_color()
+    def _onThemeColorModeChanged(self):
+        if cfg.theme_color_mode.value == 'dynamic':
+            theme_color = ui.get_theme_color()
             if theme_color:
                 ui.app_manager.refresh_theme_color(theme_color)
         else:
             ui.app_manager.refresh_theme_color(cfg.theme_color.value)
-        self.themeColorCard.setEnabled(not cfg.use_win_theme_color.value)
+        self.themeColorCard.setVisible(cfg.theme_color_mode.value == 'custom')
+        self.themeGroup.adjustSize()
 
     def _onThemeColorChanged(self, theme_color: str):
-        if not cfg.use_win_theme_color.value:
+        if cfg.theme_color_mode.value != 'dynamic':
             ui.app_manager.refresh_theme_color(theme_color)
         else:
-            Notify.warning(content='请先关闭【使用系统主题色】', parent=self)
+            Notify.warning(content='请先将【主题色】切换为自定义', parent=self)
 
     # ------------------------------------------------------------------
     # 模板
