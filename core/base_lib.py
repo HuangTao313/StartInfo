@@ -1,8 +1,6 @@
 # =============================================================================
 # 导入区
 # =============================================================================
-import atexit
-import ctypes
 import json
 import os
 import platform
@@ -11,15 +9,17 @@ import shutil
 import socket
 import subprocess
 import time
+import atexit
+import errno
+import sys
+import tempfile
 from sys import argv
-from ctypes.wintypes import HANDLE, DWORD, BOOL
 from typing import Union
 
 from loguru import logger
 
 from .config import cfg
 from .paths import *
-
 
 # 获取全局启动参数
 global_argv = argv
@@ -37,6 +37,7 @@ logger.add(
     encoding='utf-8',
     level=log_level,
     delay=True)
+
 log = logger
 
 # 配置文件在导入 config 模块时已加载（qconfig.load 早于本文件 sink 初始化），
@@ -52,7 +53,6 @@ def read_json(file_path: Union[str, Path]) -> dict:
         return {}
 
     try:
-        # 使用 with open 配合 json.load，内存效率更高
         with path.open('r', encoding='utf-8') as f:
             return json.load(f)
 
@@ -70,6 +70,7 @@ def read_json(file_path: Union[str, Path]) -> dict:
 CURRENT_VERSION_JSON = read_json(CURRENT_VERSION_PATH)
 VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败') # 版本号
 TITLE: str = '开机速览'                         # 全局标题
+APP_ID = 'StartInfo'
 SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{TITLE}.lnk'  # 开机启动项路径
 
 # 检查网络连接情况
@@ -113,43 +114,6 @@ def check_internet(timeout: float) -> bool:
                 return True
         except OSError:
             return False
-
-# Windows下禁止多开
-class WinSingleInstance:
-    def __init__(self, name='Local\\StartInfo'):
-        # 定义Windows API
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        self._create_mutex = kernel32.CreateMutexW
-        self._create_mutex.argtypes = [ctypes.c_void_p, BOOL, ctypes.c_wchar_p]
-        self._create_mutex.restype = HANDLE
-
-        self._close_handle = kernel32.CloseHandle
-        self._close_handle.argtypes = [HANDLE]
-
-        self._get_error = kernel32.GetLastError
-        self._get_error.restype = DWORD
-
-        # 创建互斥体
-        self.handle = self._create_mutex(None, False, name)
-        # 如果 GetLastError 返回 183 (ERROR_ALREADY_EXISTS)，说明互斥体已存在
-        self.is_first = not (self.handle is None or self._get_error() == 183)
-        log.debug(f'多开检测: {"首次实例" if self.is_first else "已有实例在运行"} (互斥体: {name})')
-
-        # 自动清理 - 无论如何都注册清理，确保句柄被正确释放
-        atexit.register(self._close_handle, self.handle)
-
-    def __del__(self):
-        """析构函数，确保互斥体被释放"""
-        try:
-            if hasattr(self, 'handle') and self.handle:
-                self._close_handle(self.handle)
-        except:
-            pass
-
-    @property
-    def is_running(self):
-        """返回检测结果：True表示已有实例运行"""
-        return not self.is_first
 
 # 模板路径与列表
 def get_template_path() -> Path:
@@ -244,6 +208,75 @@ def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
         error_text = f'启用模版文件失败：{str(e)}'
         log.error(error_text)
         return False, error_text
+
+# =============================================================================
+# 单实例锁（禁止多开）
+# =============================================================================
+class SingleInstance:
+    """跨平台单实例锁。"""
+
+    def __init__(self):
+        self._handle = None  # Windows 互斥体句柄
+        self._fd = None      # POSIX 锁文件描述符
+
+        if sys.platform == 'win32':
+            self.is_first = self._acquire_win()
+        else:
+            self.is_first = self._acquire_posix()
+
+        atexit.register(self.release)
+        log.debug(f'多开检测: {"首次实例" if self.is_first else "已有实例在运行"}')
+
+    @property
+    def is_running(self) -> bool:
+        """True 表示已有实例在运行。"""
+        return not self.is_first
+
+    def _acquire_win(self) -> bool:
+        import ctypes
+        from ctypes.wintypes import HANDLE, BOOL
+
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        create_mutex = kernel32.CreateMutexW
+        create_mutex.argtypes = [ctypes.c_void_p, BOOL, ctypes.c_wchar_p]
+        create_mutex.restype = HANDLE
+        self._close_handle = kernel32.CloseHandle
+        self._close_handle.argtypes = [HANDLE]
+
+        self._handle = create_mutex(None, False, APP_ID)
+        # 错误码必须紧跟 CreateMutexW 读取
+        err = ctypes.get_last_error()
+        if not self._handle:
+            raise OSError(err, f'CreateMutexW 失败: {ctypes.FormatError(err)}')
+        # 183 = ERROR_ALREADY_EXISTS，说明互斥体已存在，即已有实例
+        return err != 183
+
+    def _acquire_posix(self) -> bool:
+        import fcntl
+
+        # 文件名带 uid，避免临时目录下不同用户互相干扰
+        path = os.path.join(tempfile.gettempdir(), f'{APP_ID}-{os.getuid()}.lock')
+        self._fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except OSError as e:
+            os.close(self._fd)
+            self._fd = None
+            if e.errno not in (errno.EAGAIN, errno.EACCES):
+                raise
+            return False
+
+    def release(self) -> None:
+        """释放锁；进程退出时由 atexit 自动调用。可重复调用。"""
+        if self._handle:
+            self._close_handle(self._handle)
+            self._handle = None
+        if self._fd is not None:
+            import fcntl
+            fcntl.flock(self._fd, fcntl.LOCK_UN)
+            os.close(self._fd)
+            self._fd = None
 
 # 重启
 def restart_program(args: str = ""):

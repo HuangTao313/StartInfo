@@ -8,7 +8,7 @@ import core.base_lib as lib
 import core.startup as startup
 import core.ui as ui
 from core.config import cfg
-from core.base_lib import log
+from core.base_lib import log, SingleInstance
 from core.widgets import BirthdayWidget, MCServerInfoWidget, global_date
 from core.widgets_core import registered_widgets, NetworkWidgetBase, ExtNetworkWidgetBase
 
@@ -235,18 +235,18 @@ if __name__ == '__main__':
     log.debug('StartInfo 开始启动')
     # QApplication初始化
     ui.app_manager.init_app()
+
+    # 禁止多开（跨平台：Windows 命名互斥体 / macOS、Linux 文件锁）
+    checker = SingleInstance()
+    if checker.is_running:
+        # 显示提示（5秒后自动关闭）
+        ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！', timeout=5)
+        log.warning('检测到多开，请勿重复启动')
+        sys.exit()
+
     # 使用共享事件循环
     loop = asyncio.get_event_loop()
     asyncio.set_event_loop(loop)
-
-    # 禁止多开-Windows下
-    if lib.system == 'Windows':
-        checker = lib.WinSingleInstance(name='Local\\StartInfo')
-        if checker.is_running:
-            # 显示提示（5秒后自动关闭）
-            ui.dialog(lib.TITLE, '程序已运行，请勿重复启动！', timeout=5)
-            log.warning('检测到多开，请勿重复启动')
-            sys.exit()
 
     # 检测是否带有启动参数(args列表的长度>1)
     if len(lib.global_argv) > 1:
