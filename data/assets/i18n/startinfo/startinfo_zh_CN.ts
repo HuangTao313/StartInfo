@@ -52,7 +52,7 @@
     <message>
         <location filename="../../../../core/ui/dialogs.py" line="97"/>
         <source>All Files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">所有文件(*)</translation>
     </message>
     <message>
         <location filename="../../../../core/ui/dialogs.py" line="116"/>

@@ -26,6 +26,9 @@ data/config.json
 # 打包产物
 output/
 
+# API配置
+tools/.env
+
 # 其他
 其他/
 

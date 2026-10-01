@@ -174,8 +174,8 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.qweatherConsoleCard = HyperlinkCard(
             icon=FIF.COMMAND_PROMPT, title=self.tr('和风天气开发控制台'), text=self.tr('打开'),
-            content=self.tr('打开和风天气开发控制台(https://console.qweather.com/home?lang=zh)'),
-            url='https://console.qweather.com/home?lang=zh',
+            content=self.tr('打开和风天气开发控制台(https://console.qweather.com/home)'),
+            url='https://console.qweather.com/home',
             parent=self.weatherDetailCard
         )
 
