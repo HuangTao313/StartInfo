@@ -109,6 +109,53 @@ uv run settings.py
 
 `core` 中的文件由 `main.py`、`settings.py` 等入口间接调用，**无需也不建议直接运行 `core` 目录中的文件**。
 
+## core 目录结构
+
+| 模块 | 职责 |
+| --- | --- |
+| `core/base_lib.py` | 底座：JSON 读写、应用常量（标题 / 版本 / 启动项路径）、运行环境与网络检测、单实例锁与程序重启 |
+| `core/paths.py` | data 目录与文件路径的唯一定义处 |
+| `core/logger.py` | 日志初始化（导入 `core` 即完成文件日志注册） |
+| `core/config.py` | 配置项定义与全局 `cfg` |
+| `core/templates.py` | 模板扫描、导入与启用 |
+| `core/startup.py` | 开机启动项管理 |
+| `core/updater.py` | 检查更新与下载安装 |
+| `core/widgets/` | 组件系统：`framework.py` 框架 + `builtin.py` 内置组件 |
+| `core/ui/` | 界面层：`app.py` 应用与主题、`dialogs.py` 弹窗、`controls.py` 控件、`settings_pages/` 设置页 |
+
+> `base_lib`、`paths`、`logger`、`templates` 构成底层：`base_lib → logger → config → templates → paths`
+> 是一条单向依赖链。`templates` 必须保持为叶子（`config` 在顶层导入它），因此不要把它并入其他模块。
+
+**导入约定：** 包外统一使用 `from core.<模块> import ...`，或使用门面包
+`from core.ui import ...` / `from core.widgets import ...`；`core` 包内部模块之间使用相对导入。
+
+```python
+from core.base_lib import TITLE, VERSION, SingleInstance   # 底座
+from core.config import cfg, qconfig                       # 配置
+from core.widgets import WeatherWidget                     # 组件（框架与内置组件统一出口）
+from core.ui import app_manager, dialog, BasicSettingsPage  # 界面（弹窗 / 控件 / 设置页统一出口）
+```
+
+## data 目录结构
+
+`data` 目录按「谁负责管这些文件」划分：
+
+| 路径 | 内容 | 安装包如何处理 |
+| --- | --- | --- |
+| `data/assets/` | 随程序打包分发的只读资源：`api.json`、`emoji.json`、`current_version.json`、`qweather.db`、`xiaomi_weather.db`、`settings.ico`、`startinfo.ico`，以及 `i18n/` 下的多语言文件 | 直接覆盖 |
+| `data/config.json` | 用户配置 | **不得覆盖** |
+| `data/templates/` | 内置模板 + 用户导入/编辑的模板 | **不得覆盖已存在文件** |
+| `data/cache/` | 运行时生成、可随时删除：`widgets_cache.db`、`version.json`、更新下载缓存 | 不需要分发 |
+| `data/logs/` | 运行时生成的日志 | 不需要分发 |
+
+> `data/templates/` 不放进 `assets/`，因为它**会被程序写入**（导入模板时复制进去，用户也会编辑它），
+> 而 `assets/` 的契约是「安装包可以无条件覆盖」——把可写目录混进去，等于给将来「整体覆盖 assets」
+> 的逻辑埋一个会冲掉用户模板的坑。这也是配置文件和模板必须用"跳过已存在文件"方式安装的原因。
+
+> 旧版位置里的配置（`data/json/config.json`）在启动时由 `core/paths.py` 的
+> `migrate_legacy_config()` 自动迁移，且不会覆盖已有配置。
+> 其余旧位置的资源文件由安装包新版覆盖即可；早期版本留下的目录残留在用户机器上不影响运行。
+
 
 # 启动参数
 
@@ -319,7 +366,7 @@ API Key 请直接填写控制台提供的 Key，无需添加引号或其他内�
 - [模板自定义文档](docs/template-customization.md)
 - [组件开发文档](docs/widget-development.md)
 
-> 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets.py](core/widgets.py)。
+> 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets/](core/widgets/)。
 
 # 依赖
 

@@ -1,4 +1,5 @@
 import datetime
+import sys
 import time
 
 from datetime import datetime
@@ -9,23 +10,22 @@ from lunar_python import Lunar, Solar
 from lunar_python.util import HolidayUtil
 from typing import Any
 
-from . import base_lib as lib
-from .widgets_core import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
-                           APIConfig, register)
-from .config import cfg
+from ..base_lib import read_json
+from ..config import cfg
+from ..logger import log
+from ..paths import API_FILE_PATH, EMOJI_FILE_PATH
+from .framework import (LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase,
+                        APIConfig, register)
 
 # StartInfo内置组件
 # 组件系统及组件于2026-06-30开始重构
 # 获取 api 信息
-api = lib.read_json(lib.API_FILE_PATH)
+api = read_json(API_FILE_PATH)
 
-# 日志
-log = lib.log
-
-# 获取 emoji
-emoji = lib.read_json(lib.EMOJI_PATH)
-time_emoji = emoji['time']
-weather_emoji = emoji['weather']
+# 获取 emoji（文件缺失时退化为空表，避免导入期 KeyError 直接崩溃）
+emoji = read_json(EMOJI_FILE_PATH)
+time_emoji = emoji.get('time', {})
+weather_emoji = emoji.get('weather', {})
 
 # 获取全局日期和时间信息
 global_date = datetime.today().strftime('%Y%m%d')
@@ -373,7 +373,7 @@ class StartupTimesWidget(LocalWidgetBase):
         Returns:
             dict: 开机次数信息，示例：{'times': 1}
         """
-        if '--startup' in lib.global_argv:
+        if '--startup' in sys.argv:
             last_date = self._read_cache_value('get_date', default='')
             if global_date != last_date:
                 # 新的一天 → 重置

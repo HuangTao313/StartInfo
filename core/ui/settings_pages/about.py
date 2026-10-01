@@ -11,13 +11,16 @@ from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, MessageBox, PrimaryPushSettingCard,
                             SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel)
 
-from .ui_widgets import BaseSettingPage
-from .. import base_lib as lib
-from ..config import cfg
-from ..updater import check_update_logic
+from ...base_lib import CURRENT_VERSION_JSON, TITLE, VERSION
+from ...config import cfg
+from ...logger import log
+from ...paths import DATA_FOLDER_PATH, LOGO_ICON_FILE_PATH, UNINSTALLER_FILE_PATH
+from ...updater import check_update_logic
+from ..controls import BaseSettingPage
+from ..dialogs import Notify, UpdateDownloadBox
 
 # 常量
-LOGO_ICON_PATH = lib.DATA_FOLDER_PATH / 'icons' / 'startinfo.ico'
+LOGO_ICON_PATH = LOGO_ICON_FILE_PATH
 
 class AboutSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
@@ -39,7 +42,7 @@ class AboutSettingsPage(BaseSettingPage):
             self._add_centered_widget(self.image_label)
 
         # 标题（居中）
-        self._add_centered_widget(TitleLabel(lib.TITLE))
+        self._add_centered_widget(TitleLabel(TITLE))
 
         # 小标题(居中)
         self._add_centered_widget(SubtitleLabel('StartInfo'))
@@ -54,9 +57,9 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 更新日志
         changelog_text = (
-            f'版本号：{lib.VERSION}\n'
-            f'发布日期：{lib.CURRENT_VERSION_JSON.get('release_date', '获取失败')}\n\n'
-            f'更新日志：\n{lib.CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
+            f'版本号：{VERSION}\n'
+            f'发布日期：{CURRENT_VERSION_JSON.get('release_date', '获取失败')}\n\n'
+            f'更新日志：\n{CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
         )
 
         self.changelog = BodyLabel(changelog_text, self.scrollWidget)
@@ -134,15 +137,12 @@ class AboutSettingsPage(BaseSettingPage):
         try:
             update_available, new_version_data, error_msg = await check_update_logic()
             if error_msg:
-                from .ui_widgets import Notify
                 Notify.error(title='检查更新失败', content=error_msg, parent=self)
             elif update_available:
-                from .ui_widgets import UpdateDownloadBox
                 box = UpdateDownloadBox(new_version_data, self)
                 self._updateBox = box  # 持有引用，防止被垃圾回收
                 box.show()  # 非模态：qasync 下 exec() 会阻塞事件循环，导致下载进度无法刷新
             else:
-                from .ui_widgets import Notify
                 Notify.info(content='当前已经是最新版本', parent=self)
         finally:
             self.checkUpdateCard.setEnabled(True)
@@ -152,20 +152,18 @@ class AboutSettingsPage(BaseSettingPage):
         box.yesButton.setText('确定')
         box.cancelButton.setText('取消')
         if box.exec():
-            if lib.UNINS_PATH.exists():
+            if UNINSTALLER_FILE_PATH.exists():
                 try:
-                    lib.log.remove()
-                    shutil.rmtree(lib.DATA_FOLDER_PATH)
+                    log.remove()
+                    shutil.rmtree(DATA_FOLDER_PATH)
                 except Exception as e:
-                    lib.log.error(f'设置-删除data文件夹失败: {e}')
+                    log.error(f'设置-删除data文件夹失败: {e}')
                 try:
-                    os.startfile(lib.UNINS_PATH)
+                    os.startfile(UNINSTALLER_FILE_PATH)
                     sys.exit()
                 except Exception as e:
-                    lib.log.error(f'设置-启动卸载程序失败: {e}')
-                    from .ui_widgets import Notify
+                    log.error(f'设置-启动卸载程序失败: {e}')
                     Notify.error(content=f'启动卸载程序失败: {e}', parent=self)
             else:
-                lib.log.warning('设置-未找到卸载程序')
-                from .ui_widgets import Notify
+                log.warning('设置-未找到卸载程序')
                 Notify.warning(content='未找到卸载程序', parent=self)

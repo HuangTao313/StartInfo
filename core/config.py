@@ -1,9 +1,17 @@
+"""应用配置：验证器、配置项定义与全局 cfg 实例。
+
+本模块只依赖 paths 与 templates，**不依赖 core.logger**：
+logger.py 需要读取本模块的 ``cfg.log_level``，因此本模块只能用 loguru 的
+原始 ``logger`` 单例（与 ``core.logger.log`` 是同一对象），不能反向导入它。
+"""
+
 from loguru import logger
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
                             ColorConfigItem, ConfigItem, BoolValidator,
                             qconfig, ConfigValidator)
 
-from . import paths as lib
+from . import paths
+from .templates import get_template_files
 
 log = logger
 
@@ -50,9 +58,9 @@ class IntRangeValidator(ConfigValidator):
 class DynamicOptionsValidator(ConfigValidator):
     """支持动态选项列表的验证器。
 
-    选项列表通过 options_getter 在运行时动态获取。
-    构造时不调用 getter：config.py 类体执行期间 base_lib 可能尚未完成加载
-    （base_lib 在顶层 import 本模块的 cfg），立即调用会触发循环导入。
+    选项列表通过 options_getter 在运行时动态获取，因此每次读取都能拿到
+    磁盘上的最新模板列表。首次成功获取后缓存，避免重复扫描目录；
+    需要重新扫描时调用 :meth:`invalidate`。
     """
 
     def __init__(self, options_getter):
@@ -106,24 +114,6 @@ class CityDictValidator(ConfigValidator):
 
 
 # ===========================================================================
-# 辅助函数
-# ===========================================================================
-
-def _get_template_files() -> list:
-    """延迟导入 base_lib 的 get_template_files，避免 config ↔ base_lib 循环依赖。
-
-    base_lib 在模块顶层 import 本模块的 cfg，因此本模块不能在顶层直接
-    import base_lib；改为在调用时导入。若 base_lib 仍在加载中（构造验证器
-    时触发的调用），返回空列表，配置项使用默认值即可。
-    """
-    try:
-        from .base_lib import get_template_files
-        return get_template_files()
-    except ImportError:
-        return []
-
-
-# ===========================================================================
 # 配置类
 # ===========================================================================
 
@@ -132,7 +122,7 @@ class StartInfoConfig(QConfig):
     # 模板
     template_file = OptionsConfigItem(
         'General', 'template_file', 'default.j2',
-        DynamicOptionsValidator(_get_template_files),
+        DynamicOptionsValidator(get_template_files),
     )
 
     # 自动关闭弹窗
@@ -259,7 +249,7 @@ class StartInfoConfig(QConfig):
     )
 
 cfg = StartInfoConfig()
-qconfig.load(lib.CONFIG_FILE_PATH, cfg)
+qconfig.load(paths.CONFIG_FILE_PATH, cfg)
 
 # ===========================================================================
 # 配置写入统一日志
@@ -281,4 +271,8 @@ def _logged_config_set(self, item, value, save=True, copy=True):
 
 QConfig.set = _logged_config_set
 
-__all__ = ['cfg', 'qconfig', 'StartInfoConfig']
+__all__ = [
+    'cfg', 'qconfig', 'StartInfoConfig',
+    'StringValidator', 'IntRangeValidator', 'DynamicOptionsValidator',
+    'CityDictValidator',
+]

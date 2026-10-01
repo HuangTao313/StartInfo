@@ -9,13 +9,14 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup)
 
-from .ui_widgets import (BirthdayEditBox, CalendarSettingCard, CitySearchBox,
-                         ExpandGroupCard, ListEditingBox, Notify, TextSettingCard,
-                         ExtSwitchSettingCard, BaseSettingPage)
-from .. import base_lib as lib
-from ..config import cfg, qconfig
-from ..startup import create_shortcut, is_shortcut_exist, remove_shortcut
-from ..ui import log
+from ...config import cfg, qconfig
+from ...logger import log
+from ...paths import CONFIG_FILE_PATH, CACHE_FOLDER_PATH, LOG_FOLDER_PATH
+from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
+from ..controls import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
+                        CitySearchBox, ExpandGroupCard, ListEditingBox,
+                        TextSettingCard, ExtSwitchSettingCard)
+from ..dialogs import Notify
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -27,59 +28,59 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 基本设置 ──
-        generalGroup = SettingCardGroup('基本设置', self.contentWidget)
+        self.generalGroup = SettingCardGroup('基本设置', self.contentWidget)
 
         self.startupCard = ExtSwitchSettingCard(
             FIF.POWER_BUTTON, '开机自启', '是否开机启动',
-            config_item=None, parent=generalGroup
+            config_item=None, parent=self.generalGroup
         )
         self.startupCard.setChecked(is_shortcut_exist())
 
         self.autoCloseCard = ExtSwitchSettingCard(
             FIF.CLOSE, '主窗口自动关闭', '主窗口在一段后自动关闭，程序结束运行',
-            config_item=cfg.auto_close_switch, parent=generalGroup
+            config_item=cfg.auto_close_switch, parent=self.generalGroup
         )
 
         self.autoCloseTimer = TextSettingCard(
             config_item=cfg.auto_close_time, icon=FIF.STOP_WATCH,
             title='自动关闭时间(单位：秒/s)',
             content='主窗口自动关闭时间(范围：30~300秒，默认60秒)',
-            parent=generalGroup
+            parent=self.generalGroup
         )
 
         self.closeSettingsAction = ComboBoxSettingCard(
             texts=['重启到主程序', '直接退出'], icon=FIF.CLOSE,
             title='关闭设置窗口后的行为', content='重启到主程序或直接退出',
-            configItem=cfg.close_settings_action, parent=generalGroup
+            configItem=cfg.close_settings_action, parent=self.generalGroup
         )
 
         self.deleteDownloadTempCard = PrimaryPushSettingCard(
             icon=FIF.DELETE, title='删除下载缓存',
             content='删除因程序更新下载的临时文件', text='立即删除',
-            parent=generalGroup
+            parent=self.generalGroup
         )
 
-        generalGroup.addSettingCards([
+        self.generalGroup.addSettingCards([
             self.startupCard,
             self.autoCloseCard,
             self.autoCloseTimer,
             self.closeSettingsAction,
             self.deleteDownloadTempCard
         ])
-        self.expandLayout.addWidget(generalGroup)
+        self.expandLayout.addWidget(self.generalGroup)
 
         # ── 日期和时间 ──
-        dateTimeGroup = SettingCardGroup('日期和时间', self.contentWidget)
+        self.dateTimeGroup = SettingCardGroup('日期和时间', self.contentWidget)
         self.datetimeSwitchCard = ExtSwitchSettingCard(
             icon=FIF.DATE_TIME, title='日期和时间组件',
             content='显示当前的日期、时间以及其他信息',
-            config_item=cfg.datetime_switch, parent=dateTimeGroup
+            config_item=cfg.datetime_switch, parent=self.dateTimeGroup
         )
 
         # 创建手风琴组件
         self.dateTimeDetailCard = ExpandGroupCard(
             FIF.MORE, '日期和时间组件详细配置', '是否显示农历日期、24节气、节假日',
-            parent=dateTimeGroup
+            parent=self.dateTimeGroup
         )
 
         self.lunarDateSwitchCard = ExtSwitchSettingCard(
@@ -110,11 +111,11 @@ class BasicSettingsPage(BaseSettingPage):
             self.holidaySwitchCard,
             self.otherDataSwitchCard
         ])
-        dateTimeGroup.addSettingCards([
+        self.dateTimeGroup.addSettingCards([
             self.datetimeSwitchCard,
             self.dateTimeDetailCard
         ])
-        self.expandLayout.addWidget(dateTimeGroup)
+        self.expandLayout.addWidget(self.dateTimeGroup)
 
         # ── 天气 ──
         self.weatherGroup = SettingCardGroup('天气(需选择城市)', self.contentWidget)
@@ -188,17 +189,17 @@ class BasicSettingsPage(BaseSettingPage):
         self._update_qweather_cards_visibility()
 
         # ── 倒数日 ──
-        countdownGroup = SettingCardGroup('倒数日', self.contentWidget)
+        self.countdownGroup = SettingCardGroup('倒数日', self.contentWidget)
         self.countdownCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='倒数日组件',
             content='在主窗口显示："距离【xx】还有xx天"',
-            config_item=cfg.countdown_switch, parent=countdownGroup
+            config_item=cfg.countdown_switch, parent=self.countdownGroup
         )
 
         # 创建手风琴组件
         self.countdownDetailCard = ExpandGroupCard(
             FIF.MORE, '倒数日组件详细配置', '倒数日名称、日期信息',
-            parent=countdownGroup
+            parent=self.countdownGroup
         )
 
         self.countdownTextCard = TextSettingCard(
@@ -215,42 +216,42 @@ class BasicSettingsPage(BaseSettingPage):
             self.countdownTextCard,
             self.countdownDateCard
         ])
-        countdownGroup.addSettingCards([
+        self.countdownGroup.addSettingCards([
             self.countdownCard,
             self.countdownDetailCard
         ])
-        self.expandLayout.addWidget(countdownGroup)
+        self.expandLayout.addWidget(self.countdownGroup)
 
         # ── 生日祝福 ──
-        birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.contentWidget)
+        self.birthdayGroup = SettingCardGroup('生日祝福(暂不支持多人同天生日)', self.contentWidget)
         self.birthdayWishesSwitchCard = ExtSwitchSettingCard(
             icon=FIF.CALENDAR, title='生日祝福功能',
             content='在生日当天显示生日祝福',
-            config_item=cfg.birthday_wishes_switch, parent=birthdayGroup
+            config_item=cfg.birthday_wishes_switch, parent=self.birthdayGroup
         )
         self.birthdayListCard = PrimaryPushSettingCard(
             text='编辑生日列表', icon=FIF.CALENDAR, title='编辑',
             content='添加或删除生日记录，双击表格可修改名称与生日',
-            parent=birthdayGroup
+            parent=self.birthdayGroup
         )
-        birthdayGroup.addSettingCards([
+        self.birthdayGroup.addSettingCards([
             self.birthdayWishesSwitchCard,
             self.birthdayListCard
         ])
-        self.expandLayout.addWidget(birthdayGroup)
+        self.expandLayout.addWidget(self.birthdayGroup)
 
         # ── Minecraft 服务器检测器 ──
-        mcServerGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.contentWidget)
+        self.mcServerGroup = SettingCardGroup('Minecraft Java版服务器玩家在线情况检测', self.contentWidget)
         self.MCServerCheckSwitchCard = ExtSwitchSettingCard(
             icon=FIF.GLOBE, title='Minecraft Java版服务器玩家在线情况检测组件',
             content='快速查看MC服务器玩家在线情况，支持检查朋友在线情况',
-            config_item=cfg.mc_server_info_switch, parent=mcServerGroup
+            config_item=cfg.mc_server_info_switch, parent=self.mcServerGroup
         )
 
         # 手风琴：详细配置收起来
         self.MCDetailCard = ExpandGroupCard(
             FIF.MORE, '服务器信息详细配置', '配置服务器名称、IP、端口等信息',
-            parent=mcServerGroup
+            parent=self.mcServerGroup
         )
         self.mcServerNameCard = TextSettingCard(
             config_item=cfg.mc_server_name, icon=FIF.GAME,
@@ -293,22 +294,22 @@ class BasicSettingsPage(BaseSettingPage):
             self.mcFriendsListCard,
             self.mcServerDataRefreshCard
         ])
-        mcServerGroup.addSettingCards([
+        self.mcServerGroup.addSettingCards([
             self.MCServerCheckSwitchCard,
             self.MCDetailCard
         ])
-        self.expandLayout.addWidget(mcServerGroup)
+        self.expandLayout.addWidget(self.mcServerGroup)
 
         # ── 每日一言 ──
-        wordsGroup = SettingCardGroup('每日一言', self.contentWidget)
+        self.wordsGroup = SettingCardGroup('每日一言', self.contentWidget)
         self.wordsSwitchCard = ExtSwitchSettingCard(
             icon=FIF.MESSAGE, title='每日一言组件', content='显示每日一言信息',
-            config_item=cfg.words_switch, parent=wordsGroup
+            config_item=cfg.words_switch, parent=self.wordsGroup
         )
 
         self.wordsDetailCard = ExpandGroupCard(
             FIF.MORE, '每日一言组件详细配置', '配置数据来源、打开一言官网(友情链接)',
-            parent=wordsGroup
+            parent=self.wordsGroup
         )
 
         self.wordsSourceCard = ComboBoxSettingCard(
@@ -328,24 +329,24 @@ class BasicSettingsPage(BaseSettingPage):
             self.wordsSourceCard,
             self.friendlyLinksCard
         ])
-        wordsGroup.addSettingCards([
+        self.wordsGroup.addSettingCards([
             self.wordsSwitchCard,
             self.wordsDetailCard
         ])
-        self.expandLayout.addWidget(wordsGroup)
+        self.expandLayout.addWidget(self.wordsGroup)
 
         # ── GitHub仓库状态 ─
-        githubRepoGroup = SettingCardGroup('GitHub仓库信息组件(仅支持公开仓库)', self.contentWidget)
+        self.githubRepoGroup = SettingCardGroup('GitHub仓库信息组件(仅支持公开仓库)', self.contentWidget)
         self.githubRepoSwitchCard = ExtSwitchSettingCard(
             icon=FIF.GITHUB, title='GitHub仓库信息组件',
             content='显示Github仓库的名称、star数、fork数等信息',
-            config_item=cfg.github_repo_switch, parent=githubRepoGroup
+            config_item=cfg.github_repo_switch, parent=self.githubRepoGroup
         )
 
         # 创建手风琴组件
         self.githubRepoDetailCard = ExpandGroupCard(
             FIF.MORE, 'GitHub仓库信息组件详细配置', '仓库作者名、仓库名、数据刷新间隔',
-            parent=githubRepoGroup
+            parent=self.githubRepoGroup
         )
 
         self.repoOwnerCard = TextSettingCard(
@@ -378,19 +379,19 @@ class BasicSettingsPage(BaseSettingPage):
             self.repoDataRefreshTimeCard,
             self.repoRefreshCard
         ])
-        githubRepoGroup.addSettingCards([
+        self.githubRepoGroup.addSettingCards([
             self.githubRepoSwitchCard,
             self.githubRepoDetailCard
         ])
-        self.expandLayout.addWidget(githubRepoGroup)
+        self.expandLayout.addWidget(self.githubRepoGroup)
 
         # ── 其他信息 ──
-        otherGroup = SettingCardGroup('其他组件', self.contentWidget)
+        self.otherGroup = SettingCardGroup('其他组件', self.contentWidget)
 
         # 创建手风琴组件
         self.otherDetailCard = ExpandGroupCard(
             FIF.MORE, '其他组件开关', '问候语、开机次数、时间和日期等组件',
-            parent=otherGroup
+            parent=self.otherGroup
         )
 
         self.greetingSwitchCard = ExtSwitchSettingCard(
@@ -423,27 +424,27 @@ class BasicSettingsPage(BaseSettingPage):
             self.historicalSwitchCard,
             self.dailyCharacterSwitchCard
         ])
-        otherGroup.addSettingCard(self.otherDetailCard)
-        self.expandLayout.addWidget(otherGroup)
+        self.otherGroup.addSettingCard(self.otherDetailCard)
+        self.expandLayout.addWidget(self.otherGroup)
 
         # ── 调试 ──
-        debugGroup = SettingCardGroup('调试', self.contentWidget)
+        self.debugGroup = SettingCardGroup('调试', self.contentWidget)
         self.logLevelCard = ComboBoxSettingCard(
             icon=FIF.ALIGNMENT, title='日志等级',
             content='调整程序的日志等级，重启后生效',
-            texts=cfg.LOG_LEVELS, configItem=cfg.log_level, parent=debugGroup
+            texts=cfg.LOG_LEVELS, configItem=cfg.log_level, parent=self.debugGroup
         )
         self.openLogFolderCard = PrimaryPushSettingCard(
             text='打开日志文件夹', icon=FIF.FOLDER,
             title='打开日志文件夹', content='打开程序日志文件夹',
-            parent=debugGroup
+            parent=self.debugGroup
         )
 
-        debugGroup.addSettingCards([
+        self.debugGroup.addSettingCards([
             self.logLevelCard,
             self.openLogFolderCard
         ])
-        self.expandLayout.addWidget(debugGroup)
+        self.expandLayout.addWidget(self.debugGroup)
 
         self.finalise()
 
@@ -497,7 +498,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _openConfigFile(self):
         try:
-            os.startfile(lib.CONFIG_FILE_PATH)
+            os.startfile(CONFIG_FILE_PATH)
         except Exception as e:
             log.error(f'设置-打开配置文件失败: {e}')
             Notify.error(title='打开配置文件失败', content=str(e), parent=self)
@@ -541,17 +542,17 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
     def _onOpenLogFolderClicked(self) -> None:
-        if lib.LOG_FOLDER_PATH.exists():
-            os.startfile(lib.LOG_FOLDER_PATH)
+        if LOG_FOLDER_PATH.exists():
+            os.startfile(LOG_FOLDER_PATH)
             Notify.success('已打开日志文件夹', parent=self)
 
         else:
             Notify.error('日志文件夹不存在', parent=self)
 
     def _onDeleteDownloadTempClicked(self) -> bool | None:
-        if lib.DOWNLOAD_PATH.exists():
-            shutil.rmtree(lib.DOWNLOAD_PATH)
-            lib.log.info('已删除下载缓存')
+        if CACHE_FOLDER_PATH.exists():
+            shutil.rmtree(CACHE_FOLDER_PATH)
+            log.info('已删除下载缓存')
             Notify.success('已删除下载缓存', parent=self)
             return True
 
@@ -635,7 +636,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     @asyncSlot()
     async def _onWeatherSourceChanged(self):
-        from ..widgets import WeatherWidget
+        from ...widgets import WeatherWidget
         widget = WeatherWidget()
         cache_source = widget.get_cached_source()
 
@@ -674,7 +675,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     @asyncSlot()
     async def _onRefreshWeather(self):
-        from core.widgets import WeatherWidget
+        from ...widgets import WeatherWidget
         widget = WeatherWidget()
         # 如果数据源是和风天气，检查API Host和API Key是否可用
         if widget.DATA_SOURCE == 'qweather':
@@ -697,7 +698,7 @@ class BasicSettingsPage(BaseSettingPage):
     @asyncSlot()
     async def _onRefreshMCServer(self):
         self.mcServerDataRefreshCard.setEnabled(False)
-        from core.widgets import MCServerError, MCServerInfoWidget
+        from ...widgets import MCServerError, MCServerInfoWidget
         try:
             mc = MCServerInfoWidget()
             data = await mc.get_data_async(force_refresh=True)
@@ -727,7 +728,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     @asyncSlot()
     async def _onRefreshGitHubRepo(self):
-        from core.widgets import GitHubRepoInfoWidget
+        from ...widgets import GitHubRepoInfoWidget
         # 未填写仓库作者或仓库名称时不予刷新，弹警告
         if not (cfg.github_repo_owner.value.strip() and cfg.github_repo_name.value.strip()):
             Notify.warning('请先填写仓库作者和仓库名称', parent=self)
@@ -779,7 +780,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     @asyncSlot()
     async def _onWordsSourceChanged(self):
-        from ..widgets import DailyWordsWidget
+        from ...widgets import DailyWordsWidget
         widget = DailyWordsWidget()
         cache_source = widget.get_cached_source()
         # 如果选择的数据源和缓存的数据源不一致

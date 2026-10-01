@@ -5,10 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import base_lib as lib
-
-# 日志
-log = lib.log
+from .base_lib import SHORTCUT_FILE_PATH, system
+from .logger import log
+from .paths import EXE_FILE_PATH, MAIN_PATH, WIN_STARTUP_FOLDER_PATH
 
 # macOS 使用 LaunchAgent 实现当前用户登录后自动启动。
 MACOS_LAUNCH_AGENT_LABEL = 'com.startinfo.launcher'
@@ -28,7 +27,7 @@ def _get_macos_program_arguments() -> list[str]:
 
     return [
         str(Path(sys.executable).resolve()),
-        str((lib.MAIN_PATH / 'main.py').resolve()),
+        str((MAIN_PATH / 'main.py').resolve()),
         '--startup',
     ]
 
@@ -38,7 +37,7 @@ def _get_macos_launch_agent_data() -> dict:
     return {
         'Label': MACOS_LAUNCH_AGENT_LABEL,
         'ProgramArguments': _get_macos_program_arguments(),
-        'WorkingDirectory': str(lib.MAIN_PATH.resolve()),
+        'WorkingDirectory': str(MAIN_PATH.resolve()),
         'RunAtLoad': True,
         'KeepAlive': False,
         'ProcessType': 'Interactive',
@@ -53,15 +52,15 @@ def create_shortcut() -> bool:
     """
     try:
         # 如果系统是Windows
-        if lib.system == 'Windows':
+        if system == 'Windows':
             from win32com.client import Dispatch
             shell = Dispatch('WScript.Shell')
-            shortcut = shell.CreateShortCut(str(lib.SHORTCUT_PATH))
-            shortcut.Targetpath = str(lib.EXE_PATH)
+            shortcut = shell.CreateShortCut(str(SHORTCUT_FILE_PATH))
+            shortcut.Targetpath = str(EXE_FILE_PATH)
             shortcut.Arguments = '--startup'
-            shortcut.WorkingDirectory = str(lib.MAIN_PATH)
+            shortcut.WorkingDirectory = str(MAIN_PATH)
             shortcut.save()
-            log.info(f'快捷方式已创建并移动到启动文件夹: {lib.SHORTCUT_PATH}')
+            log.info(f'快捷方式已创建并移动到启动文件夹: {SHORTCUT_FILE_PATH}')
             return True
 
         # 如果系统是MacOS
@@ -91,22 +90,22 @@ def is_shortcut_exist() -> bool:
     :return: 如果存在返回 True，否则返回 False
     """
     # 如果系统是Windows
-    if lib.system == 'Windows':
-        if lib.WIN_STARTUP_PATH.exists():
+    if system == 'Windows':
+        if WIN_STARTUP_FOLDER_PATH.exists():
             # 检查快捷方式的目标路径是否与指定的目标路径一致
             from win32com.client import Dispatch
             shell = Dispatch('WScript.Shell')
-            shortcut = shell.CreateShortCut(str(lib.SHORTCUT_PATH))
-            if shortcut.Targetpath == str(lib.EXE_PATH):
-                log.info(f'快捷方式已存在，且目标路径正确: {lib.SHORTCUT_PATH}')
+            shortcut = shell.CreateShortCut(str(SHORTCUT_FILE_PATH))
+            if shortcut.Targetpath == str(EXE_FILE_PATH):
+                log.info(f'快捷方式已存在，且目标路径正确: {SHORTCUT_FILE_PATH}')
                 return True
 
             else:
-                log.info(f'快捷方式已存在，但目标路径不匹配: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式已存在，但目标路径不匹配: {SHORTCUT_FILE_PATH}')
                 return False
 
         else:
-            log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+            log.info(f'快捷方式不存在: {SHORTCUT_FILE_PATH}')
             return False
 
     # 如果系统是MacOS
@@ -155,13 +154,13 @@ def remove_shortcut() -> bool:
     """
     try:
         # 如果系统是Windows
-        if lib.system == 'Windows':
-            if lib.SHORTCUT_PATH.exists():
-                lib.SHORTCUT_PATH.unlink(missing_ok = True)
-                log.info(f'快捷方式已删除: {lib.SHORTCUT_PATH}')
+        if system == 'Windows':
+            if SHORTCUT_FILE_PATH.exists():
+                SHORTCUT_FILE_PATH.unlink(missing_ok = True)
+                log.info(f'快捷方式已删除: {SHORTCUT_FILE_PATH}')
 
             else:
-                log.info(f'快捷方式不存在: {lib.SHORTCUT_PATH}')
+                log.info(f'快捷方式不存在: {SHORTCUT_FILE_PATH}')
             return True
 
         # 如果系统是MacOS

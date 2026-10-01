@@ -1,52 +1,43 @@
-# =============================================================================
-# 导入区
-# =============================================================================
+"""StartInfo 底座库：JSON 读写、应用常量、运行环境、进程生命周期。
+
+这是 ``core`` 内部最底层、可被任意模块安全导入的模块。它只依赖两件事：
+
+- :mod:`core.paths`   —— 纯路径常量，自身无依赖
+- :mod:`core.logger`  —— 需要 ``config.log_level``，因此位于 config 之上
+
+因此 ``base_lib → logger → config → templates → paths`` 是一条单向链，没有环。
+
+.. warning::
+   不要在本模块顶层导入 ``config`` 或 ``templates``，也不要把 ``paths`` /
+   ``logger`` / ``templates`` 折进本模块：``config`` 在顶层导入
+   ``templates.get_template_files``，``templates`` 必须保持为叶子，
+   否则 ``config → templates → base_lib → logger → config`` 会立即成环。
+"""
+
+import atexit
+import errno
 import json
 import os
 import platform
 import shlex
-import shutil
 import socket
 import subprocess
-import time
-import atexit
-import errno
 import sys
 import tempfile
-from sys import argv
+import time
+from pathlib import Path
 from typing import Union
 
-from loguru import logger
+from .logger import log
+from .paths import (CURRENT_VERSION_FILE_PATH, EXE_FILE_PATH, MAIN_PATH,
+                    WIN_STARTUP_FOLDER_PATH)
 
-from .config import cfg
-from .paths import *
 
-# 获取全局启动参数
-global_argv = argv
-
-# 获取系统环境信息
-system = platform.system()
-
-# 日志初始化 (建议放在这里，因为依赖 cfg.log_level)
-log_level = 'DEBUG' if '--debug' in global_argv else cfg.log_level.value
-
-logger.add(
-    sink=LOG_FILE_PATH,
-    enqueue=True,
-    retention='3 days',
-    encoding='utf-8',
-    level=log_level,
-    delay=True)
-
-log = logger
-
-# 配置文件在导入 config 模块时已加载（qconfig.load 早于本文件 sink 初始化），
-# 故在此补记，保证启动阶段的配置文件加载行为也在日志中可追踪
-log.debug(f'加载配置文件: {CONFIG_FILE_PATH}')
-log.debug('配置文件加载完成')
-
-# 读取单个json文件
+# =============================================================================
+# JSON 读写
+# =============================================================================
 def read_json(file_path: Union[str, Path]) -> dict:
+    """读取单个 json 文件，失败时记录日志并返回空字典。"""
     path = Path(file_path)
     if not path.exists():
         log.error(f'文件不存在: {path}')
@@ -64,21 +55,36 @@ def read_json(file_path: Union[str, Path]) -> dict:
         log.error(f'读取文件 {path.name} 时发生未知错误: {e}')
         return {}
 
-# =============================================================================
-# 基础配置 (不依赖 cfg 的常量)
-# =============================================================================
-CURRENT_VERSION_JSON = read_json(CURRENT_VERSION_PATH)
-VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败') # 版本号
-TITLE: str = '开机速览'                         # 全局标题
-APP_ID = 'StartInfo'
-SHORTCUT_PATH: Path = WIN_STARTUP_PATH / f'{TITLE}.lnk'  # 开机启动项路径
 
-# 检查网络连接情况
-# 模块级缓存变量（所有导入此模块的文件共享同一个缓存）
+# =============================================================================
+# 应用身份与静态常量
+# =============================================================================
+# 本地已安装版本记录（读取随程序分发的 current_version.json）
+CURRENT_VERSION_JSON: dict = read_json(CURRENT_VERSION_FILE_PATH)
+# 版本号
+VERSION: str = CURRENT_VERSION_JSON.get('version', '版本号获取失败')
+
+# 全局标题
+TITLE: str = '开机速览'
+# 单实例锁与系统级标识
+APP_ID = 'StartInfo'
+
+# 开机启动项快捷方式路径
+SHORTCUT_FILE_PATH = WIN_STARTUP_FOLDER_PATH / f'{TITLE}.lnk'
+
+
+# =============================================================================
+# 运行环境与网络可用性
+# =============================================================================
+# 获取系统环境信息
+system = platform.system()
+
+# 网络检测结果缓存（模块级变量，所有导入方共享）
 # 记录 (是否可用, 检测时刻)；带 TTL 避免长期缓存断网结果，
 # 网络恢复后仍可重新检测
 _is_internet_cache: tuple[bool, float] | None = None
 _INTERNET_CACHE_TTL: float = 60.0  # 缓存有效秒数
+
 
 def is_internet(timeout: float = 3.0) -> bool | float:
     """
@@ -87,7 +93,7 @@ def is_internet(timeout: float = 3.0) -> bool | float:
     - 第一次调用：执行网络检测并缓存结果
     - 缓存有效期（默认 60 秒）内：直接返回缓存结果（零开销）
     - 缓存过期后：重新检测，避免断网恢复后仍返回旧的失败结果
-    - 所有导入 lib 的文件共享同一个缓存状态
+    - 所有导入本模块的文件共享同一个缓存状态
 
     :param timeout: 超时时间（秒），默认 3 秒
     :return: True 表示网络可用，False 表示不可用
@@ -115,99 +121,6 @@ def check_internet(timeout: float) -> bool:
         except OSError:
             return False
 
-# 模板路径与列表
-def get_template_path() -> Path:
-    """动态获取当前激活的模板路径（每次调用实时读取配置）。"""
-    return TEMPLATE_FOLDER_PATH / cfg.template_file.value
-
-
-def get_template_files() -> list:
-    """扫描模板文件夹，获取所有 .j2 模板文件名"""
-    if not TEMPLATE_FOLDER_PATH.exists():
-        return ['default.j2']
-    files = [
-        p.name for p in TEMPLATE_FOLDER_PATH.glob('*.j2')
-        if p.is_file() and p.name != 'birthday_wishes.j2'
-    ]
-    if not files:
-        return ['default.j2']
-    return files
-
-# 导入模板
-def import_template(template_file_path: Path) -> tuple[bool, str]:
-    """
-    导入模板文件
-
-    :param template_file_path: 模板文件路径
-    :return: (是否成功, 提示信息)
-    """
-    # 检查传入的模板文件是否存在
-    if not template_file_path.exists():
-        error_text = f'模版文件{template_file_path.name}不存在'
-        log.error(error_text)
-        return False, error_text
-
-    # 自动创建模版文件夹(如果不存在)
-    TEMPLATE_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
-    new_template_file_path = TEMPLATE_FOLDER_PATH / template_file_path.name
-
-    # 如果模板已经导入，则提示用户
-    if new_template_file_path.exists():
-        warning_text = f'模版文件{template_file_path.name}已存在，请勿重复导入'
-        log.warning(warning_text)
-        return False, warning_text
-
-    # 导入模板
-    try:
-        shutil.copy(template_file_path, new_template_file_path)
-        info_text = f'模版文件已导入：{new_template_file_path.name}'
-        log.info(info_text)
-        return True, info_text
-
-    except Exception as e:
-        error_text = f'导入模版文件失败：{str(e)}'
-        log.error(error_text)
-        return False, error_text
-
-# 启用模板
-def activate_template(template_file_path: Path | str) -> tuple[bool, str]:
-    """
-    启用模板文件
-
-    :param template_file_path: 模板文件路径（支持字符串或Path对象）
-    :return: (是否成功, 提示信息)
-    """
-    # 参数校验
-    if not template_file_path or not str(template_file_path).strip():
-        error_text = '模板文件路径不能为空'
-        log.error(error_text)
-        return False, error_text
-
-    # 统一转换为Path对象
-    if isinstance(template_file_path, str):
-        template_file_path = Path(template_file_path)
-        if not template_file_path.is_absolute():
-            template_file_path = TEMPLATE_FOLDER_PATH / template_file_path
-
-    # 检查文件是否存在
-    if not template_file_path.exists():
-        error_text = f'模版文件{template_file_path.name}不存在'
-        log.error(error_text)
-        return False, error_text
-
-    # 写入配置并启用模板
-    try:
-        # 使用 qconfig.set() 方法正确设置并保存配置项
-        from .config import qconfig, cfg
-        qconfig.set(cfg.template_file, template_file_path.name, save=True)
-        info_text = f'已启用模版文件{template_file_path.name}'
-        log.info(info_text)
-        return True, info_text
-
-    except Exception as e:
-        error_text = f'启用模版文件失败：{str(e)}'
-        log.error(error_text)
-        return False, error_text
 
 # =============================================================================
 # 单实例锁（禁止多开）
@@ -278,7 +191,10 @@ class SingleInstance:
             os.close(self._fd)
             self._fd = None
 
+
+# =============================================================================
 # 重启
+# =============================================================================
 def restart_program(args: str = ""):
     """
     兼容互斥锁的强制重启
@@ -290,7 +206,7 @@ def restart_program(args: str = ""):
         current_pid = os.getpid()
 
         # 2. 构造命令
-        # 注意：start "" "{EXE_PATH}" {args}
+        # 注意：start "" "{EXE_FILE_PATH}" {args}
         # 如果 args 不为空，它会紧跟在路径后面
         # 例如：start "" "C:\path\to\main.exe" --settings
 
@@ -301,7 +217,7 @@ def restart_program(args: str = ""):
         # taskkill 强制杀掉当前 PID 确保文件锁/互斥锁释放
         # timeout 等待 1 秒给系统缓冲
         # start 重新拉起程序
-        cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_PATH}"{extra_args}'
+        cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_FILE_PATH}"{extra_args}'
 
         # 破坏性操作：强制杀掉当前进程，记录后以后台静默方式执行 CMD 命令
         log.info(f'主程序即将重启 (PID={current_pid}, 参数="{args or "无"}")')
@@ -371,3 +287,15 @@ exec "$@"
         log.info(f'MacOS程序正在重启，启动参数: {args or "无"}')
         # Qt 的槽函数可能拦截 SystemExit，直接结束旧进程才能确保辅助进程继续。
         os._exit(0)
+
+
+__all__ = [
+    # JSON 读写
+    'read_json',
+    # 应用身份与静态常量
+    'CURRENT_VERSION_JSON', 'VERSION', 'TITLE', 'APP_ID', 'SHORTCUT_FILE_PATH',
+    # 运行环境与网络
+    'system', 'is_internet', 'check_internet',
+    # 进程生命周期
+    'SingleInstance', 'restart_program',
+]

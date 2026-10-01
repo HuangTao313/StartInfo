@@ -17,17 +17,17 @@ venv/
 # 日志目录
 data/logs/
 
+# 运行时缓存（组件缓存 / 更新检查缓存 / 下载缓存，可随时删除）
+data/cache/
+
+# 用户配置
+data/config.json
+
+# 打包产物
+output/
+
 # 其他
 其他/
-
-# 组件缓存
-data/db/widgets_cache.db
-
-# 更新检查缓存
-data/json/version.json
-
-# 设置
-data/json/config.json
 
 # 开发工具目录
 .zcode/

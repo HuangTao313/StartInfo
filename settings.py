@@ -5,15 +5,14 @@ from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from qfluentwidgets import FluentWindow, FluentIcon, NavigationItemPosition, SplashScreen
 
-import core.base_lib as lib
 import core.ui as ui
+from core.base_lib import restart_program, system
 from core.config import cfg
-from core.view.about_settings_page import AboutSettingsPage
-from core.view.basic_settings_page import BasicSettingsPage
-from core.view.appearance_settings_page import AppearanceSettingsPage
+from core.paths import SETTINGS_ICON_FILE_PATH
+from core.ui import AboutSettingsPage, AppearanceSettingsPage, BasicSettingsPage
 
 # 图标
-SETTINGS_ICON = lib.DATA_FOLDER_PATH / 'icons' / 'settings.ico'
+SETTINGS_ICON = SETTINGS_ICON_FILE_PATH
 
 class SettingsWindow(FluentWindow):
     def __init__(self):
@@ -27,10 +26,10 @@ class SettingsWindow(FluentWindow):
 
         # 云母效果仅支持 Windows 11
         # 未启用或系统不支持时，关闭云母效果
-        if not cfg.mica_effect_switch.value or lib.system != 'Windows':
+        if not cfg.mica_effect_switch.value or system != 'Windows':
             self.set_mica_enabled(False)
 
-            if lib.system != 'Windows':
+            if system != 'Windows':
                 # 非 Windows 平台不支持云母效果，锁定开关为关闭状态
                 cfg.set(cfg.mica_effect_switch, False, save=True)
 
@@ -69,7 +68,6 @@ def start_settings():
         loop.run_forever()
 
     if cfg.close_settings_action.value == 'restart':
-        from core.base_lib import restart_program
         restart_program()
 
     else:

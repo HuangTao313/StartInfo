@@ -1,6 +1,6 @@
 # 组件系统开发文档
 
-> 版本：2.0 · 适用：StartInfo 组件框架（基类 `core/widgets_core.py`，内置组件 `core/widgets.py`）
+> 版本：2.0 · 适用：StartInfo 组件框架（框架 `core/widgets/framework.py`，内置组件 `core/widgets/builtin.py`）
 
 ---
 
@@ -47,7 +47,15 @@ LocalWidgetBase                     ← 组件根基类（get_data() / get_data_
 
 > 说明：原 `WidgetBase` 与 `LocalWidgetBase` 已合并为同一个 `LocalWidgetBase`，所有组件（本地 / 联网 / 多数据源）统一继承它。
 
-内置组件（`core/widgets.py`）通过 `@register` 装饰器注册到组件注册表，`main.py` 遍历 `registered_widgets` 构建启用组件列表并注入模板，新增组件无需再修改 `main.py`（见 [register 装饰器](#register-装饰器)）。
+内置组件（`core/widgets/builtin.py`）通过 `@register` 装饰器注册到组件注册表，`main.py` 遍历 `registered_widgets` 构建启用组件列表并注入模板，新增组件无需再修改 `main.py`（见 [register 装饰器](#register-装饰器)）。
+
+`core.widgets` 是组件系统的门面包：框架在 `core/widgets/framework.py`，内置组件统一写在 `core/widgets/builtin.py`。**包外一律用门面包导入**：
+
+```python
+from core.widgets import LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase, register
+```
+
+新增内置组件直接追加到 `core/widgets/builtin.py`，并使用包内相对导入（如 `from .framework import ...`）。
 
 ---
 
@@ -58,7 +66,7 @@ LocalWidgetBase                     ← 组件根基类（get_data() / get_data_
 ```python
 from datetime import datetime
 
-from .widgets_core import LocalWidgetBase
+from core.widgets import LocalWidgetBase
 
 
 class GreetingWidget(LocalWidgetBase):
@@ -86,7 +94,7 @@ await w.get_data_async()                # 异步调用
 ### 2. 联网组件
 
 ```python
-from .widgets_core import NetworkWidgetBase
+from core.widgets import NetworkWidgetBase
 
 
 class HitokotoWidget(NetworkWidgetBase):
@@ -394,7 +402,7 @@ class DailyWordsWidget(ExtNetworkWidgetBase):
 内置组件通过 `@register` 注册到全局组件注册表，无需修改 `main.py`：
 
 ```python
-from .widgets_core import register
+from core.widgets import register
 
 @register(cfg.words_switch, 'words_switch')
 class DailyWordsWidget(ExtNetworkWidgetBase):
@@ -451,11 +459,11 @@ class DailyWordsWidget(ExtNetworkWidgetBase):
 
 **Q：缓存数据库文件在哪？**
 
-`data/db/widgets_cache.db`。`CacheManager.init_db()` 在 `LocalWidgetBase.__init__()` 中自动调用（幂等）。
+`data/cache/widgets_cache.db`。`CacheManager.init_db()` 在 `LocalWidgetBase.__init__()` 中自动调用（幂等）。
 
 **Q：组件缓存和用户配置是什么关系？**
 
-两者独立。组件缓存（`widgets_cache.db`）按组件管理运行时数据；用户配置由 `cfg`（qfluentwidgets 配置系统，持久化在 `data/json/config.json`）管理，组件通过 `CONFIG_ITEM` 等配置项引用。
+两者独立。组件缓存（`widgets_cache.db`）按组件管理运行时数据；用户配置由 `cfg`（qfluentwidgets 配置系统，持久化在 `data/config.json`）管理，组件通过 `CONFIG_ITEM` 等配置项引用。
 
 **Q：组件怎么获取 API Key？**
 

@@ -1,5 +1,5 @@
 """
-组件框架 —— LocalWidgetBase / LocalWidgetBase / NetworkWidgetBase
+组件框架 —— LocalWidgetBase / NetworkWidgetBase / ExtNetworkWidgetBase
 
 核心理念：
     子类声明意图（WIDGET_NAME / NEED_CACHE / LOCAL_INTERVAL），
@@ -34,9 +34,10 @@ from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
-from .base_lib import log, is_internet
-from .paths import DB_FOLDER_PATH
-from .config import ConfigItem
+from ..base_lib import is_internet
+from ..config import ConfigItem
+from ..logger import log
+from ..paths import WIDGET_CACHE_FILE_PATH
 
 
 # =============================================================================
@@ -88,7 +89,7 @@ def _mask_params(params: dict | None) -> dict | None:
 class CacheManager:
     """组件缓存 SQLite 持久化层（widget_name + cache_key 二级键）。"""
 
-    DB_PATH = DB_FOLDER_PATH / 'widgets_cache.db'
+    DB_PATH = WIDGET_CACHE_FILE_PATH
     _initialized = False
 
     # ------------------------------------------------------------------

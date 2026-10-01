@@ -340,7 +340,7 @@ The overall project design, feature planning, code review, and final maintenance
 - [Template Customization Guide](docs/template-customization.md)
 - [Widget Development Guide](docs/widget-development.md)
 
-> StartInfo does not currently support a plugin system. All existing Widgets are built-in components and are located in [core/widgets.py](core/widgets.py).
+> StartInfo does not currently support a plugin system. All existing Widgets are built-in components and are located in [core/widgets/](core/widgets/).
 
 
 # Dependencies

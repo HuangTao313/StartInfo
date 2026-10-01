@@ -7,10 +7,13 @@ from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
                             RadioButton, SettingCardGroup, HyperlinkCard, qconfig)
 
-from .ui_widgets import BaseSettingPage, Notify, ExtSwitchSettingCard
-from .. import base_lib as lib
-from .. import ui
-from ..config import cfg
+from ...base_lib import system
+from ...config import cfg
+from ...paths import TEMPLATE_FOLDER_PATH
+from ...templates import get_template_files, import_template
+from ..app import app_manager, get_theme_color
+from ..controls import BaseSettingPage, ExtSwitchSettingCard
+from ..dialogs import Notify, file_dialog
 
 
 class AppearanceSettingsPage(BaseSettingPage):
@@ -41,7 +44,7 @@ class AppearanceSettingsPage(BaseSettingPage):
         )
 
         # Linux下由于发行版众多，无法做到获取系统主题色，因而禁用这个功能，强制自定义主题色
-        if lib.system == 'Linux':
+        if system == 'Linux':
             # 如果配置文件已修改为跟随系统，改回自定义模式
             if cfg.theme_color_mode.value == 'dynamic':
                 qconfig.set(cfg.theme_color_mode, 'custom', save=True)
@@ -61,7 +64,7 @@ class AppearanceSettingsPage(BaseSettingPage):
             config_item=cfg.mica_effect_switch, parent=self.themeGroup
         )
         # 非Windows系统云母效果开关默认锁定
-        if lib.system != 'Windows':
+        if system != 'Windows':
             self.micaEffectSwitchCard.setEnabled(False)
 
         self.themeGroup.addSettingCards([
@@ -75,7 +78,7 @@ class AppearanceSettingsPage(BaseSettingPage):
         # ── 模板 ──
         self.templateGroup = SettingCardGroup('模板', self.contentWidget)
 
-        template_files = lib.get_template_files()
+        template_files = get_template_files()
         self.templateCard = OptionsSettingCard(
             configItem=cfg.template_file, icon=FIF.LABEL, title='模板',
             content='选择主界面使用的模板', texts=template_files,
@@ -133,21 +136,21 @@ class AppearanceSettingsPage(BaseSettingPage):
 
     @staticmethod
     def _onThemeChanged(theme_type: str):
-        ui.app_manager.refresh_theme(theme_type)
+        app_manager.refresh_theme(theme_type)
 
     def _onThemeColorModeChanged(self):
         if cfg.theme_color_mode.value == 'dynamic':
-            theme_color = ui.get_theme_color()
+            theme_color = get_theme_color()
             if theme_color:
-                ui.app_manager.refresh_theme_color(theme_color)
+                app_manager.refresh_theme_color(theme_color)
         else:
-            ui.app_manager.refresh_theme_color(cfg.theme_color.value)
+            app_manager.refresh_theme_color(cfg.theme_color.value)
         self.themeColorCard.setVisible(cfg.theme_color_mode.value == 'custom')
         self.themeGroup.adjustSize()
 
     def _onThemeColorChanged(self, theme_color: str):
         if cfg.theme_color_mode.value != 'dynamic':
-            ui.app_manager.refresh_theme_color(theme_color)
+            app_manager.refresh_theme_color(theme_color)
         else:
             Notify.warning(content='请先将【主题色】切换为自定义', parent=self)
 
@@ -156,9 +159,9 @@ class AppearanceSettingsPage(BaseSettingPage):
     # ------------------------------------------------------------------
 
     def _onImportTemplateClicked(self):
-        template_file_path = ui.file_dialog('选择模版文件', '', 'jinja2模板文件 (*.j2)')
+        template_file_path = file_dialog('选择模版文件', '', 'jinja2模板文件 (*.j2)')
         if template_file_path is not None:
-            is_success, result_message = lib.import_template(template_file_path)
+            is_success, result_message = import_template(template_file_path)
             if is_success:
                 Notify.success(title='模板导入成功',
                                content=f'已成功导入模板：{template_file_path.name}',
@@ -212,10 +215,10 @@ class AppearanceSettingsPage(BaseSettingPage):
         card.card.hBoxLayout.activate()
 
     def _onRefreshTemplateClicked(self):
-        templates_list = lib.get_template_files()
+        templates_list = get_template_files()
         self._update_options_setting_card(self.templateCard, templates_list)
         Notify.success(f'已刷新模板列表，发现 {len(templates_list)} 个文件', parent=self)
 
     @staticmethod
     def _onOpenTemplateFolderClicked():
-        os.startfile(lib.TEMPLATE_FOLDER_PATH)
+        os.startfile(TEMPLATE_FOLDER_PATH)
