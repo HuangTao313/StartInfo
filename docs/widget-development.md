@@ -2,6 +2,9 @@
 
 > 版本：2.0 · 适用：StartInfo 组件框架（框架 `core/widgets/framework.py`，内置组件 `core/widgets/builtin.py`）
 
+
+> 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets/builtin.py](../core/widgets/builtin.py)。
+
 ---
 
 ## 目录

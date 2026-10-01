@@ -1,20 +1,20 @@
 <div align="center">
 
-<img src="images/startinfo.png" alt="StartInfo Logo" width="18%">
+<img src="../images/startinfo.png" alt="StartInfo Logo" width="18%">
 
 <h1>StartInfo</h1>
 
 <p>A desktop information dashboard built with PySide6 and QFluentWidgets.</p>
 
 [![Stars](https://img.shields.io/github/stars/HuangTao313/StartInfo?style=for-the-badge&color=orange&label=Stars)](https://github.com/HuangTao313/StartInfo)
-[![License](https://img.shields.io/github/license/HuangTao313/StartInfo?style=for-the-badge&color=darkgreen&label=License)](LICENSE)
+[![License](https://img.shields.io/github/license/HuangTao313/StartInfo?style=for-the-badge&color=darkgreen&label=License)](../../LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/HuangTao313/StartInfo/total.svg?style=for-the-badge&color=green&label=Downloads)](https://github.com/HuangTao313/StartInfo/releases)
 [![Latest Release](https://img.shields.io/github/v/release/HuangTao313/StartInfo?style=for-the-badge&label=Latest%20Release)](https://github.com/HuangTao313/StartInfo/releases)
 
 </div>
 
 <p align="center">
-<a href="../README.md">简体中文</a> | English
+<a href="../../README.md">简体中文</a> | English
 </p>
 
 > [!WARNING]
@@ -51,8 +51,8 @@
     <td style="text-align: center;">Settings Window(Dark Mode)</td>
   </tr>
   <tr>
-    <td><img src="images/main-window.png" width="100%" /></td>
-    <td><img src="images/settings.png" width="100%" /></td>
+    <td><img src="../images/main-window.png" width="100%" /></td>
+    <td><img src="../images/settings.png" width="100%" /></td>
   </tr>
 </table>
 
@@ -80,195 +80,6 @@ Download the latest version:
 > Download links always point to the corresponding files in the latest GitHub Release.
 >
 > macOS-related features have been adapted, but macOS builds are currently not provided.
-
-# Running from Source
-
-First, clone the repository:
-
-```bash
-git clone https://github.com/HuangTao313/StartInfo.git
-cd StartInfo
-```
-
-Use uv to synchronize project dependencies:
-
-```bash
-uv sync
-```
-
-## Running
-
-The source code entry points of StartInfo are `main.py` and `settings.py`.
-
-You can run them directly according to your needs.
-
-**Start the main application:**
-
-```bash
-uv run main.py
-```
-
-**Launch the settings page directly:**
-
-```bash
-uv run settings.py
-```
-
-The `core` directory contains the core functionality modules of StartInfo. It is an internal library developed specifically for this project and is not intended to run as an independent application.
-
-Files inside the `core` directory are called indirectly by entry points such as `main.py` and `settings.py`.
-
-**Running files inside the `core` directory directly is neither required nor recommended.**
-
-
-# Command Line Arguments
-
-StartInfo supports the following command-line arguments, which can be used for debugging, troubleshooting, and specific use cases.
-
-Usage:
-
-**Running from source:**
-
-```bash
-uv run main.py <argument>
-```
-
-**Compiled version:**
-
-```powershell
-StartInfo.exe <argument>
-```
-
-The following arguments work in both modes.
-
----
-
-## `--settings`
-
-Skip the main application flow and directly open the settings page.
-
-This option can be used when the main application cannot start normally but the settings page still works.
-
-Example:
-
-```powershell
-StartInfo.exe --settings
-```
-
----
-
-## `--debug`
-
-Temporarily forces the log level of the current launch to `DEBUG`.
-
-This option is intended for debugging and troubleshooting.
-
-This parameter **does not modify the saved log level in settings**.
-
-Without `--debug`, StartInfo will continue using the log level configured in the settings page.
-
-Example:
-
-```powershell
-StartInfo.exe --debug
-```
-
-The current launch will use the `DEBUG` log level. The next normal launch will still use the previously configured log level.
-
-`--debug` is not an entry-point argument and can be combined with other arguments.
-
-Example:
-
-```powershell
-StartInfo.exe --settings --debug
-```
-
-## `--startup`
-
-Used to indicate whether StartInfo was launched by the **Windows startup entry**.
-
-This parameter is mainly added automatically by StartInfo's startup feature and usually does not need to be manually specified by users.
-
-When the application starts, the startup count component checks whether the `--startup` parameter exists to determine whether the current launch was triggered by Windows startup, and records the corresponding statistics.
-
-The actual startup entry format is similar to:
-
-```powershell
-StartInfo.exe --startup
-```
-
-> `--startup` is an internal-use parameter. In most cases, users do not need to manually add or modify it.
-
-
----
-
-## Combining Arguments
-
-StartInfo supports passing multiple command-line arguments at the same time.
-
-Currently supported arguments:
-
-```
---settings
---debug
---startup
-```
-
-Example:
-
-```powershell
-StartInfo.exe --settings --debug --startup
-```
-
-Argument handling logic:
-
-- `--settings` is an entry-point argument and takes priority by opening the settings page.
-- `--debug` only affects the log level of the current launch and can be combined with other arguments.
-- `--startup` is handled independently by the startup count component and can coexist with other arguments.
-
-Normal users usually do not need to manually combine multiple arguments.
-
-
----
-
-## Template Files
-
-StartInfo supports receiving a Jinja2 template file path as a command-line argument.
-
-You can drag a template file directly onto the StartInfo executable.
-
-Example:
-
-```powershell
-StartInfo.exe D:\example.j2
-```
-
-After startup, the application will detect the provided template file and ask whether to import and enable the template.
-
-This feature is mainly designed to make it easier for users to quickly add custom templates.
-
-If a template path and other command-line arguments are provided at the same time:
-
-```powershell
-StartInfo.exe --settings D:\example.j2
-```
-
-`--settings` takes priority. The application will directly open the settings page and will not start the template import process.
-
-
----
-
-# Logging and Debugging
-
-StartInfo uses Loguru for runtime logging.
-
-The default log level is `WARNING`, so normal operation will not generate a large amount of regular runtime information.
-
-Log files are kept for **3 days** by default, and expired logs are automatically cleaned up.
-
-If you encounter unexpected behavior, launch StartInfo with the `--debug` parameter to enable more detailed DEBUG-level logging.
-
-When reporting issues or submitting bug reports, please attach the relevant log files whenever possible.
 
 # Update Mechanism
 
@@ -337,11 +148,9 @@ The overall project design, feature planning, code review, and final maintenance
 
 # Documentation
 
-- [Template Customization Guide](docs/template-customization.md)
-- [Widget Development Guide](docs/widget-development.md)
-
-> StartInfo does not currently support a plugin system. All existing Widgets are built-in components and are located in [core/widgets/](core/widgets/).
-
+- [Development Guide](development_en.md)
+- [Template Customization Guide](template-customization_en.md)
+- [Widget Development Guide](widget-development_en.md)
 
 # Dependencies
 
@@ -389,7 +198,7 @@ Thanks to everyone who contributed to the development, testing, and feedback of 
 
 This project is open source under the GNU GPLv3.0 License.
 
-For the full license text, please refer to the [LICENSE](LICENSE) file in the project root directory.
+For the full license text, please refer to the [LICENSE](../../LICENSE) file in the project root directory.
 
 #
 
