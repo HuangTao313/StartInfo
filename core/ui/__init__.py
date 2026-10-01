@@ -14,7 +14,7 @@
 导入顺序即依赖顺序：app → dialogs → controls → 页面。
 """
 
-from .app import AppManager, app_manager, get_theme_color
+from .app import AppManager, app_manager, get_theme_color, tr
 from .dialogs import (Notify, UpdateDownloadBox, action, dialog, error_dialog,
                       file_dialog, main_window)
 from .controls import (BaseSettingPage, BirthdayEditBox, BirthdayTableDelegate,
@@ -26,7 +26,7 @@ from .settings_pages import (AboutSettingsPage, AppearanceSettingsPage,
 
 __all__ = [
     # app
-    'AppManager', 'app_manager', 'get_theme_color',
+    'AppManager', 'app_manager', 'get_theme_color', 'tr',
     # dialogs
     'Notify', 'UpdateDownloadBox', 'action', 'dialog', 'error_dialog',
     'file_dialog', 'main_window',

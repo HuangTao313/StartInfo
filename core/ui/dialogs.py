@@ -22,7 +22,7 @@ from ..base_lib import TITLE, restart_program, system
 from ..logger import log
 from ..paths import LOG_FILE_PATH
 from ..updater import GITHUB_RELEASES_URL, perform_update_async
-from .app import app_manager
+from .app import app_manager, tr
 
 
 def _setup_auto_close(dialog_instance: Dialog, seconds: int | bool) -> None:
@@ -39,7 +39,7 @@ def _setup_auto_close(dialog_instance: Dialog, seconds: int | bool) -> None:
         auto_close_timer.timeout.connect(dialog_instance.accept)
         auto_close_timer.start(seconds * 1000)
 
-def dialog(title: str, content: str, buttons: List[str] = ['确定'], timeout: int | bool = False) -> bool:
+def dialog(title: str, content: str, buttons: List[str] = None, timeout: int | bool = False) -> bool:
     """
     安全的消息框函数 - 使用单例 QApplication
 
@@ -50,6 +50,10 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定'], timeout: i
     :return: True if confirmed, False otherwise
     """
     app_manager.get_app()
+
+    # 默认按钮延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+    if buttons is None:
+        buttons = [tr('确定')]
 
     # 创建对话框
     dialog = Dialog(title, content, None)
@@ -77,7 +81,7 @@ def dialog(title: str, content: str, buttons: List[str] = ['确定'], timeout: i
     return bool(result)
 
 # 文件选择对话框
-def file_dialog(title: str, directory: str = '', filter: str = 'All Files (*)') -> Path | None:
+def file_dialog(title: str, directory: str = '', filter: str = None) -> Path | None:
     """
     文件选择对话框 - 使用单例 QApplication
 
@@ -87,6 +91,10 @@ def file_dialog(title: str, directory: str = '', filter: str = 'All Files (*)') 
     :return: 选中的文件路径，如果没有选择则返回 None
     """
     app_manager.get_app()
+
+    # 默认过滤器延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+    if filter is None:
+        filter = tr('All Files (*)')
 
     # 解包 QFileDialog.getOpenFileName 的返回值
     file_path_str, _ = QFileDialog.getOpenFileName(
@@ -105,7 +113,7 @@ def file_dialog(title: str, directory: str = '', filter: str = 'All Files (*)') 
 
 # 报错弹窗
 def error_dialog(text: str) -> None:
-    yn = dialog('程序运行时发生错误╥﹏╥...', text, ['重启', '打开日志文件'])
+    yn = dialog(tr('程序运行时发生错误╥﹏╥...'), text, [tr('重启'), tr('打开日志文件')])
     if yn:
         # 重启
         restart_program()
@@ -120,11 +128,12 @@ def error_dialog(text: str) -> None:
 
             else:
                 log.error(f'打开日志文件失败 - 日志文件不存在：{LOG_FILE_PATH}')
-                dialog('打开日志文件失败╥﹏╥...', f'日志文件不存在：{LOG_FILE_PATH}')
+                dialog(tr('打开日志文件失败╥﹏╥...'),
+                       tr('日志文件不存在：{path}').format(path=LOG_FILE_PATH))
 
         except Exception as e:
             log.error(f'打开日志文件失败：{e}')
-            dialog('打开日志文件失败╥﹏╥...', f'{e}')
+            dialog(tr('打开日志文件失败╥﹏╥...'), f'{e}')
 
 # ========== 主窗口 - 稳定版（支持禁用自动关闭） ==========
 def main_window(text: str, auto_close_seconds: int = 60) -> bool:
@@ -140,8 +149,8 @@ def main_window(text: str, auto_close_seconds: int = 60) -> bool:
 
     # 创建对话框
     dialog_instance = Dialog(TITLE, clean_text, None)
-    dialog_instance.yesButton.setText('确定')
-    dialog_instance.cancelButton.setText('设置')
+    dialog_instance.yesButton.setText(tr('确定'))
+    dialog_instance.cancelButton.setText(tr('设置'))
 
     # 2. 禁止抖动逻辑
     dialog_instance.adjustSize()
@@ -175,8 +184,11 @@ class Notify:
     """弹窗提醒工具类"""
 
     @staticmethod
-    def info(content: str, title: str = '提示', duration: int = 2000, parent=None):
+    def info(content: str, title: str = None, duration: int = 2000, parent=None):
         """显示普通信息提示"""
+        # 默认标题延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+        if title is None:
+            title = tr('提示')
         # 如果调用时没传 parent，尝试从 AppManager 获取主窗口（假设你存了）
         # 或者在调用时手动传 self
         InfoBar.info(
@@ -190,8 +202,11 @@ class Notify:
         )
 
     @staticmethod
-    def success(content: str, title: str = '成功', duration: int = 2000, parent=None):
+    def success(content: str, title: str = None, duration: int = 2000, parent=None):
         """显示成功绿条弹窗"""
+        # 默认标题延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+        if title is None:
+            title = tr('成功')
         # 如果调用时没传 parent，尝试从 AppManager 获取主窗口（假设你存了）
         # 或者在调用时手动传 self
         InfoBar.success(
@@ -205,8 +220,11 @@ class Notify:
         )
 
     @staticmethod
-    def warning(content: str, title: str = '警告', duration: int = 5000, parent=None):
+    def warning(content: str, title: str = None, duration: int = 5000, parent=None):
         """显示橙色警告弹窗"""
+        # 默认标题延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+        if title is None:
+            title = tr('警告')
         InfoBar.warning(
             title=title,
             content=content,
@@ -218,8 +236,11 @@ class Notify:
         )
 
     @staticmethod
-    def error(content: str, title: str = '错误', duration: int = 5000, parent=None):
+    def error(content: str, title: str = None, duration: int = 5000, parent=None):
         """显示错误红条弹窗"""
+        # 默认标题延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+        if title is None:
+            title = tr('错误')
         InfoBar.error(
             title=title,
             content=content,
@@ -230,7 +251,7 @@ class Notify:
             parent=parent
         )
 
-def action(success_msg: str = '', fail_msg: str = '操作失败'):
+def action(success_msg: str = '', fail_msg: str = None):
     """装饰器：自动包装异步方法 → asyncSlot → InfoBar 反馈。
 
     用法：
@@ -253,6 +274,8 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
     def deco(func):
         @functools.wraps(func)
         async def wrapper(self, *args, **kwargs):
+            # 默认失败提示延迟翻译：默认参数在模块加载时求值，那时还没有翻译器
+            _fail_msg = tr('操作失败') if fail_msg is None else fail_msg
             try:
                 result = func(self, *args, **kwargs)
                 # 如果是协程，await
@@ -266,7 +289,7 @@ def action(success_msg: str = '', fail_msg: str = '操作失败'):
                     # 返回 None 表示无需操作（如数据源未变更），静默处理
                     pass
                 else:
-                    InfoBar.error(title=fail_msg, content='', parent=self,
+                    InfoBar.error(title=_fail_msg, content='', parent=self,
                                   position=InfoBarPosition.TOP,
                                   duration=2000)
                 return result
@@ -302,17 +325,22 @@ class UpdateDownloadBox(MessageBoxBase):
         self._last_percent = -1
 
         # ── 初始：新版本信息 ──
-        self.titleLabel = SubtitleLabel('发现新版本')
+        self.titleLabel = SubtitleLabel(self.tr('发现新版本'))
         self.contentLabel = BodyLabel(
-            f'版本号：{update_info.get('version', '获取失败')}\n'
-            f'发布日期：{update_info.get('release_date', '获取失败')}\n'
-            f'更新日志：\n{update_info.get('changelog', '暂无更新日志')}',
+            self.tr('版本号：{version}\n'
+                    '发布日期：{release_date}\n'
+                    '更新日志：\n'
+                    '{changelog}').format(
+                version=update_info.get('version', self.tr('获取失败')),
+                release_date=update_info.get('release_date', self.tr('获取失败')),
+                changelog=update_info.get('changelog', self.tr('暂无更新日志')),
+            ),
             self,
         )
         self.contentLabel.setWordWrap(True)
 
         # ── 下载进度（初始隐藏）──
-        self.progressLabel = BodyLabel('正在下载新版本安装包：0%', self)
+        self.progressLabel = BodyLabel(self.tr('正在下载新版本安装包：0%'), self)
         self.progressBar = ProgressBar(self)
         self.progressBar.setRange(0, 100)
         self.progressBar.setValue(0)
@@ -322,8 +350,8 @@ class UpdateDownloadBox(MessageBoxBase):
         self.viewLayout.addWidget(self.progressLabel)
         self.viewLayout.addWidget(self.progressBar)
 
-        self.yesButton.setText('立即更新')
-        self.cancelButton.setText('取消更新')
+        self.yesButton.setText(self.tr('立即更新'))
+        self.cancelButton.setText(self.tr('取消更新'))
         self.widget.setMinimumWidth(480)
 
         self.progressLabel.hide()
@@ -351,9 +379,9 @@ class UpdateDownloadBox(MessageBoxBase):
 
     def _switch_to_download_view(self):
         """清除文案，切换为下载进度视图。"""
-        self.titleLabel.setText('正在更新')
+        self.titleLabel.setText(self.tr('正在更新'))
         self.contentLabel.hide()
-        self.progressLabel.setText('正在下载新版本安装包：0%')
+        self.progressLabel.setText(self.tr('正在下载新版本安装包：0%'))
         self.progressLabel.show()
         self.progressBar.show()
         self.yesButton.hide()
@@ -365,7 +393,7 @@ class UpdateDownloadBox(MessageBoxBase):
                 self.update_info, progress_callback=self._on_download_progress)
         except Exception as e:
             log.error(f'更新器-更新过程异常: {e}')
-            success, error_msg = False, f'更新过程发生异常：{e}'
+            success, error_msg = False, self.tr('更新过程发生异常：{error}').format(error=e)
 
         if not success:
             self._show_download_error(error_msg)
@@ -378,15 +406,18 @@ class UpdateDownloadBox(MessageBoxBase):
                 self._last_percent = percent
                 self.progressBar.setValue(percent)
             self.progressLabel.setText(
-                f'正在下载新版本安装包：{percent}%'
-                f' ({_format_size(downloaded)} / {_format_size(total)})')
+                self.tr('正在下载新版本安装包：{percent}% ({downloaded} / {total})').format(
+                    percent=percent,
+                    downloaded=_format_size(downloaded),
+                    total=_format_size(total)))
         else:
             self.progressLabel.setText(
-                f'正在下载新版本安装包：{_format_size(downloaded)}')
+                self.tr('正在下载新版本安装包：{downloaded}').format(
+                    downloaded=_format_size(downloaded)))
 
     def _show_download_error(self, error_msg: str):
-        self.titleLabel.setText('下载失败')
+        self.titleLabel.setText(self.tr('下载失败'))
         self.progressLabel.setText(error_msg)
         self.progressBar.error()  # 进度条置为错误状态（红色）
-        self.cancelButton.setText('关闭')
+        self.cancelButton.setText(self.tr('关闭'))
         self.cancelButton.show()

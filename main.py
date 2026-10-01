@@ -10,6 +10,7 @@ from core.config import cfg
 from core.logger import log
 from core.paths import TEMPLATE_FOLDER_PATH
 from core.templates import activate_template, get_template_path, import_template
+from core.ui import tr
 from core.widgets import (BirthdayWidget, ExtNetworkWidgetBase, MCServerInfoWidget,
                           NetworkWidgetBase, global_date, registered_widgets)
 
@@ -241,7 +242,7 @@ if __name__ == '__main__':
     checker = SingleInstance()
     if checker.is_running:
         # 显示提示（5秒后自动关闭）
-        ui.dialog(TITLE, '程序已运行，请勿重复启动！', timeout=5)
+        ui.dialog(TITLE, tr('程序已运行，请勿重复启动！'), timeout=5)
         log.warning('检测到多开，请勿重复启动')
         sys.exit()
 

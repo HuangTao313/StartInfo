@@ -235,6 +235,9 @@ def check_update() -> tuple[bool, dict]:
 
 def _build_update_info(remote: dict, update_type: str, reason: str) -> dict:
     """【内部函数】构建完整更新的更新信息"""
+    # 延迟导入：core.ui.dialogs 依赖本模块，顶层导入 tr 会造成循环导入
+    from .ui.app import tr
+
     pkg = remote.get('full_package', {})
 
     # 如果使用GitHub镜像站，就拼接前缀
@@ -245,9 +248,9 @@ def _build_update_info(remote: dict, update_type: str, reason: str) -> dict:
         url = pkg.get('url', '')
 
     return {
-        'version': remote.get('version', '版本号获取失败'),
-        'release_date': remote.get('release_date', '日期获取失败'),
-        'changelog': remote.get('changelog', '更新日志获取失败'),
+        'version': remote.get('version', tr('版本号获取失败')),
+        'release_date': remote.get('release_date', tr('日期获取失败')),
+        'changelog': remote.get('changelog', tr('更新日志获取失败')),
         'type': update_type,
         'url': url,
         'sha256': pkg.get('sha256', ''),
@@ -259,16 +262,19 @@ async def perform_update_async(update_info: dict, progress_callback=None) -> tup
     【异步流程】下载 → 校验 → 应用安装程序
     返回: (是否成功, 错误信息)；成功时内部会启动安装程序并退出当前进程
     """
+    # 延迟导入：core.ui.dialogs 依赖本模块，顶层导入 tr 会造成循环导入
+    from .ui.app import tr
+
     # 下载
     log.info('更新器-准备完整更新，正在下载...')
     update_file_path = await download_file_async(
         update_info['url'], filename='setup.exe', progress_callback=progress_callback)
     if not update_file_path:
-        return False, '下载更新包时出错，请稍后重试。'
+        return False, tr('下载更新包时出错，请稍后重试。')
 
     # 校验（放入线程池，避免阻塞 UI）
     if not await asyncio.to_thread(verify_sha256, update_file_path, update_info['sha256']):
-        return False, '更新包校验失败，文件可能已损坏。'
+        return False, tr('更新包校验失败，文件可能已损坏。')
 
     # 应用（此函数会启动安装程序并退出当前进程）
     apply_full_update(update_file_path)
@@ -282,6 +288,9 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
         错误信息非 None 表示检查失败，调用方应提示出错而不是"已是最新版本"
     :param force_refresh: True 时跳过缓存，强制从当前更新源重新获取版本文件
     """
+    # 延迟导入：core.ui.dialogs 依赖本模块，顶层导入 tr 会造成循环导入
+    from .ui.app import tr
+
     log.debug(f'更新器-开始检查更新 (force_refresh={force_refresh})')
     try:
         # 1. 版本文件维护逻辑
@@ -301,14 +310,16 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
         if need_fetch:
             if not await asyncio.to_thread(get_version_file):
                 log.warning("更新器-静默检查失败：无法获取远程版本")
-                return False, {}, f"获取版本信息失败（更新源: {cfg.update_source.value}），请检查网络或更新源配置"
+                return False, {}, tr(
+                    '获取版本信息失败（更新源: {source}），请检查网络或更新源配置'
+                ).format(source=cfg.update_source.value)
 
         # 2. 联网并比对
         if not is_internet():
-            return False, {}, "无法连接网络，检查更新失败"
+            return False, {}, tr('无法连接网络，检查更新失败')
 
         need_update, update_info = check_update()  # 调用你原有的比对函数
         return need_update, update_info, None
     except Exception as e:
         log.error(f"静默检查异常: {e}")
-        return False, {}, f"检查更新异常: {e}"
+        return False, {}, tr('检查更新异常: {error}').format(error=e)

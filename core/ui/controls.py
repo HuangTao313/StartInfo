@@ -111,21 +111,21 @@ class CitySearchBox(MessageBoxBase):
         super().__init__(parent)
 
         # 1. 初始化 UI 组件
-        self.titleLabel = SubtitleLabel('搜索城市')
-        self.text = '请输入城市名进行搜索'
+        self.titleLabel = SubtitleLabel(self.tr('搜索城市'))
+        self.text = self.tr('请输入城市名进行搜索')
         # 仅有和风天气城市数据库支持搜索省份
         if self.weather_source == 'qweather':
-            self.text += '(支持搜索省份)'
+            self.text += self.tr('(支持搜索省份)')
 
         self.hintLabel = BodyLabel(self.text)
         self.searchEdit = SearchLineEdit(self)
         self.cityList = ListWidget(self)
 
         # 2. 配置组件属性
-        self.searchEdit.setPlaceholderText('例如：北京 / 上海 / 武汉')
+        self.searchEdit.setPlaceholderText(self.tr('例如：北京 / 上海 / 武汉'))
         self.searchEdit.setClearButtonEnabled(True)
-        self.yesButton.setText('选择此城市')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(self.tr('选择此城市'))
+        self.cancelButton.setText(self.tr('取消'))
 
         # 3. 设置布局
         self.viewLayout.addWidget(self.titleLabel)
@@ -262,7 +262,7 @@ class TextSettingCard(SettingCard):
             # 只有存在配置项时才绑定自动更新信号
             self.configItem.valueChanged.connect(self.setText)
         else:
-            self.lineEdit.setPlaceholderText('未关联配置项...')
+            self.lineEdit.setPlaceholderText(self.tr('未关联配置项...'))
 
         # 3. 布局
         self.hBoxLayout.addStretch(1)
@@ -312,7 +312,7 @@ class CalendarSettingCard(SettingCard):
 
         # --- 汉化关键点 ---
         # 覆盖源码中的 'Pick a date'
-        self.calendarPicker.setText('选择一个日期')
+        self.calendarPicker.setText(self.tr('选择一个日期'))
         # ----------
 
         # 2. 初始化日期
@@ -380,7 +380,7 @@ class ExpandGroupCard(ExpandGroupSettingCard):
 
 class ListEditingBox(MessageBoxBase):
 
-    def __init__(self, title: str = '编辑列表', items: list = None, parent=None):
+    def __init__(self, title: str | None = None, items: list = None, parent=None):
         super().__init__(parent)
 
         # 设置弹窗宽高
@@ -388,12 +388,14 @@ class ListEditingBox(MessageBoxBase):
         self.widget.setFixedHeight(600)
 
         # 设置弹窗底部按钮
-        self.yesButton.setText('保存')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(self.tr('保存'))
+        self.cancelButton.setText(self.tr('取消'))
 
-        # 标题
+        # 标题（默认标题延迟翻译：默认参数在类定义时求值，那时还没有 self）
+        if title is None:
+            title = self.tr('编辑列表')
         self.titleLabel = SubtitleLabel(title)
-        self.hintLabel = BodyLabel('不可添加重复元素')
+        self.hintLabel = BodyLabel(self.tr('不可添加重复元素'))
 
         # 工具栏
         self.commandBar = CommandBar()
@@ -408,7 +410,7 @@ class ListEditingBox(MessageBoxBase):
         # 元素输入框
         self.lineEdit = LineEdit()
         # 设置提示文本
-        self.lineEdit.setPlaceholderText('添加或编辑元素')
+        self.lineEdit.setPlaceholderText(self.tr('添加或编辑元素'))
         # 启用清空按钮
         self.lineEdit.setClearButtonEnabled(True)
 
@@ -416,13 +418,13 @@ class ListEditingBox(MessageBoxBase):
 
         self.addButton = Action(
             FluentIcon.ADD,
-            '添加',
+            self.tr('添加'),
             triggered=self.addItem
         )
 
         self.editButton = Action(
             FluentIcon.EDIT,
-            '编辑',
+            self.tr('编辑'),
             enabled=False,
             triggered=self.editItem
         )
@@ -440,7 +442,7 @@ class ListEditingBox(MessageBoxBase):
         # 删除
         self.deleteButton = Action(
             FluentIcon.DELETE,
-            '删除',
+            self.tr('删除'),
             enabled=False,
             triggered=self.deleteItem
         )
@@ -701,12 +703,12 @@ class BirthdayEditBox(MessageBoxBase):
         self.widget.setFixedHeight(600)
 
         # 2. 设置弹窗底部按钮
-        self.yesButton.setText('保存')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(self.tr('保存'))
+        self.cancelButton.setText(self.tr('取消'))
 
         # 3. 标题与提示
-        self.titleLabel = SubtitleLabel('编辑生日列表')
-        self.hintLabel = BodyLabel('双击名称或生日可编辑')
+        self.titleLabel = SubtitleLabel(self.tr('编辑生日列表'))
+        self.hintLabel = BodyLabel(self.tr('双击名称或生日可编辑'))
 
         # 4. 工具栏（修改通过双击表格完成，无需单独按钮）
         self.commandBar = CommandBar()
@@ -720,13 +722,13 @@ class BirthdayEditBox(MessageBoxBase):
 
         self.addButton = Action(
             FluentIcon.ADD,
-            '添加',
+            self.tr('添加'),
             triggered=self.addItem
         )
 
         self.deleteButton = Action(
             FluentIcon.DELETE,
-            '删除',
+            self.tr('删除'),
             enabled=False,
             triggered=self.deleteItem
         )
@@ -741,7 +743,7 @@ class BirthdayEditBox(MessageBoxBase):
         # 5. 生日表格
         self.tableWidget = TableWidget(self)
         self.tableWidget.setColumnCount(2)
-        self.tableWidget.setHorizontalHeaderLabels(['名称', '生日'])
+        self.tableWidget.setHorizontalHeaderLabels([self.tr('名称'), self.tr('生日')])
         self.tableWidget.verticalHeader().hide()
         # 仅双击 / F2 触发编辑
         self.tableWidget.setEditTriggers(
@@ -790,7 +792,7 @@ class BirthdayEditBox(MessageBoxBase):
 
         # 显示用 ISO 文本，同时在 UserRole 保存 QDate 供编辑器同步
         date_item = QTableWidgetItem(
-            date.toString(Qt.ISODate) if date.isValid() else '未设置')
+            date.toString(Qt.ISODate) if date.isValid() else self.tr('未设置'))
         date_item.setData(Qt.UserRole, date)
         self.tableWidget.setItem(row, 1, date_item)
 
@@ -824,19 +826,28 @@ class BirthdayEditBox(MessageBoxBase):
             name = self.tableWidget.item(row, 0).text().strip()
 
             if not name:
-                Notify.warning(content=f'第 {row + 1} 行的名称不能为空', parent=self)
+                Notify.warning(
+                    content=self.tr('第 {row} 行的名称不能为空').format(row=row + 1),
+                    parent=self
+                )
                 return False
 
             # 配置以名称为字典键，重名会互相覆盖
             if name in names:
-                Notify.warning(content=f'名称重复：{name}，生日列表以名称为唯一标识', parent=self)
+                Notify.warning(
+                    content=self.tr('名称重复：{name}，生日列表以名称为唯一标识').format(name=name),
+                    parent=self
+                )
                 return False
 
             names.add(name)
 
             date = self.tableWidget.item(row, 1).data(Qt.UserRole)
             if not (isinstance(date, QDate) and date.isValid()):
-                Notify.warning(content=f'{name} 的生日无效，请双击生日单元格重新选择', parent=self)
+                Notify.warning(
+                    content=self.tr('{name} 的生日无效，请双击生日单元格重新选择').format(name=name),
+                    parent=self
+                )
                 return False
 
         return True

@@ -17,7 +17,7 @@ SETTINGS_ICON = SETTINGS_ICON_FILE_PATH
 class SettingsWindow(FluentWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('开机速览-设置')
+        self.setWindowTitle(self.tr('开机速览-设置'))
         self.resize(1000, 800)
         self.setMinimumSize(800, 600)
         self._center()
@@ -41,9 +41,9 @@ class SettingsWindow(FluentWindow):
         self.show()
 
         # 3.创建子界面
-        self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, '基本设置')
-        self.addSubInterface(AppearanceSettingsPage(self), FluentIcon.BRUSH, '个性化')
-        self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, '关于',NavigationItemPosition.BOTTOM)
+        self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, self.tr('基本设置'))
+        self.addSubInterface(AppearanceSettingsPage(self), FluentIcon.BRUSH, self.tr('个性化'))
+        self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, self.tr('关于'),NavigationItemPosition.BOTTOM)
 
         # 4. 隐藏启动页面
         self.splashScreen.finish()

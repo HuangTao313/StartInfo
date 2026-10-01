@@ -31,7 +31,7 @@ class AboutSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 关于 ──
-        self.aboutGroup = SettingCardGroup('关于', self.contentWidget)
+        self.aboutGroup = SettingCardGroup(self.tr('关于'), self.contentWidget)
 
         # 图标（居中）
         if LOGO_ICON_PATH.exists():
@@ -46,20 +46,25 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 小标题(居中)
         self._add_centered_widget(SubtitleLabel('StartInfo'))
-        self._add_centered_widget(SubtitleLabel('本项目采用 GNU GPLv3.0 许可证开源'))
+        self._add_centered_widget(SubtitleLabel(self.tr('本项目采用 GNU GPLv3.0 许可证开源')))
 
         # 简单介绍(居中)
-        self._add_centered_widget(StrongBodyLabel('一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。'))
+        self._add_centered_widget(StrongBodyLabel(self.tr('一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。')))
 
 
         # 与下方设置项之间的间距
         self._add_spacer(20)
 
         # 更新日志
-        changelog_text = (
-            f'版本号：{VERSION}\n'
-            f'发布日期：{CURRENT_VERSION_JSON.get('release_date', '获取失败')}\n\n'
-            f'更新日志：\n{CURRENT_VERSION_JSON.get('changelog', '获取失败')}'
+        changelog_text = self.tr(
+            '版本号：{version}\n'
+            '发布日期：{release_date}\n\n'
+            '更新日志：\n'
+            '{changelog}'
+        ).format(
+            version=VERSION,
+            release_date=CURRENT_VERSION_JSON.get('release_date', self.tr('获取失败')),
+            changelog=CURRENT_VERSION_JSON.get('changelog', self.tr('获取失败')),
         )
 
         self.changelog = BodyLabel(changelog_text, self.scrollWidget)
@@ -68,30 +73,30 @@ class AboutSettingsPage(BaseSettingPage):
 
         # 检查更新
         self.checkUpdateCard = PrimaryPushSettingCard(
-            text='检查更新', icon=FIF.UPDATE, title='检查更新',
-            content='检查新版本并下载', parent=self.aboutGroup
+            text=self.tr('检查更新'), icon=FIF.UPDATE, title=self.tr('检查更新'),
+            content=self.tr('检查新版本并下载'), parent=self.aboutGroup
         )
 
         # 更新源
         self.updateSourceCard = ComboBoxSettingCard(
-            icon=FIF.CLOUD_DOWNLOAD, title='更新源',
-            content='选择更新源：GitHub、GitHub镜像站',
-            texts=['GitHub', 'GitHub镜像站'],
+            icon=FIF.CLOUD_DOWNLOAD, title=self.tr('更新源'),
+            content=self.tr('选择更新源：GitHub、GitHub镜像站'),
+            texts=['GitHub', self.tr('GitHub镜像站')],
             configItem=cfg.update_source, parent=self.aboutGroup
         )
 
         # 项目GitHub仓库
         self.githubCard = HyperlinkCard(
-            icon=FIF.GITHUB, title='此项目的GitHub仓库',
-            content='打开此项目的GitHub仓库',
+            icon=FIF.GITHUB, title=self.tr('此项目的GitHub仓库'),
+            content=self.tr('打开此项目的GitHub仓库'),
             url='https://github.com/HuangTao313/StartInfo',
-            text='打开', parent=self.aboutGroup
+            text=self.tr('打开'), parent=self.aboutGroup
         )
 
         # 卸载
         self.uninstallCard = PrimaryPushSettingCard(
-            text='卸载', icon=FIF.DELETE, title='卸载',
-            content='卸载本程序', parent=self.aboutGroup
+            text=self.tr('卸载'), icon=FIF.DELETE, title=self.tr('卸载'),
+            content=self.tr('卸载本程序'), parent=self.aboutGroup
         )
 
         self.aboutGroup.addSettingCards([
@@ -137,20 +142,20 @@ class AboutSettingsPage(BaseSettingPage):
         try:
             update_available, new_version_data, error_msg = await check_update_logic()
             if error_msg:
-                Notify.error(title='检查更新失败', content=error_msg, parent=self)
+                Notify.error(title=self.tr('检查更新失败'), content=error_msg, parent=self)
             elif update_available:
                 box = UpdateDownloadBox(new_version_data, self)
                 self._updateBox = box  # 持有引用，防止被垃圾回收
                 box.show()  # 非模态：qasync 下 exec() 会阻塞事件循环，导致下载进度无法刷新
             else:
-                Notify.info(content='当前已经是最新版本', parent=self)
+                Notify.info(content=self.tr('当前已经是最新版本'), parent=self)
         finally:
             self.checkUpdateCard.setEnabled(True)
 
     def onUninstallClicked(self):
-        box = MessageBox('卸载确认', '确定要卸载本程序吗？', self)
-        box.yesButton.setText('确定')
-        box.cancelButton.setText('取消')
+        box = MessageBox(self.tr('卸载确认'), self.tr('确定要卸载本程序吗？'), self)
+        box.yesButton.setText(self.tr('确定'))
+        box.cancelButton.setText(self.tr('取消'))
         if box.exec():
             if UNINSTALLER_FILE_PATH.exists():
                 try:
@@ -163,7 +168,9 @@ class AboutSettingsPage(BaseSettingPage):
                     sys.exit()
                 except Exception as e:
                     log.error(f'设置-启动卸载程序失败: {e}')
-                    Notify.error(content=f'启动卸载程序失败: {e}', parent=self)
+                    Notify.error(
+                        content=self.tr('启动卸载程序失败: {error}').format(error=e),
+                        parent=self)
             else:
                 log.warning('设置-未找到卸载程序')
-                Notify.warning(content='未找到卸载程序', parent=self)
+                Notify.warning(content=self.tr('未找到卸载程序'), parent=self)

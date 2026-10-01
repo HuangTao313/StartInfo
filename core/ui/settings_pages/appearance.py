@@ -27,19 +27,19 @@ class AppearanceSettingsPage(BaseSettingPage):
 
     def _init_ui(self):
         # ── 主题 ──
-        self.themeGroup = SettingCardGroup('主题', self.contentWidget)
+        self.themeGroup = SettingCardGroup(self.tr('主题'), self.contentWidget)
 
         self.themeCard = ComboBoxSettingCard(
-            configItem=cfg.theme, icon=FIF.CONSTRACT, title='主题',
-            content='调整软件的外观颜色',
-            texts=['浅色主题', '深色主题', '跟随系统'],
+            configItem=cfg.theme, icon=FIF.CONSTRACT, title=self.tr('主题'),
+            content=self.tr('调整软件的外观颜色'),
+            texts=[self.tr('浅色主题'), self.tr('深色主题'), self.tr('跟随系统')],
             parent=self.themeGroup
         )
 
         self.themeColorModeCard = ComboBoxSettingCard(
-            icon=FIF.PALETTE, title='主题色',
-            content='跟随系统或自定义', configItem=cfg.theme_color_mode,
-            texts=['跟随系统', '自定义'],
+            icon=FIF.PALETTE, title=self.tr('主题色'),
+            content=self.tr('跟随系统或自定义'), configItem=cfg.theme_color_mode,
+            texts=[self.tr('跟随系统'), self.tr('自定义')],
             parent=self.themeGroup
         )
 
@@ -53,14 +53,15 @@ class AppearanceSettingsPage(BaseSettingPage):
 
         self.themeColorCard = ColorSettingCard(
             configItem=cfg.theme_color, icon=FIF.PALETTE,
-            title='自定义主题色', content='自定义程序主题色',
+            title=self.tr('自定义主题色'), content=self.tr('自定义程序主题色'),
             parent=self.themeGroup
         )
         # 仅在主题色模式为「自定义」时显示该卡片
         self.themeColorCard.setVisible(cfg.theme_color_mode.value == 'custom')
 
         self.micaEffectSwitchCard = ExtSwitchSettingCard(
-            icon=FIF.TRANSPARENT, title='云母效果', content='窗口和表面显示半透明(仅支持Windows11)',
+            icon=FIF.TRANSPARENT, title=self.tr('云母效果'),
+            content=self.tr('窗口和表面显示半透明(仅支持Windows11)'),
             config_item=cfg.mica_effect_switch, parent=self.themeGroup
         )
         # 非Windows系统云母效果开关默认锁定
@@ -76,38 +77,38 @@ class AppearanceSettingsPage(BaseSettingPage):
         self.expandLayout.addWidget(self.themeGroup)
 
         # ── 模板 ──
-        self.templateGroup = SettingCardGroup('模板', self.contentWidget)
+        self.templateGroup = SettingCardGroup(self.tr('模板'), self.contentWidget)
 
         template_files = get_template_files()
         self.templateCard = OptionsSettingCard(
-            configItem=cfg.template_file, icon=FIF.LABEL, title='模板',
-            content='选择主界面使用的模板', texts=template_files,
+            configItem=cfg.template_file, icon=FIF.LABEL, title=self.tr('模板'),
+            content=self.tr('选择主界面使用的模板'), texts=template_files,
             parent=self.templateGroup
         )
 
         self.importTemplateCard = PushSettingCard(
-            text='导入模板', icon=FIF.DOWNLOAD,
-            title='导入模板', content='导入Jinja2模板',
+            text=self.tr('导入模板'), icon=FIF.DOWNLOAD,
+            title=self.tr('导入模板'), content=self.tr('导入Jinja2模板'),
             parent=self.templateGroup
         )
 
         self.refreshTemplateCard = PrimaryPushSettingCard(
-            text='刷新模板列表', icon=FIF.SYNC,
-            title='刷新模板列表', content='刷新模板列表',
+            text=self.tr('刷新模板列表'), icon=FIF.SYNC,
+            title=self.tr('刷新模板列表'), content=self.tr('刷新模板列表'),
             parent=self.templateGroup
         )
 
         self.openTemplateFolderCard = PrimaryPushSettingCard(
-            text='打开模板文件夹', icon=FIF.FOLDER,
-            title='打开模板文件夹', content='打开模板文件夹',
+            text=self.tr('打开模板文件夹'), icon=FIF.FOLDER,
+            title=self.tr('打开模板文件夹'), content=self.tr('打开模板文件夹'),
             parent=self.templateGroup
         )
 
         self.openTemplateDocCard = HyperlinkCard(
-            icon=FIF.DICTIONARY, title='模板自定义文档',
-            content='打开模板自定义文档',
+            icon=FIF.DICTIONARY, title=self.tr('模板自定义文档'),
+            content=self.tr('打开模板自定义文档'),
             url='https://github.com/HuangTao313/StartInfo/blob/main/docs/template-customization.md',
-            text='打开', parent=self.templateGroup
+            text=self.tr('打开'), parent=self.templateGroup
         )
 
         self.templateGroup.addSettingCards([
@@ -152,19 +153,21 @@ class AppearanceSettingsPage(BaseSettingPage):
         if cfg.theme_color_mode.value != 'dynamic':
             app_manager.refresh_theme_color(theme_color)
         else:
-            Notify.warning(content='请先将【主题色】切换为自定义', parent=self)
+            Notify.warning(content=self.tr('请先将【主题色】切换为自定义'), parent=self)
 
     # ------------------------------------------------------------------
     # 模板
     # ------------------------------------------------------------------
 
     def _onImportTemplateClicked(self):
-        template_file_path = file_dialog('选择模版文件', '', 'jinja2模板文件 (*.j2)')
+        template_file_path = file_dialog(
+            self.tr('选择模版文件'), '', self.tr('jinja2模板文件 (*.j2)'))
         if template_file_path is not None:
             is_success, result_message = import_template(template_file_path)
             if is_success:
-                Notify.success(title='模板导入成功',
-                               content=f'已成功导入模板：{template_file_path.name}',
+                Notify.success(title=self.tr('模板导入成功'),
+                               content=self.tr('已成功导入模板：{name}').format(
+                                   name=template_file_path.name),
                                parent=self)
                 self._onRefreshTemplateClicked()
 
@@ -217,7 +220,9 @@ class AppearanceSettingsPage(BaseSettingPage):
     def _onRefreshTemplateClicked(self):
         templates_list = get_template_files()
         self._update_options_setting_card(self.templateCard, templates_list)
-        Notify.success(f'已刷新模板列表，发现 {len(templates_list)} 个文件', parent=self)
+        Notify.success(
+            self.tr('已刷新模板列表，发现 {count} 个文件').format(count=len(templates_list)),
+            parent=self)
 
     @staticmethod
     def _onOpenTemplateFolderClicked():

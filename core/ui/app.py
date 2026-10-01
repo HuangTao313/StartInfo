@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTranslator
+from PySide6.QtCore import QTranslator, QCoreApplication
 from qasync import QEventLoop
 from qfluentwidgets import Theme, setTheme, setThemeColor
 
@@ -11,6 +11,14 @@ from ..base_lib import system
 from ..config import cfg
 from ..logger import log
 from ..paths import TRANSLATION_FILE_PATH
+
+# 模块级 tr() 使用的翻译上下文，**必须保持为空字符串**。
+# lupdate 把裸 tr() 调用（无论位于模块级、嵌套函数，还是类的方法/静态方法中）
+# 一律归入「空上下文」，因此运行时只有用空上下文查找才能命中 .qm 里的译文。
+# 若这里写成任意具名上下文（如 'StartInfo'），lupdate 生成的条目仍然存在，
+# 但运行时永远查不到，会静默退回原文。
+# 类内部的 self.tr() 由 Qt 与 lupdate 统一以「类名」作为上下文，不走这里。
+GLOBAL_TR_CONTEXT = ''
 
 class AppManager:
     _instance = None
@@ -84,6 +92,20 @@ class AppManager:
 
 # 全局 AppManager 实例
 app_manager = AppManager()
+
+def tr(text: str) -> str:
+    """模块级翻译入口，由 :class:`AppManager` 提供。
+
+    等价于 ``self.tr()``，供没有 ``self`` 的用户可见文案使用
+    （模块级函数、模块级代码、非 QObject 的普通类）：:
+
+        from .app import tr
+        ui.dialog(tr('发生错误'))
+
+    类内部请继续使用 ``self.tr()``，不要为了调用本函数而引入 QObject。
+    """
+    return QCoreApplication.translate(GLOBAL_TR_CONTEXT, text)
+
 
 def get_theme_color() -> str:
     """获取系统的主题色"""
