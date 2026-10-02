@@ -195,69 +195,127 @@ class SingleInstance:
 # =============================================================================
 # 重启
 # =============================================================================
+def _is_packaged() -> bool:
+    """是否运行在打包后的环境（PyInstaller frozen / Nuitka __compiled__）"""
+    return bool(getattr(sys, 'frozen', False) or '__compiled__' in globals())
+
+
+def _system_display() -> str:
+    """用于日志展示的系统名：platform.system() 的 Darwin 映射为 macOS"""
+    return {'Darwin': 'macOS'}.get(system, system)
+
+
 def restart_program(args: str = ""):
     """
-    兼容互斥锁的强制重启
+    兼容互斥锁的强制重启（按 系统 × 开发/打包 分发到对应分支）
     :param args: 启动参数，例如 "--settings"。留空则默认启动主程序。
     """
-    # 如果是Windows系统
     if system == 'Windows':
-        # 1. 获取当前进程 PID
-        current_pid = os.getpid()
-
-        # 2. 构造命令
-        # 注意：start "" "{EXE_FILE_PATH}" {args}
-        # 如果 args 不为空，它会紧跟在路径后面
-        # 例如：start "" "C:\path\to\main.exe" --settings
-
-        # 我们加上一个判断，确保参数前面有个空格
-        extra_args = f" {args}" if args else ""
-
-        # 构造一行流命令
-        # taskkill 强制杀掉当前 PID 确保文件锁/互斥锁释放
-        # timeout 等待 1 秒给系统缓冲
-        # start 重新拉起程序
-        cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_FILE_PATH}"{extra_args}'
-
-        # 破坏性操作：强制杀掉当前进程，记录后以后台静默方式执行 CMD 命令
-        log.info(f'主程序即将重启 (PID={current_pid}, 参数="{args or "无"}")')
-        subprocess.Popen(cmd, shell=True)
-
-        # 4. 当前程序立即退出
-        sys.exit()
-
-    # MacOS打包环境
-    else:
-        current_pid = os.getpid()
-        extra_args = shlex.split(args) if args else []
-        # 保留虚拟环境中的解释器路径；resolve() 会把 .venv/bin/python
-        # 解析为基础 Python，导致重启后找不到项目依赖。
-        executable_path = Path(sys.executable).absolute()
-
-        # Nuitka 的 macOS GUI 程序位于 xxx.app/Contents/MacOS/ 中。
-        # 找到 .app 后使用 open 交给 Launch Services 正确拉起应用。
-        app_path = next(
-            (path for path in executable_path.parents if path.suffix == '.app'),
-            None
-        )
-        if app_path:
-            restart_command = ['/usr/bin/open', '-n', str(app_path)]
-            if extra_args:
-                restart_command.extend(['--args', *extra_args])
-        elif getattr(sys, 'frozen', False) or '__compiled__' in globals():
-            # 兼容 Nuitka/PyInstaller 生成的独立可执行文件。
-            restart_command = [str(executable_path), *extra_args]
+        if _is_packaged():
+            _restart_windows_packaged(args)
         else:
-            # 开发环境中的 sys.executable 是 Python，需要明确启动 main.py。
-            restart_command = [
-                str(executable_path),
-                str((MAIN_PATH / 'main.py').resolve()),
-                *extra_args
-            ]
+            _restart_windows_dev(args)
+    else:
+        if _is_packaged():
+            _restart_posix_packaged(args)
+        else:
+            _restart_posix_dev(args)
 
-        # 辅助进程等待当前程序退出后再启动新实例。等待时间设置上限，
-        # 避免 Nuitka 外层进程暂未退出时一直阻塞重启。
-        restart_script = '''
+
+def _restart_windows_packaged(args: str) -> None:
+    """Windows 打包环境：强制杀掉当前进程后重新拉起 StartInfo.exe"""
+    current_pid = os.getpid()
+
+    # start "" "{EXE_FILE_PATH}" {args}：args 不为空时紧跟在路径后面，
+    # 例如 start "" "C:\path\to\StartInfo.exe" --settings
+    extra_args = f" {args}" if args else ""
+
+    # taskkill 强制杀掉当前 PID 确保互斥锁释放，timeout 等待 1 秒缓冲，
+    # start 重新拉起程序
+    cmd = f'taskkill /f /pid {current_pid} & timeout /t 1 /nobreak & start "" "{EXE_FILE_PATH}"{extra_args}'
+
+    # 破坏性操作：强制杀掉当前进程，记录后以后台静默方式执行 CMD 命令
+    log.info(f'主程序即将重启 (PID={current_pid}, 参数="{args or "无"}")')
+    subprocess.Popen(cmd, shell=True)
+    sys.exit()
+
+
+def _restart_windows_dev(args: str) -> None:
+    """Windows 开发环境：等当前进程退出后在项目根目录用 uv 重新拉起 main.py。
+
+    辅助 PowerShell 进程继承当前控制台（IDE 终端），不新开窗口，
+    新实例的输出继续留在原终端里。
+    """
+    current_pid = os.getpid()
+    extra_args = f" {args}" if args else ""
+
+    # 轮询等待旧进程退出（单实例互斥锁随之释放）后再拉起新实例，设 3 秒上限；
+    # 若旧进程因 Qt 拦截 SystemExit 等原因仍在，兜底强制结束。
+    restart_script = f'''
+$n = 0
+while ((Get-Process -Id {current_pid} -ErrorAction SilentlyContinue) -and ($n -lt 30)) {{
+    Start-Sleep -Milliseconds 100
+    $n++
+}}
+Stop-Process -Id {current_pid} -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 300
+uv run main.py{extra_args}
+'''
+
+    log.info(f'Windows 开发环境即将重启 (PID={current_pid}, 参数="{args or "无"}")')
+    subprocess.Popen(
+        ['powershell', '-NoProfile', '-Command', restart_script],
+        cwd=str(MAIN_PATH),
+    )
+    sys.exit()
+
+
+def _restart_posix_packaged(args: str) -> None:
+    """POSIX 打包环境：macOS 交给 Launch Services 拉起 .app，其余直接执行自身"""
+    # 保留实际可执行文件路径
+    executable_path = Path(sys.executable).absolute()
+    extra_args = shlex.split(args) if args else []
+
+    # Nuitka 的 macOS GUI 程序位于 xxx.app/Contents/MacOS/ 中。
+    # 找到 .app 后使用 open 交给 Launch Services 正确拉起应用。
+    app_path = next(
+        (path for path in executable_path.parents if path.suffix == '.app'),
+        None
+    )
+    if app_path:
+        restart_command = ['/usr/bin/open', '-n', str(app_path)]
+        if extra_args:
+            restart_command.extend(['--args', *extra_args])
+    else:
+        # 兼容 Nuitka/PyInstaller 生成的独立可执行文件（Linux 打包产物同此）。
+        restart_command = [str(executable_path), *extra_args]
+
+    _launch_posix_restart(restart_command, args)
+
+
+def _restart_posix_dev(args: str) -> None:
+    """POSIX 开发环境：用当前虚拟环境解释器重新拉起 main.py（macOS/Linux 通用）"""
+    extra_args = shlex.split(args) if args else []
+
+    # 保留虚拟环境中的解释器路径；resolve() 会把 .venv/bin/python
+    # 解析为基础 Python，导致重启后找不到项目依赖。
+    executable_path = Path(sys.executable).absolute()
+
+    # 开发环境中的 sys.executable 是 Python，需要明确启动 main.py。
+    restart_command = [
+        str(executable_path),
+        str((MAIN_PATH / 'main.py').resolve()),
+        *extra_args
+    ]
+
+    _launch_posix_restart(restart_command, args)
+
+
+def _launch_posix_restart(restart_command: list[str], args: str) -> None:
+    """启动 POSIX 辅助进程：等当前进程退出后执行重启命令，随后结束当前进程"""
+    # 辅助进程等待当前程序退出后再启动新实例。等待时间设置上限，
+    # 避免 Nuitka 外层进程暂未退出时一直阻塞重启。
+    restart_script = '''
 old_pid="$1"
 shift
 wait_count=0
@@ -267,26 +325,26 @@ while kill -0 "$old_pid" 2>/dev/null && [ "$wait_count" -lt 30 ]; do
 done
 exec "$@"
 '''
-        subprocess.Popen(
-            [
-                '/bin/sh',
-                '-c',
-                restart_script,
-                'StartInfo-restart',
-                str(current_pid),
-                *restart_command
-            ],
-            cwd=str(MAIN_PATH),
-            start_new_session=True,
-            close_fds=True,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
+    subprocess.Popen(
+        [
+            '/bin/sh',
+            '-c',
+            restart_script,
+            'StartInfo-restart',
+            str(os.getpid()),
+            *restart_command
+        ],
+        cwd=str(MAIN_PATH),
+        start_new_session=True,
+        close_fds=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
 
-        log.info(f'MacOS程序正在重启，启动参数: {args or "无"}')
-        # Qt 的槽函数可能拦截 SystemExit，直接结束旧进程才能确保辅助进程继续。
-        os._exit(0)
+    log.info(f'{_system_display()}程序正在重启，启动参数: {args or "无"}')
+    # Qt 的槽函数可能拦截 SystemExit，直接结束旧进程才能确保辅助进程继续。
+    os._exit(0)
 
 
 __all__ = [

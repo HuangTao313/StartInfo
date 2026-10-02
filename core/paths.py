@@ -101,7 +101,7 @@ SETTINGS_ICON_FILE_PATH: Path = ASSETS_FOLDER_PATH / 'settings.ico'
 # 应用图标
 LOGO_ICON_FILE_PATH: Path = ASSETS_FOLDER_PATH / 'startinfo.ico'
 # QFluentWidgets 中文翻译文件
-TRANSLATION_FILE_PATH: Path = I18N_FOLDER_PATH / 'qfluentwidgets.zh_CN.qm'
+TRANSLATION_FILE_PATH: Path = I18N_FOLDER_PATH / 'qfw' / 'qfluentwidgets.zh_CN.qm'
 
 
 # =============================================================================

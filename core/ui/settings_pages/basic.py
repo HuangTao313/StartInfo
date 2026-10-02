@@ -1,17 +1,17 @@
 """基本设置页面。"""
 
-import os
 import shutil
 
 from qasync import asyncSlot
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup)
 
 from ...config import cfg, qconfig
 from ...logger import log
-from ...paths import CONFIG_FILE_PATH, CACHE_FOLDER_PATH, LOG_FOLDER_PATH
+from ...paths import DATA_FOLDER_PATH, CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..controls import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
                         CitySearchBox, ExpandGroupCard, ListEditingBox,
@@ -481,17 +481,6 @@ class BasicSettingsPage(BaseSettingPage):
         self.openLogFolderCard.clicked.connect(self._onOpenLogFolderClicked)
 
     # ------------------------------------------------------------------
-    # 辅助
-    # ------------------------------------------------------------------
-
-    def _openConfigFile(self):
-        try:
-            os.startfile(CONFIG_FILE_PATH)
-        except Exception as e:
-            log.error(f'设置-打开配置文件失败: {e}')
-            Notify.error(title=self.tr('打开配置文件失败'), content=str(e), parent=self)
-
-    # ------------------------------------------------------------------
     # 槽函数
     # ------------------------------------------------------------------
 
@@ -509,7 +498,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onOpenLogFolderClicked(self) -> None:
         if LOG_FOLDER_PATH.exists():
-            os.startfile(LOG_FOLDER_PATH)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(LOG_FOLDER_PATH)))
             Notify.success(self.tr('已打开日志文件夹'), parent=self)
 
         else:
