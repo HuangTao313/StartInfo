@@ -221,7 +221,7 @@ class StartInfoConfig(QConfig):
     )
     mc_server_data_refresh_interval = ConfigItem(
         'MCServerInfoWidget', 'data_refresh_interval', 60,
-        IntRangeValidator(min_val=5, default_val=60),
+        IntRangeValidator(min_val=5, max_val=3600, default_val=60),
     )
 
     # =========================== 每日一言 ===========================

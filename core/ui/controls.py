@@ -10,8 +10,14 @@ from typing import Union
 
 from PySide6.QtCore import Qt, Signal, QDate, QLocale, QSize, QPersistentModelIndex
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QHeaderView, QListWidgetItem, QTableWidgetItem, QWidget, QHBoxLayout
-from qfluentwidgets import SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase, SubtitleLabel, ListWidget, BodyLabel, SettingCard, FluentIconBase, LineEdit, ConfigItem, CalendarPicker, ExpandGroupSettingCard, Action, CommandBar, FluentIcon, ZhDatePicker, TableWidget, TableItemDelegate, ScrollArea, ExpandLayout
+from PySide6.QtWidgets import (QAbstractItemDelegate, QAbstractItemView, QHeaderView,
+                               QListWidgetItem, QTableWidgetItem, QWidget, QHBoxLayout)
+from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, MessageBoxBase,
+                            SubtitleLabel, ListWidget, BodyLabel, SettingCard,
+                            FluentIconBase, LineEdit, SpinBox, ConfigItem,
+                            CalendarPicker, ExpandGroupSettingCard, Action, CommandBar,
+                            FluentIcon, ZhDatePicker, TableWidget, TableItemDelegate,
+                            ScrollArea, ExpandLayout)
 
 from ..config import cfg
 from ..logger import log
@@ -290,7 +296,77 @@ class TextSettingCard(SettingCard):
         if self.lineEdit.text() != str_text:
             self.lineEdit.setText(str_text)
 
+class NumberSettingCard(SettingCard):
+    """ 支持输入并微调数字的设置卡 """
 
+    numberChanged = Signal(int)
+
+    def __init__(self, config_item: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
+                 title, content=None, min_value=0, max_value=99, parent=None):
+        """
+        参数:
+        ----------
+        configItem: ConfigItem
+            配置项，关联 qconfig
+
+        icons: str | QIcon | FluentIconBase
+            图标
+
+        title: str
+            标题
+
+        content: str
+            描述内容
+
+        min_value: int
+            SpinBox 允许的最小值
+
+        max_value: int
+            SpinBox 允许的最大值
+
+        parent: QWidget
+            父组件
+        """
+        super().__init__(icon, title, content, parent)
+        self.configItem = config_item
+
+        # 1. 创建微调框并设置数值范围
+        self.spinBox = SpinBox(self)
+        self.spinBox.setFixedWidth(200)
+        self.spinBox.setRange(min_value, max_value)
+
+        # 2. 初始化数值
+        if self.configItem:
+            self.spinBox.setValue(int(self.configItem.value))
+            # 只有存在配置项时才绑定自动更新信号
+            self.configItem.valueChanged.connect(self.setNumber)
+        else:
+            self.spinBox.setToolTip(self.tr('未关联配置项...'))
+
+        # 3. 布局
+        self.hBoxLayout.addStretch(1)
+        self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        # 4. 信号绑定
+        self.spinBox.editingFinished.connect(self.__onEditingFinished)
+
+    def __onEditingFinished(self):
+        """ 输入完成的回调 """
+        number = self.spinBox.value()
+        self.setNumber(number)
+        self.numberChanged.emit(number)
+
+    def setNumber(self, number: int):
+        """ 更新配置和 UI """
+
+        # 只有存在配置项时才写入 qconfig
+        if self.configItem:
+            qconfig.set(self.configItem, number)
+
+        # 同步 UI（setValue 会自动夹取范围内值）
+        if self.spinBox.value() != number:
+            self.spinBox.setValue(number)
 
 class CalendarSettingCard(SettingCard):
     """ 日历选择设置卡 """
@@ -733,12 +809,12 @@ class BirthdayEditBox(MessageBoxBase):
             triggered=self.deleteItem
         )
 
-        self.commandBar.addActions(
-            [
-                self.addButton,
-                self.deleteButton,
-            ]
-        )
+        # 添加
+        self.commandBar.addAction(self.addButton)
+        # 分隔符
+        self.commandBar.addSeparator()
+        # 删除
+        self.commandBar.addAction(self.deleteButton)
 
         # 5. 生日表格
         self.tableWidget = TableWidget(self)

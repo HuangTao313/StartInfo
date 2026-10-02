@@ -15,7 +15,7 @@ from ...paths import CONFIG_FILE_PATH, CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..controls import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
                         CitySearchBox, ExpandGroupCard, ListEditingBox,
-                        TextSettingCard, ExtSwitchSettingCard)
+                        NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
 from ..dialogs import Notify
 
 
@@ -42,10 +42,11 @@ class BasicSettingsPage(BaseSettingPage):
             config_item=cfg.auto_close_switch, parent=self.generalGroup
         )
 
-        self.autoCloseTimer = TextSettingCard(
+        self.autoCloseTimer = NumberSettingCard(
             config_item=cfg.auto_close_time, icon=FIF.STOP_WATCH,
             title=self.tr('自动关闭时间(单位：秒/s)'),
             content=self.tr('主窗口自动关闭时间(范围：30~300秒，默认60秒)'),
+            min_value=30, max_value=300,
             parent=self.generalGroup
         )
 
@@ -55,18 +56,11 @@ class BasicSettingsPage(BaseSettingPage):
             configItem=cfg.close_settings_action, parent=self.generalGroup
         )
 
-        self.deleteDownloadTempCard = PrimaryPushSettingCard(
-            icon=FIF.DELETE, title=self.tr('删除下载缓存'),
-            content=self.tr('删除因程序更新下载的临时文件'), text=self.tr('立即删除'),
-            parent=self.generalGroup
-        )
-
         self.generalGroup.addSettingCards([
             self.startupCard,
             self.autoCloseCard,
             self.autoCloseTimer,
             self.closeSettingsAction,
-            self.deleteDownloadTempCard
         ])
         self.expandLayout.addWidget(self.generalGroup)
 
@@ -148,10 +142,11 @@ class BasicSettingsPage(BaseSettingPage):
             content=self.tr('获取天气的城市'), parent=self.weatherDetailCard
         )
 
-        self.weatherRefreshTimeCard = TextSettingCard(
+        self.weatherRefreshTimeCard = NumberSettingCard(
             icon=FIF.STOP_WATCH, title=self.tr('天气信息刷新间隔(单位：分钟/m)'),
             content=self.tr('天气信息自动刷新时间(范围：15~60分钟，默认30分钟)'),
-            config_item=cfg.weather_data_refresh_interval, parent=self.weatherDetailCard
+            config_item=cfg.weather_data_refresh_interval,
+            min_value=15, max_value=60, parent=self.weatherDetailCard
         )
 
         self.weatherRefreshCard = PrimaryPushSettingCard(
@@ -276,11 +271,12 @@ class BasicSettingsPage(BaseSettingPage):
             content=self.tr('Minecraft Java版服务器端口号(一般为25565)'),
             parent=self.MCDetailCard
         )
-        self.mcServerDataRefreshIntervalCard = TextSettingCard(
+        self.mcServerDataRefreshIntervalCard = NumberSettingCard(
             config_item=cfg.mc_server_data_refresh_interval,
             icon=FIF.STOP_WATCH,
             title=self.tr('服务器信息刷新间隔(单位：秒/s)'),
             content=self.tr('Minecraft Java版服务器信息自动刷新时间(范围：5~3600秒，默认60秒)'),
+            min_value=5, max_value=3600,
             parent=self.MCDetailCard
         )
         self.mcFriendsListCard = PrimaryPushSettingCard(
@@ -371,10 +367,11 @@ class BasicSettingsPage(BaseSettingPage):
             config_item=cfg.github_repo_name, parent=self.githubRepoDetailCard
         )
 
-        self.repoDataRefreshTimeCard = TextSettingCard(
+        self.repoDataRefreshTimeCard = NumberSettingCard(
             icon=FIF.STOP_WATCH, title=self.tr('GitHub仓库信息刷新间隔(单位：小时/h)'),
             content=self.tr('GitHub仓库信息自动刷新时间(范围：1~24小时(1天)，默认1小时)'),
-            config_item=cfg.github_repo_data_refresh_interval, parent=self.githubRepoDetailCard
+            config_item=cfg.github_repo_data_refresh_interval,
+            min_value=1, max_value=24, parent=self.githubRepoDetailCard
         )
 
         self.repoRefreshCard = PrimaryPushSettingCard(
@@ -440,11 +437,19 @@ class BasicSettingsPage(BaseSettingPage):
 
         # ── 调试 ──
         self.debugGroup = SettingCardGroup(self.tr('调试'), self.contentWidget)
+
+        self.deleteCaCheCard = PrimaryPushSettingCard(
+            icon=FIF.DELETE, title=self.tr('删除缓存'),
+            content=self.tr('删除因程序在运行中产生的缓存数据'), text=self.tr('立即删除'),
+            parent=self.debugGroup
+        )
+
         self.logLevelCard = ComboBoxSettingCard(
             icon=FIF.ALIGNMENT, title=self.tr('日志等级'),
             content=self.tr('调整程序的日志等级，重启后生效'),
             texts=cfg.LOG_LEVELS, configItem=cfg.log_level, parent=self.debugGroup
         )
+
         self.openLogFolderCard = PrimaryPushSettingCard(
             text=self.tr('打开日志文件夹'), icon=FIF.FOLDER,
             title=self.tr('打开日志文件夹'), content=self.tr('打开程序日志文件夹'),
@@ -452,6 +457,7 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
         self.debugGroup.addSettingCards([
+            self.deleteCaCheCard,
             self.logLevelCard,
             self.openLogFolderCard
         ])
@@ -462,52 +468,21 @@ class BasicSettingsPage(BaseSettingPage):
     def _connect_signals(self):
         """连接信号与槽。"""
         self.startupCard.checkedChanged.connect(self._onStartupChanged)
-        self.autoCloseTimer.textChanged.connect(self._onAutoCloseTimeChanged)
-        self.deleteDownloadTempCard.clicked.connect(self._onDeleteDownloadTempClicked)
+        self.deleteCaCheCard.clicked.connect(self._onDeleteCaCheClicked)
         cfg.weather_source.valueChanged.connect(self._onWeatherSourceChanged)
         cfg.weather_source.valueChanged.connect(self._update_qweather_cards_visibility)
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
-        self.weatherRefreshTimeCard.textChanged.connect(self._onWeatherRefreshTimeChanged)
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
         self.birthdayListCard.clicked.connect(self._onEditBirthdayList)
-        self.mcServerDataRefreshIntervalCard.textChanged.connect(
-            self._onMcServerDataRefreshIntervalChanged
-        )
         self.mcFriendsListCard.clicked.connect(self._onEditFriendsList)
         self.mcServerDataRefreshCard.clicked.connect(self._onRefreshMCServer)
         cfg.words_source.valueChanged.connect(self._onWordsSourceChanged)
-        self.repoDataRefreshTimeCard.textChanged.connect(
-            self._onGitHubRepoRefreshTimeChanged
-        )
         self.repoRefreshCard.clicked.connect(self._onRefreshGitHubRepo)
         self.openLogFolderCard.clicked.connect(self._onOpenLogFolderClicked)
 
     # ------------------------------------------------------------------
     # 辅助
     # ------------------------------------------------------------------
-
-    def _check_input(self, text, min_val, max_val, config_item, card):
-        """验证用户输入的数字是否在有效范围内。"""
-        try:
-            value = int(text)
-        except (ValueError, TypeError):
-            Notify.warning(
-                title=self.tr('输入错误'),
-                content=self.tr('请输入有效的整数，已恢复为 {value}').format(
-                    value=config_item.value),
-                parent=self
-            )
-            card.setText(str(config_item.value))
-            return
-
-        if not min_val <= value <= max_val:
-            Notify.warning(
-                title=self.tr('输入错误'),
-                content=self.tr('请输入 {min_val}~{max_val} 之间的值，已恢复为 {value}').format(
-                    min_val=min_val, max_val=max_val, value=config_item.value),
-                parent=self
-            )
-            card.setText(str(config_item.value))
 
     def _openConfigFile(self):
         try:
@@ -532,28 +507,6 @@ class BasicSettingsPage(BaseSettingPage):
             else:
                 Notify.error(content=self.tr('删除开机启动项失败，请查看日志'), parent=self)
 
-    def _onAutoCloseTimeChanged(self, text):
-        """自动关闭时间的输入校验。"""
-        self._check_input(text, 30, 300, cfg.auto_close_time, self.autoCloseTimer)
-
-    def _onWeatherRefreshTimeChanged(self, text):
-        """天气刷新间隔的输入校验。"""
-        self._check_input(text, 15, 60, cfg.weather_data_refresh_interval, self.weatherRefreshTimeCard)
-
-    def _onMcServerDataRefreshIntervalChanged(self, text):
-        """MC服务器刷新间隔的输入校验。"""
-        self._check_input(
-            text, 5, 3600, cfg.mc_server_data_refresh_interval,
-            self.mcServerDataRefreshIntervalCard
-        )
-
-    def _onGitHubRepoRefreshTimeChanged(self, text):
-        """GitHub仓库信息刷新间隔的输入校验。"""
-        self._check_input(
-            text, 1, 24, cfg.github_repo_data_refresh_interval,
-            self.repoDataRefreshTimeCard
-        )
-
     def _onOpenLogFolderClicked(self) -> None:
         if LOG_FOLDER_PATH.exists():
             os.startfile(LOG_FOLDER_PATH)
@@ -562,15 +515,15 @@ class BasicSettingsPage(BaseSettingPage):
         else:
             Notify.error(self.tr('日志文件夹不存在'), parent=self)
 
-    def _onDeleteDownloadTempClicked(self) -> bool | None:
+    def _onDeleteCaCheClicked(self) -> bool | None:
         if CACHE_FOLDER_PATH.exists():
             shutil.rmtree(CACHE_FOLDER_PATH)
-            log.info('已删除下载缓存')
-            Notify.success(self.tr('已删除下载缓存'), parent=self)
+            log.info('已删除缓存')
+            Notify.success(self.tr('已删除缓存'), parent=self)
             return True
 
         else:
-            Notify.info(content=self.tr('未发现下载缓存'), parent=self)
+            Notify.info(content=self.tr('未发现缓存'), parent=self)
             return None
 
     def _onCityChooseClicked(self) -> None:
