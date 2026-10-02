@@ -153,10 +153,10 @@ class AboutSettingsPage(BaseSettingPage):
             self.checkUpdateCard.setEnabled(True)
 
     def onUninstallClicked(self):
-        box = MessageBox(self.tr('卸载确认'), self.tr('确定要卸载本程序吗？'), self)
-        box.yesButton.setText(self.tr('确定'))
-        box.cancelButton.setText(self.tr('取消'))
-        if box.exec():
+        self.box = MessageBox(self.tr('卸载确认'), self.tr('确定要卸载本程序吗？'), self)
+        self.box.yesButton.setText(self.tr('确定'))
+        self.box.cancelButton.setText(self.tr('取消'))
+        if self.box.exec():
             if UNINSTALLER_FILE_PATH.exists():
                 try:
                     log.remove()

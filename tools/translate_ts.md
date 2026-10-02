@@ -54,8 +54,8 @@ python tools/translate_ts.py 输入文件 输出文件 --to 目标语言
 
 ```powershell
 python tools/translate_ts.py `
-    data/assets/i18n/startinfo/startinfo_zh_CN.ts `
-    data/assets/i18n/startinfo/startinfo_en_US.ts `
+    data/assets/i18n/startinfo/startinfo.zh_CN.ts `
+    data/assets/i18n/startinfo/startinfo.en_US.ts `
     --to en
 ```
 
@@ -180,7 +180,7 @@ MAX_CONCURRENCY = 3
       ↓
    lupdate
       ↓
-startinfo_zh_CN.ts
+startinfo.zh_CN.ts
       ↓
 translate_ts.py
       ↓
@@ -199,15 +199,15 @@ Qt Linguist 人工校对
 pyside6-lupdate `
     (Get-ChildItem core -Recurse -Filter *.py | Select-Object -ExpandProperty FullName) `
     main.py settings.py `
-    -ts data/assets/i18n/startinfo/startinfo_zh_CN.ts
+    -ts data/assets/i18n/startinfo/startinfo.zh_CN.ts
 ```
 
 生成英文初稿：
 
 ```powershell
 python tools/translate_ts.py `
-    data/assets/i18n/startinfo/startinfo_zh_CN.ts `
-    data/assets/i18n/startinfo/startinfo_en_US.ts `
+    data/assets/i18n/startinfo/startinfo.zh_CN.ts `
+    data/assets/i18n/startinfo/startinfo.en_US.ts `
     --to en
 ```
 
@@ -216,7 +216,7 @@ python tools/translate_ts.py `
 最后使用：
 
 ```powershell
-uv run pyside6-lrelease data/assets/i18n/startinfo/startinfo_en_US.ts
+uv run pyside6-lrelease data/assets/i18n/startinfo/startinfo.en_US.ts
 ```
 
 生成 `.qm`。

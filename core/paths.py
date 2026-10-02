@@ -83,6 +83,8 @@ CURRENT_VERSION_FILE_PATH: Path = ASSETS_FOLDER_PATH / 'current_version.json'
 API_FILE_PATH: Path = ASSETS_FOLDER_PATH / 'api.json'
 # emoji 资源（随程序分发）
 EMOJI_FILE_PATH: Path = ASSETS_FOLDER_PATH / 'emoji.json'
+# 语言包清单（语言代码 → name/version/files）
+LANGUAGES_FILE_PATH: Path = I18N_FOLDER_PATH / 'languages.json'
 
 # 组件缓存数据库（运行时生成）
 WIDGET_CACHE_FILE_PATH: Path = CACHE_FOLDER_PATH / 'widgets_cache.db'

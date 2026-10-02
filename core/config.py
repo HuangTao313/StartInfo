@@ -11,6 +11,7 @@ from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
                             qconfig, ConfigValidator)
 
 from . import paths
+from .i18n import DEFAULT_LANGUAGE, get_available_languages
 from .templates import get_template_files
 
 log = logger
@@ -31,6 +32,22 @@ class StringValidator(ConfigValidator):
 
     def correct(self, value):
         if isinstance(value, str) and len(value) > 0:
+            return value
+        return self._default
+
+class ListValidator(ConfigValidator):
+    """列表验证器。"""
+
+    def __init__(self, default: list = None):
+        if default is None:
+            default = []
+        self._default = default
+
+    def validate(self, value):
+        return isinstance(value, list)
+
+    def correct(self, value):
+        if isinstance(value, list):
             return value
         return self._default
 
@@ -119,45 +136,54 @@ class CityDictValidator(ConfigValidator):
 
 class StartInfoConfig(QConfig):
     # =========================== General ===========================
-    # 模板
-    template_file = OptionsConfigItem(
-        'General', 'template_file', 'default.j2',
-        DynamicOptionsValidator(get_template_files),
-    )
-
     # 自动关闭弹窗
     auto_close_switch = ConfigItem('General', 'auto_close_switch', True, BoolValidator())
     auto_close_time = ConfigItem(
         'General', 'auto_close_time', 60,
-        IntRangeValidator(min_val=30, max_val=300, default_val=60),
+        IntRangeValidator(min_val=30, max_val=300, default_val=60)
     )
 
     # 关闭设置窗口后的行为
     close_settings_action = OptionsConfigItem(
         'General', 'close_settings_action', 'restart',
-        OptionsValidator(['restart', 'exit']),
+        OptionsValidator(['restart', 'exit'])
+    )
+    # 语言（languages.json 为随程序分发的只读资源，导入时读取一次即可）
+    language = OptionsConfigItem(
+        'General', 'language', DEFAULT_LANGUAGE,
+        OptionsValidator(get_available_languages()),
+        restart=True
     )
     # 更新源
     update_source = OptionsConfigItem(
         'General', 'update_source', 'github',
-        OptionsValidator(['github', 'github_mirror']),
+        OptionsValidator(['github', 'github_mirror'])
     )
 
     # 日志等级
     LOG_LEVELS = ['DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']
     log_level = OptionsConfigItem('General', 'log_level', 'WARNING', OptionsValidator(LOG_LEVELS))
 
-    # =========================== Appearance ===========================
+    # =========================== 个性化 ===========================
+    # 主题
     theme = OptionsConfigItem(
         'Appearance', 'theme', 'dynamic',
-        OptionsValidator(['light', 'dark', 'dynamic']),
+        OptionsValidator(['light', 'dark', 'dynamic'])
     )
+    # 主题色模式
     theme_color_mode = OptionsConfigItem(
         'Appearance', 'theme_color_mode', 'dynamic',
-        OptionsValidator(['dynamic', 'custom']),
+        OptionsValidator(['dynamic', 'custom'])
     )
+    # 主题色
     theme_color = ColorConfigItem('Appearance', 'theme_color', '#0078d4')
+    # 云母效果
     mica_effect_switch = ConfigItem('Appearance', 'mica_effect_switch', True, BoolValidator())
+    # 模板
+    template_file = OptionsConfigItem(
+        'Appearance', 'template_file', 'default.j2',
+        DynamicOptionsValidator(get_template_files)
+    )
 
     # =========================== 日期和时间 ===========================
     datetime_switch = ConfigItem('DateTimeWidget', 'switch', True, BoolValidator())
@@ -174,21 +200,21 @@ class StartInfoConfig(QConfig):
     weather_switch = ConfigItem('WeatherWidget', 'switch', False, BoolValidator())
     city_name = ConfigItem(
         'WeatherWidget', 'city_name', DEFAULT_CITY_NAMES,
-        CityDictValidator(DEFAULT_CITY_NAMES),
+        CityDictValidator(DEFAULT_CITY_NAMES)
     )
     city_id = ConfigItem(
         'WeatherWidget', 'city_id', DEFAULT_CITY_IDS,
-        CityDictValidator(DEFAULT_CITY_IDS),
+        CityDictValidator(DEFAULT_CITY_IDS)
     )
     qweather_api_host = ConfigItem('WeatherWidget', 'qweather_api_host', '' ,StringValidator(default=''))
     qweather_api_key = ConfigItem('WeatherWidget', 'qweather_api_key', '', StringValidator(default=''))
     weather_data_refresh_interval = ConfigItem(
         'WeatherWidget', 'data_refresh_interval', 30,
-        IntRangeValidator(min_val=15, max_val=60, default_val=30),
+        IntRangeValidator(min_val=15, max_val=60, default_val=30)
     )
     weather_source = OptionsConfigItem(
         'WeatherWidget', 'source', 'xiaomi_weather',
-        OptionsValidator(['xiaomi_weather', 'qweather']),
+        OptionsValidator(['xiaomi_weather', 'qweather'])
     )
 
     # =========================== 倒数日 ===========================
@@ -206,29 +232,30 @@ class StartInfoConfig(QConfig):
     )
     mc_server_name = ConfigItem(
         'MCServerInfoWidget', 'server_name', '',
-        StringValidator(default=''),
+        StringValidator(default='')
     )
     mc_server_ip = ConfigItem(
         'MCServerInfoWidget', 'server_ip', '',
-        StringValidator(default=''),
+        StringValidator(default='')
     )
     mc_server_port = ConfigItem(
         'MCServerInfoWidget', 'server_port', '25565',
-        StringValidator(default='25565'),
+        StringValidator(default='25565')
     )
     mc_server_friends_list = ConfigItem(
         'MCServerInfoWidget', 'friends_list', [],
+        ListValidator(default=[])
     )
     mc_server_data_refresh_interval = ConfigItem(
         'MCServerInfoWidget', 'data_refresh_interval', 60,
-        IntRangeValidator(min_val=5, max_val=3600, default_val=60),
+        IntRangeValidator(min_val=5, max_val=3600, default_val=60)
     )
 
     # =========================== 每日一言 ===========================
     words_switch = ConfigItem('EveryDayWordsWidget', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
         'EveryDayWordsWidget', 'source', 'hitokoto',
-        OptionsValidator(['hitokoto', 'iciba']),
+        OptionsValidator(['hitokoto', 'iciba'])
     )
 
     # =========================== GitHub仓库信息 ===========================
@@ -237,7 +264,7 @@ class StartInfoConfig(QConfig):
     github_repo_name = ConfigItem('GitHubRepoInfoWidget', 'repo_name', '', StringValidator(default=''))
     github_repo_data_refresh_interval = ConfigItem(
         'GitHubRepoInfoWidget', 'data_refresh_interval', 1,
-        IntRangeValidator(min_val=1, max_val=24, default_val=1),
+        IntRangeValidator(min_val=1, max_val=24, default_val=1)
     )
 
     # =========================== InformationSwitch (组件开关) ===========================
@@ -245,7 +272,7 @@ class StartInfoConfig(QConfig):
     startup_times_switch = ConfigItem('OtherWidgetsSwitch', 'startup_times_widget', True, BoolValidator())
     historical_switch = ConfigItem('OtherWidgetsSwitch', 'historical_widget', False, BoolValidator())
     daily_character_switch = ConfigItem(
-        'OtherWidgetsSwitch', 'daily_character_widget', False, BoolValidator(),
+        'OtherWidgetsSwitch', 'daily_character_widget', False, BoolValidator()
     )
 
 cfg = StartInfoConfig()

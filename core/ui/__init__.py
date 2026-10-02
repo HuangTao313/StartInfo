@@ -23,10 +23,14 @@ from .controls import (BaseSettingPage, BirthdayEditBox, BirthdayTableDelegate,
 from .switch_button import IndicatorPosition, SwitchButton
 from .settings_pages import (AboutSettingsPage, AppearanceSettingsPage,
                              BasicSettingsPage)
+from ..i18n import (get_system_language, get_available_languages,
+                    get_language_names)
 
 __all__ = [
     # app
     'AppManager', 'app_manager', 'get_theme_color', 'tr',
+    # i18n
+    'get_system_language', 'get_available_languages', 'get_language_names',
     # dialogs
     'Notify', 'UpdateDownloadBox', 'action', 'dialog', 'error_dialog',
     'file_dialog', 'main_window',

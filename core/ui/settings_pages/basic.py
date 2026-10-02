@@ -7,16 +7,20 @@ from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
-                            PushSettingCard, SettingCardGroup)
+                            PushSettingCard, SettingCardGroup,
+                            MessageBox)
 
+from ...base_lib import restart_program
 from ...config import cfg, qconfig
+from ...i18n import get_language_names
 from ...logger import log
-from ...paths import DATA_FOLDER_PATH, CACHE_FOLDER_PATH, LOG_FOLDER_PATH
+from ...paths import CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
+from ..app import app_manager
 from ..controls import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
                         CitySearchBox, ExpandGroupCard, ListEditingBox,
                         NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
-from ..dialogs import Notify
+from ..dialogs import Notify, dialog
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -42,7 +46,7 @@ class BasicSettingsPage(BaseSettingPage):
             config_item=cfg.auto_close_switch, parent=self.generalGroup
         )
 
-        self.autoCloseTimer = NumberSettingCard(
+        self.autoCloseTimeCard = NumberSettingCard(
             config_item=cfg.auto_close_time, icon=FIF.STOP_WATCH,
             title=self.tr('自动关闭时间(单位：秒/s)'),
             content=self.tr('主窗口自动关闭时间(范围：30~300秒，默认60秒)'),
@@ -50,17 +54,25 @@ class BasicSettingsPage(BaseSettingPage):
             parent=self.generalGroup
         )
 
-        self.closeSettingsAction = ComboBoxSettingCard(
+        self.closeSettingsActionCard = ComboBoxSettingCard(
             texts=[self.tr('重启到主程序'), self.tr('直接退出')], icon=FIF.CLOSE,
             title=self.tr('关闭设置窗口后的行为'), content=self.tr('重启到主程序或直接退出'),
             configItem=cfg.close_settings_action, parent=self.generalGroup
         )
 
+        languages = get_language_names()
+        self.languageCard = ComboBoxSettingCard(
+            texts=languages, icon=FIF.LANGUAGE,
+            title=self.tr('语言'), content=self.tr('切换程序的显示语言'),
+            configItem=cfg.language, parent=self.generalGroup
+        )
+
         self.generalGroup.addSettingCards([
             self.startupCard,
             self.autoCloseCard,
-            self.autoCloseTimer,
-            self.closeSettingsAction,
+            self.autoCloseTimeCard,
+            self.closeSettingsActionCard,
+            self.languageCard
         ])
         self.expandLayout.addWidget(self.generalGroup)
 
@@ -440,7 +452,7 @@ class BasicSettingsPage(BaseSettingPage):
 
         self.deleteCaCheCard = PrimaryPushSettingCard(
             icon=FIF.DELETE, title=self.tr('删除缓存'),
-            content=self.tr('删除因程序在运行中产生的缓存数据'), text=self.tr('立即删除'),
+            content=self.tr('删除程序在运行中产生的缓存数据'), text=self.tr('立即删除'),
             parent=self.debugGroup
         )
 
@@ -477,12 +489,29 @@ class BasicSettingsPage(BaseSettingPage):
         self.mcFriendsListCard.clicked.connect(self._onEditFriendsList)
         self.mcServerDataRefreshCard.clicked.connect(self._onRefreshMCServer)
         cfg.words_source.valueChanged.connect(self._onWordsSourceChanged)
+        cfg.language.valueChanged.connect(self._onLanguageChanged)
         self.repoRefreshCard.clicked.connect(self._onRefreshGitHubRepo)
         self.openLogFolderCard.clicked.connect(self._onOpenLogFolderClicked)
 
     # ------------------------------------------------------------------
     # 槽函数
     # ------------------------------------------------------------------
+
+    def _onLanguageChanged(self, language: str):
+        """语言卡片选择后（qfw 卡片已自动保存配置）热重载翻译器。
+
+        已打开窗口的文案在构造时已固化，不会随翻译器刷新，
+        询问用户是否立即重启以完全应用新语言。
+        """
+        if not app_manager.switch_language(language):
+            Notify.error(self.tr('语言切换失败，请查看日志'), parent=self)
+            return
+
+        self.box = MessageBox(self.tr('切换语言'), self.tr('语言将在重启后完全生效，是否立即重启？'), self)
+        self.box.yesButton.setText(self.tr('立即重启'))
+        self.box.cancelButton.setText(self.tr('稍后重启'))
+        if self.box.exec():
+            restart_program('--settings')
 
     def _onStartupChanged(self, is_enabled: bool):
         if is_enabled:

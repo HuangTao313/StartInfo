@@ -1,0 +1,17 @@
+{
+    "zh_CN": {
+        "name": "简体中文",
+        "version": "1.0.0",
+        "files": [
+            "qfw/qfluentwidgets.zh_CN.qm",
+            "startinfo/startinfo.zh_CN.qm"
+        ]
+    },
+    "en_US": {
+        "name": "English",
+        "version": "1.0.0",
+        "files": [
+            "startinfo/startinfo.en_US.qm"
+        ]
+    }
+}

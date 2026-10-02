@@ -9,8 +9,10 @@ from qfluentwidgets import Theme, setTheme, setThemeColor
 
 from ..base_lib import system
 from ..config import cfg
+from ..i18n import (DEFAULT_LANGUAGE, get_available_languages,
+                    get_language_files)
 from ..logger import log
-from ..paths import TRANSLATION_FILE_PATH
+from ..paths import I18N_FOLDER_PATH
 
 # 模块级 tr() 使用的翻译上下文，**必须保持为空字符串**。
 # lupdate 把裸 tr() 调用（无论位于模块级、嵌套函数，还是类的方法/静态方法中）
@@ -39,34 +41,31 @@ class AppManager:
             # 2. 将其设置为全局的 asyncio 事件循环
             asyncio.set_event_loop(self._loop)
             log.debug('将QT事件循环设置为全局 asyncio 事件循环')
-
-            # 设置全局语言为中文
-            self.translator = QTranslator()
-            self.translator.load(str(TRANSLATION_FILE_PATH))
-            self._app.installTranslator(self.translator)
-            log.debug('设置语言为中文')
-
+            # 3.设置语言
+            self._translators: list[QTranslator] = []
+            self._apply_language()
+            # 4.应用主题
             self._apply_theme()
-            log.debug('初始化主题')
+
         return self._app
 
     def _apply_theme(self):
         """根据 cfg 的值初始化主题"""
-        # 直接读取你 config.py 里的当前值
-        theme_mode = cfg.theme.value
-        # theme_color_mode = cfg.theme_color.value if not cfg.use_win_theme_color.value else get_theme_color()
+        theme = cfg.theme.value
         theme_color = cfg.theme_color.value if cfg.theme_color_mode.value != 'dynamic' else get_theme_color()
-        self.refresh_theme(theme_mode)
+        self.refresh_theme(theme)
+        log.debug(f'初始化主题：{theme}')
         self.refresh_theme_color(theme_color)
+        log.debug(f'初始化主题色：{theme_color}')
 
     @staticmethod
-    def refresh_theme(theme_mode: str):
+    def refresh_theme(theme: str):
         """
         刷新全局主题
         """
-        if theme_mode == 'light':
+        if theme == 'light':
             setTheme(Theme.LIGHT)
-        elif theme_mode == 'dark':
+        elif theme == 'dark':
             setTheme(Theme.DARK)
         else:
             # QFluentWidgets 完美支持 Theme.AUTO，它会自动看系统设置
@@ -81,6 +80,59 @@ class AppManager:
         # 注意：qfw 的 setThemeColor 内部会自动处理 qconfig 和 updateStyleSheet
         # 我们只需要确保传入的是有效的颜色
         setThemeColor(color_value, save=True)
+
+    def _apply_language(self, language: str = None) -> None:
+        """初始化/切换语言：卸载旧翻译器后按 languages.json 的 files 顺序加载。
+
+        Qt 的多个翻译器按安装逆序查询，后安装的优先命中——files 里排在
+        后面的 startinfo 语言包会覆盖排在前面的 qfw 语言包中的同源文案
+        （如 qfw 的开关状态「开/关」替换为「打开/关闭」）。
+        """
+        if language is None:
+            language = cfg.language.value
+
+        # 语言不在清单中（配置文件被手改/清单变更）时回退默认语言
+        if language not in get_available_languages():
+            log.warning(f'语言 {language} 不在语言包清单中，回退默认语言 {DEFAULT_LANGUAGE}')
+            language = DEFAULT_LANGUAGE
+
+        for old_translator in self._translators:
+            self._app.removeTranslator(old_translator)
+        self._translators.clear()
+
+        for file_path in get_language_files(language):
+            qm_path = I18N_FOLDER_PATH / file_path
+            translator = QTranslator(self._app)
+            if translator.load(str(qm_path)):
+                self._app.installTranslator(translator)
+                self._translators.append(translator)
+                log.debug(f'已加载语言包: {qm_path.name}')
+            else:
+                log.warning(f'语言包加载失败，已跳过: {qm_path}')
+
+        log.debug(f'当前语言: {language}')
+
+    def switch_language(self, language: str) -> bool:
+        """切换语言：保存配置并重载翻译器。返回是否成功。
+
+        已打开的窗口不会随翻译器重载而刷新（文案在构造时已固化），
+        完全生效需要重启程序。
+        """
+        if language not in get_available_languages():
+            log.warning(f'切换语言失败，{language} 不在语言包清单中')
+            return False
+
+        # 值相同则不写入，避免 valueChanged 信号再次触发语言重载
+        if language != cfg.language.value:
+            cfg.set(cfg.language, language, save=True)
+        else:
+            # 本方法由卡片的 valueChanged 信号链触发时，qconfig.set 尚未
+            # 执行到 save()；若此后弹窗选择立即重启，sys.exit() 的
+            # SystemExit 会中断信号链跳过 save()，导致配置未落盘
+            cfg.save()
+
+        self._apply_language(language)
+        return True
 
     def get_app(self) -> QApplication:
         # init_app 自带惰性守卫并总是返回 _app，直接委托即可
@@ -160,4 +212,4 @@ var color = $.NSColor.controlAccentColor.colorUsingColorSpace(
         return '#0078d4'
 
     except Exception:
-        return '#0078d4'  # 读取失败时的保底蓝色
+        return '#0078d4'

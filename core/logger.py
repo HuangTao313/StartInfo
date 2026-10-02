@@ -10,10 +10,13 @@ import sys
 
 from loguru import logger
 
+# 别名必须先于 config 导入创建：config → i18n 的语言清单读取会经
+# 延迟导入回到 base_lib → logger，此时本模块处于半初始化状态，
+# 只有 log 已存在才能安全完成这条回路
+log = logger
+
 from .config import cfg
 from .paths import CONFIG_FILE_PATH, LOG_FILE_PATH
-
-log = logger
 
 # 日志初始化依赖 cfg.log_level，因此必须在 config 之后导入
 # --debug 只影响本次启动，不写回配置
