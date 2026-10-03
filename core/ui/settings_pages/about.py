@@ -11,7 +11,7 @@ from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, MessageBox, PrimaryPushSettingCard,
                             SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel)
 
-from ...base_lib import CURRENT_VERSION_JSON, TITLE, VERSION
+from ...base_lib import CURRENT_VERSION_JSON, VERSION
 from ...config import cfg
 from ...logger import log
 from ...paths import DATA_FOLDER_PATH, LOGO_ICON_FILE_PATH, UNINSTALLER_FILE_PATH
@@ -41,16 +41,13 @@ class AboutSettingsPage(BaseSettingPage):
             self.image_label.setFixedSize(pixmap.size())
             self._add_centered_widget(self.image_label)
 
-        # 标题（居中）
-        self._add_centered_widget(TitleLabel(TITLE))
-
-        # 小标题(居中)
-        self._add_centered_widget(SubtitleLabel('StartInfo'))
-        self._add_centered_widget(SubtitleLabel(self.tr('本项目采用 GNU GPLv3.0 许可证开源')))
+        # 标题（居中）。tr() 必须传字面量，lupdate 无法提取变量；
+        # 文案需与 base_lib.TITLE 保持一致
+        self._add_centered_widget(TitleLabel(self.tr('开机速览')))
 
         # 简单介绍(居中)
         self._add_centered_widget(StrongBodyLabel(self.tr('一款基于 PySide6 与 QFluentWidgets 开发的桌面信息聚合工具，通过模块化组件在开机后快速展示各类实用信息。')))
-
+        self._add_centered_widget(StrongBodyLabel(self.tr('本项目采用 GNU GPLv3.0 许可证开源')))
 
         # 与下方设置项之间的间距
         self._add_spacer(20)
