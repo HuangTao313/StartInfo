@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import hashlib
+import json
 import os
 import time
 import uuid
@@ -12,15 +13,27 @@ from pathlib import Path
 import httpx
 
 
-API_URL = "https://openapi.youdao.com/api"
+API_URL = "https://openapi.youdao.com/proxy/http/llm-trans"
 MAX_CONCURRENCY = 3
 MAX_RETRIES = 4
+
+# 子曰翻译模型：pro(14B) 质量更高且**支持提示词**；lite(1.5B) 便宜但
+# 实测会忽略 TRANSLATION_PROMPT，专有名词约定不生效
+HANDLE_OPTION = "0"
+
+# 自定义提示词：有道限制 ≤1200 字符 / 400 单词，保持精简。
+# 项目专有名词：开机速览 → StartInfo；组件 → Widget(s)
+TRANSLATION_PROMPT = (
+    "这是桌面应用「开机速览」(StartInfo)的界面文案翻译。"
+    "应用名统一译为 StartInfo；组件统一译为 Widget(s)；"
+    "保留 {} 占位符、换行符与原文格式，不要多加解释，只返回译文。"
+)
 
 LANGUAGE_MAP = {
     "zh_CN": "zh-CHS",
     "zh_TW": "zh-CHT",
     "zh_HK": "zh-CHT",
-    "en_US": "en_US",
+    "en_US": "en",
     "en": "en",
     "ja": "ja",
     "ko": "ko",
@@ -81,8 +94,8 @@ async def translate(
             salt = str(uuid.uuid4())
             curtime = str(int(time.time()))
 
-            params = {
-                "q": text,
+            payload = {
+                "i": text,
                 "from": source_lang,
                 "to": target_lang,
                 "appKey": app_key,
@@ -96,28 +109,54 @@ async def translate(
                 ),
                 "signType": "v3",
                 "curtime": curtime,
+                "prompt": TRANSLATION_PROMPT,
+                # full：每条 SSE 事件携带累积全文，取最后一条即为完整译文
+                "streamType": "full",
+                "handleOption": HANDLE_OPTION,
             }
 
             try:
-                response = await client.get(
+                # LLM 流式响应较慢，读超时单独放宽
+                timeout = httpx.Timeout(20.0, read=120.0)
+
+                full_text = ""
+
+                async with client.stream(
+                    "POST",
                     API_URL,
-                    params=params,
-                    timeout=20,
-                )
-                response.raise_for_status()
-                data = response.json()
+                    data=payload,
+                    timeout=timeout,
+                ) as response:
+                    response.raise_for_status()
 
-                if data.get("errorCode") not in (None, "0"):
-                    raise RuntimeError(
-                        f"有道 API 错误 {data['errorCode']}: "
-                        f"{data.get('errorMessage', '未知错误')}"
-                    )
+                    async for line in response.aiter_lines():
+                        line = line.strip()
 
-                translations = data.get("translation")
-                if not translations:
-                    raise RuntimeError("API 未返回 translation")
+                        if not line.startswith("data:"):
+                            continue
 
-                return translations[0]
+                        data = line[len("data:"):].strip()
+
+                        if not data:
+                            continue
+
+                        event = json.loads(data)
+
+                        if event.get("code") != "0":
+                            raise RuntimeError(
+                                f"有道大模型翻译错误 {event.get('code')}: "
+                                f"{event.get('message', '未知错误')}"
+                            )
+
+                        chunk = (event.get("data") or {}).get("transFull")
+
+                        if chunk:
+                            full_text = chunk
+
+                if not full_text:
+                    raise RuntimeError("API 未返回译文")
+
+                return full_text
 
             except Exception as e:
                 if attempt == MAX_RETRIES - 1:
@@ -301,7 +340,7 @@ def indent_xml(tree: ET.ElementTree) -> None:
 
 async def main() -> None:
     parser = argparse.ArgumentParser(
-        description="使用有道翻译 API 增量翻译 Qt .ts 文件"
+        description="使用有道大模型翻译 API 增量翻译 Qt .ts 文件"
     )
     parser.add_argument("source", type=Path, help="源 .ts 文件")
     parser.add_argument("output", type=Path, help="输出 .ts 文件")
