@@ -688,8 +688,8 @@ class NetworkWidgetBase(LocalWidgetBase):
 
         适合大多数组件（小时/天级刷新），无需手动管理连接。
         """
-        # 检查是否联网
-        if not is_internet():
+        # 检查是否联网（探测移入线程池，避免阻塞事件循环/UI）
+        if not await asyncio.to_thread(is_internet):
             self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')
             return None
@@ -1029,8 +1029,8 @@ class ExtNetworkWidgetBase(LocalWidgetBase):
     # --------------------------------------------------------------
     async def _dispatch_requests_async(self) -> dict | None:
         """异步并发调度当前数据源的全部 API"""
-        # 检查是否联网
-        if not is_internet():
+        # 检查是否联网（探测移入线程池，避免阻塞事件循环/UI）
+        if not await asyncio.to_thread(is_internet):
             self.last_error = '当前未联网，无法获取数据'
             self.skip_cache()  # 断网不写缓存，避免把 None 以 'null' 缓存
             log.error(f'当前未联网，联网组件 [{self.WIDGET_NAME}] 无法获取数据')

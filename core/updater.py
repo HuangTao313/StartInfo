@@ -294,8 +294,9 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
     log.debug(f'更新器-开始检查更新 (force_refresh={force_refresh})')
     try:
         # 0. 联网检查提前：断网时直接给出准确提示，
-        #    避免先尝试拉取失败后报出误导性的"获取版本信息失败"
-        if not is_internet():
+        #    避免先尝试拉取失败后报出误导性的"获取版本信息失败"；
+        #    探测移入线程池，避免阻塞事件循环/UI
+        if not await asyncio.to_thread(is_internet):
             return False, {}, tr('无法连接网络，检查更新失败')
 
         # 1. 版本文件维护逻辑

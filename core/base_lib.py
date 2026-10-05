@@ -24,6 +24,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Union
@@ -92,25 +93,36 @@ system = platform.system()
 # 网络恢复后仍可重新检测
 _is_internet_cache: tuple[bool, float] | None = None
 _INTERNET_CACHE_TTL: float = 60.0  # 缓存有效秒数
+# 并发单飞锁：多个联网组件经 gather 同时启动时，只有第一个调用真正发起
+# 探测，其余调用（各自位于线程池工作线程内）等锁释放后直接读缓存结果
+_probe_lock = threading.Lock()
 
 
-def is_internet(timeout: float = 3.0) -> bool | float:
+def is_internet(timeout: float = 2.0) -> bool:
     """
     检测网络连通性（使用阿里云公共 DNS，自动缓存结果）
 
     - 第一次调用：执行网络检测并缓存结果
     - 缓存有效期（默认 60 秒）内：直接返回缓存结果（零开销）
     - 缓存过期后：重新检测，避免断网恢复后仍返回旧的失败结果
+    - 并发调用时单飞：同一时刻只有一次真实探测，其余等待并复用结果
     - 所有导入本模块的文件共享同一个缓存状态
 
-    :param timeout: 超时时间（秒），默认 3 秒
+    异步调用方（事件循环内）请使用 ``await asyncio.to_thread(is_internet)``，
+    避免阻塞循环；本函数内部的锁等待发生在调用方线程上。
+
+    :param timeout: 超时时间（秒），默认 2 秒
     :return: True 表示网络可用，False 表示不可用
     """
     global _is_internet_cache
 
     now = time.monotonic()
     if _is_internet_cache is None or now - _is_internet_cache[1] >= _INTERNET_CACHE_TTL:
-        _is_internet_cache = (check_internet(timeout), now)
+        with _probe_lock:
+            # 拿到锁后复查：可能其他线程刚完成探测并刷新了缓存
+            now = time.monotonic()
+            if _is_internet_cache is None or now - _is_internet_cache[1] >= _INTERNET_CACHE_TTL:
+                _is_internet_cache = (check_internet(timeout), now)
 
     return _is_internet_cache[0]
 
