@@ -16,13 +16,15 @@
 
 from .app import AppManager, app_manager, get_theme_color, tr
 from .dialogs import dialog, error_dialog, file_dialog, main_window
-from .ui_widgets import (BaseSettingPage, CalendarSettingCard, CitySearchBox,
-                         DateTableDelegate, DateTableEditBox, ExpandGroupCard,
-                         ExtSwitchSettingCard, ListEditingBox, TextSettingCard,
-                         Notify, UpdateDownloadBox, action)
-from .switch_button import IndicatorPosition, SwitchButton
 from .settings_pages import (AboutSettingsPage, AppearanceSettingsPage,
                              BasicSettingsPage)
+from .switch_button import IndicatorPosition, SwitchButton
+from .ui_widgets import (BaseSettingPage, CitySearchBox, DateTableDelegate,
+                         DateTableEditBox, DateTableEditSettingCard,
+                         EditingSettingCardBase, ExpandGroupCard,
+                         ExtSwitchSettingCard, ListEditingBox,
+                         ListEditingSettingCard, TextSettingCard,
+                         Notify, UpdateDownloadBox, action)
 from ..i18n import (get_system_language, get_available_languages,
                     get_language_names)
 
@@ -34,10 +36,11 @@ __all__ = [
     # dialogs
     'Notify', 'UpdateDownloadBox', 'action', 'dialog', 'error_dialog',
     'file_dialog', 'main_window',
-    # controls
-    'BaseSettingPage', 'CalendarSettingCard', 'CitySearchBox',
-    'DateTableDelegate', 'DateTableEditBox', 'ExpandGroupCard',
-    'ExtSwitchSettingCard', 'ListEditingBox', 'TextSettingCard',
+    # ui_widgets
+    'BaseSettingPage',  'CitySearchBox', 'DateTableDelegate',
+    'DateTableEditBox', 'DateTableEditSettingCard', 'EditingSettingCardBase',
+    'ExpandGroupCard', 'ExtSwitchSettingCard', 'ListEditingBox',
+    'ListEditingSettingCard', 'TextSettingCard',
     # switch button
     'IndicatorPosition', 'SwitchButton',
     # 设置页

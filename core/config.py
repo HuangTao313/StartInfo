@@ -9,6 +9,7 @@ from loguru import logger
 from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
                             ColorConfigItem, ConfigItem, BoolValidator,
                             qconfig, ConfigValidator)
+from datetime import datetime
 
 from . import paths
 from .i18n import DEFAULT_LANGUAGE, get_available_languages
@@ -22,32 +23,16 @@ log = logger
 # ===========================================================================
 
 class StringValidator(ConfigValidator):
-    """非空字符串验证器。"""
+    """字符串验证器"""
 
-    def __init__(self, default: str = '未知'):
+    def __init__(self, default: str = ''):
         self._default = default
 
     def validate(self, value):
-        return isinstance(value, str) and len(value) > 0
+        return isinstance(value, str)
 
     def correct(self, value):
-        if isinstance(value, str) and len(value) > 0:
-            return value
-        return self._default
-
-class ListValidator(ConfigValidator):
-    """列表验证器。"""
-
-    def __init__(self, default: list = None):
-        if default is None:
-            default = []
-        self._default = default
-
-    def validate(self, value):
-        return isinstance(value, list)
-
-    def correct(self, value):
-        if isinstance(value, list):
+        if isinstance(value, str):
             return value
         return self._default
 
@@ -71,6 +56,67 @@ class IntRangeValidator(ConfigValidator):
             return self.default_val
         return int(max(self.min_val, min(val, self.max_val)))
 
+
+class ListValidator(ConfigValidator):
+    """列表验证器。"""
+
+    def __init__(self, default: list = None):
+        if default is None:
+            default = []
+        self._default = default
+
+    def validate(self, value):
+        return isinstance(value, list)
+
+    def correct(self, value):
+        if isinstance(value, list):
+            return value
+        return self._default
+
+
+class DictValidator(ConfigValidator):
+    """字典验证器。"""
+
+    def __init__(self, default: dict = {}):
+        self._default = default
+
+    def validate(self, value):
+        return isinstance(value, dict)
+
+    def correct(self, value):
+        if isinstance(value, dict):
+            return value
+        return self._default
+
+
+class CityDictValidator(DictValidator):
+    """城市信息字典验证器：校验 {数据源: 城市名/城市ID} 格式的字典。"""
+    def validate(self, value):
+        return isinstance(value, dict) and len(value) > 0
+
+
+class DateDictValidator(DictValidator):
+    """日期信息字典验证器：值格式 {名称: 'YYYY-MM-DD'}"""
+
+    @staticmethod
+    def normalize(value) -> dict:
+        """规范化日期字典：旧版 'YYYYMMDD' 迁移为 'YYYY-MM-DD'，无法解析的条目丢弃"""
+        result = {}
+        if not isinstance(value, dict):
+            return result
+        for key, date in value.items():
+            if not isinstance(date, str):
+                continue
+            for fmt in ('%Y-%m-%d', '%Y%m%d'):
+                try:
+                    result[key] = datetime.strptime(date, fmt).strftime('%Y-%m-%d')
+                    break
+                except ValueError:
+                    continue
+        return result
+
+    def correct(self, value):
+        return self.normalize(value)
 
 class DynamicOptionsValidator(ConfigValidator):
     """支持动态选项列表的验证器。
@@ -113,21 +159,6 @@ class DynamicOptionsValidator(ConfigValidator):
         if not current_options:
             return value
         return value if value in current_options else current_options[0]
-
-
-class CityDictValidator(ConfigValidator):
-    """城市信息字典验证器：校验 {数据源: 城市名/城市ID} 格式的字典。"""
-
-    def __init__(self, default: dict):
-        self._default = default
-
-    def validate(self, value):
-        return isinstance(value, dict) and len(value) > 0
-
-    def correct(self, value):
-        if isinstance(value, dict) and len(value) > 0:
-            return value
-        return dict(self._default)
 
 
 # ===========================================================================
@@ -206,8 +237,8 @@ class StartInfoConfig(QConfig):
         'WeatherWidget', 'city_id', DEFAULT_CITY_IDS,
         CityDictValidator(DEFAULT_CITY_IDS)
     )
-    qweather_api_host = ConfigItem('WeatherWidget', 'qweather_api_host', '' ,StringValidator(default=''))
-    qweather_api_key = ConfigItem('WeatherWidget', 'qweather_api_key', '', StringValidator(default=''))
+    qweather_api_host = ConfigItem('WeatherWidget', 'qweather_api_host', '' ,StringValidator())
+    qweather_api_key = ConfigItem('WeatherWidget', 'qweather_api_key', '', StringValidator())
     weather_data_refresh_interval = ConfigItem(
         'WeatherWidget', 'data_refresh_interval', 30,
         IntRangeValidator(min_val=15, max_val=60, default_val=30)
@@ -219,12 +250,13 @@ class StartInfoConfig(QConfig):
 
     # =========================== 倒数日 ===========================
     countdown_switch = ConfigItem('CountdownDayWidget', 'switch', False, BoolValidator())
-    countdown_name = ConfigItem('CountdownDayWidget', 'name', '', StringValidator(default=''))
-    countdown_date = ConfigItem('CountdownDayWidget', 'date', '', StringValidator(default=''))
+    countdown_name = ConfigItem('CountdownDayWidget', 'name', '', StringValidator())
+    countdown_date = ConfigItem('CountdownDayWidget', 'date', '', StringValidator())
+    countdown_days_dict = ConfigItem('CountdownDayWidget', 'countdown_days_dict', {}, DictValidator())
 
     # =========================== 生日祝福 ===========================
     birthday_wishes_switch = ConfigItem('BirthdayWishesWidget', 'switch', False, BoolValidator())
-    birthday_dict = ConfigItem('BirthdayWishesWidget', 'birthday_dict', {})
+    birthday_dict = ConfigItem('BirthdayWishesWidget', 'birthdays_dict', {}, DateDictValidator())
 
     # =========================== MC服务器检测 ===========================
     mc_server_info_switch = ConfigItem(
@@ -232,11 +264,11 @@ class StartInfoConfig(QConfig):
     )
     mc_server_name = ConfigItem(
         'MCServerInfoWidget', 'server_name', '',
-        StringValidator(default='')
+        StringValidator()
     )
     mc_server_ip = ConfigItem(
         'MCServerInfoWidget', 'server_ip', '',
-        StringValidator(default='')
+        StringValidator()
     )
     mc_server_port = ConfigItem(
         'MCServerInfoWidget', 'server_port', '25565',
@@ -260,8 +292,8 @@ class StartInfoConfig(QConfig):
 
     # =========================== GitHub仓库信息 ===========================
     github_repo_switch = ConfigItem('GitHubRepoInfoWidget', 'switch', False, BoolValidator())
-    github_repo_owner = ConfigItem('GitHubRepoInfoWidget', 'repo_owner', '', StringValidator(default=''))
-    github_repo_name = ConfigItem('GitHubRepoInfoWidget', 'repo_name', '', StringValidator(default=''))
+    github_repo_owner = ConfigItem('GitHubRepoInfoWidget', 'repo_owner', '', StringValidator())
+    github_repo_name = ConfigItem('GitHubRepoInfoWidget', 'repo_name', '', StringValidator())
     github_repo_data_refresh_interval = ConfigItem(
         'GitHubRepoInfoWidget', 'data_refresh_interval', 1,
         IntRangeValidator(min_val=1, max_val=24, default_val=1)

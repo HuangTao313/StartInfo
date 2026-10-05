@@ -136,7 +136,7 @@ def handle_j2_template(j2_file_path: Path):
 
 async def main() -> None:
     """程序主函数"""
-    # 创建所有已启用的组件实例（组件在 core/widgets/builtin.py 中用 @register 注册）
+    # 创建所有已启用的组件实例（组件在 core/widgets/widgets.py 中用 @register 注册）
     active = [info.cls() for info in registered_widgets if info.switch.value]
     log.debug(f'启用组件: {[info.cls.WIDGET_NAME for info in registered_widgets if info.switch.value]}')
 

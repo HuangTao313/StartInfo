@@ -17,10 +17,9 @@ from ...logger import log
 from ...paths import CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..app import app_manager
-from ..ui_widgets import (BaseSettingPage, CalendarSettingCard, CitySearchBox,
-                          DateTableEditBox, ExpandGroupCard, ListEditingBox,
-                          Notify, NumberSettingCard, TextSettingCard,
-                          ExtSwitchSettingCard)
+from ..ui_widgets import (BaseSettingPage, CitySearchBox, DateTableEditSettingCard,
+                          ExpandGroupCard, ListEditingSettingCard, Notify,
+                          NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -209,28 +208,37 @@ class BasicSettingsPage(BaseSettingPage):
         )
 
         # 创建手风琴组件
-        self.countdownDetailCard = ExpandGroupCard(
-            FIF.MORE, self.tr('倒数日组件详细配置'), self.tr('倒数日名称、日期信息'),
+        # self.countdownDetailCard = ExpandGroupCard(
+        #     FIF.MORE, self.tr('倒数日组件详细配置'), self.tr('倒数日名称、日期信息'),
+        #     parent=self.countdownGroup
+        # )
+        #
+        # self.countdownTextCard = TextSettingCard(
+        #     config_item=cfg.countdown_name, icon=FIF.EDIT, title=self.tr('倒数日名称'),
+        #     content=self.tr('倒数日名称'), parent=self.countdownDetailCard
+        # )
+        # self.countdownDateCard = CalendarSettingCard(
+        #     icon=FIF.CALENDAR, title=self.tr('倒数目标日期'),
+        #     content=self.tr('设置你需要倒计时的日期'), config_item=cfg.countdown_date,
+        #     parent=self.countdownDetailCard
+        # )
+        #
+        # self.countdownDetailCard.addCards([
+        #     self.countdownTextCard,
+        #     self.countdownDateCard
+        # ])
+        self.countdownDayListCard = DateTableEditSettingCard(
+            config_item=cfg.countdown_days_dict, icon=FIF.CALENDAR, title=self.tr('编辑'),
+            content=self.tr('添加或删除倒数日，双击表格可修改名称与日期'),
+            text=self.tr('编辑倒数日列表'), date_column_name=self.tr('日期'),
+            success_text=self.tr('已保存新的倒数日列表'),
             parent=self.countdownGroup
         )
 
-        self.countdownTextCard = TextSettingCard(
-            config_item=cfg.countdown_name, icon=FIF.EDIT, title=self.tr('倒数日名称'),
-            content=self.tr('倒数日名称'), parent=self.countdownDetailCard
-        )
-        self.countdownDateCard = CalendarSettingCard(
-            icon=FIF.CALENDAR, title=self.tr('倒数目标日期'),
-            content=self.tr('设置你需要倒计时的日期'), config_item=cfg.countdown_date,
-            parent=self.countdownDetailCard
-        )
-
-        self.countdownDetailCard.addCards([
-            self.countdownTextCard,
-            self.countdownDateCard
-        ])
         self.countdownGroup.addSettingCards([
             self.countdownCard,
-            self.countdownDetailCard
+            self.countdownDayListCard
+            # self.countdownDetailCard
         ])
         self.expandLayout.addWidget(self.countdownGroup)
 
@@ -241,9 +249,11 @@ class BasicSettingsPage(BaseSettingPage):
             content=self.tr('在生日当天显示生日祝福'),
             config_item=cfg.birthday_wishes_switch, parent=self.birthdayGroup
         )
-        self.birthdayListCard = PrimaryPushSettingCard(
-            text=self.tr('编辑生日列表'), icon=FIF.CALENDAR, title=self.tr('编辑'),
+        self.birthdayListCard = DateTableEditSettingCard(
+            config_item=cfg.birthday_dict, icon=FIF.CALENDAR, title=self.tr('编辑'),
             content=self.tr('添加或删除生日记录，双击表格可修改名称与生日'),
+            text=self.tr('编辑生日列表'), date_column_name=self.tr('生日'),
+            success_text=self.tr('已保存新的生日列表'),
             parent=self.birthdayGroup
         )
         self.birthdayGroup.addSettingCards([
@@ -291,9 +301,10 @@ class BasicSettingsPage(BaseSettingPage):
             min_value=5, max_value=3600,
             parent=self.MCDetailCard
         )
-        self.mcFriendsListCard = PrimaryPushSettingCard(
-            text=self.tr('编辑朋友列表'), icon=FIF.PEOPLE, title=self.tr('编辑'),
-            content=self.tr(r'编辑朋友列表'), parent=self.MCDetailCard
+        self.mcFriendsListCard = ListEditingSettingCard(
+            config_item=cfg.mc_server_friends_list, icon=FIF.PEOPLE, title=self.tr('编辑'),
+            content=self.tr(r'编辑朋友列表'), text=self.tr('编辑朋友列表'),
+            success_text=self.tr('已保存新的朋友列表'), parent=self.MCDetailCard
         )
         self.mcServerDataRefreshCard = PrimaryPushSettingCard(
             text=self.tr('立即刷新'), icon=FIF.SYNC, title=self.tr('立即刷新'),
@@ -485,8 +496,6 @@ class BasicSettingsPage(BaseSettingPage):
         cfg.weather_source.valueChanged.connect(self._update_qweather_cards_visibility)
         self.cityChooseCard.clicked.connect(self._onCityChooseClicked)
         self.weatherRefreshCard.clicked.connect(self._onRefreshWeather)
-        self.birthdayListCard.clicked.connect(self._onEditBirthdayList)
-        self.mcFriendsListCard.clicked.connect(self._onEditFriendsList)
         self.mcServerDataRefreshCard.clicked.connect(self._onRefreshMCServer)
         cfg.words_source.valueChanged.connect(self._onWordsSourceChanged)
         cfg.language.valueChanged.connect(self._onLanguageChanged)
@@ -749,31 +758,6 @@ class BasicSettingsPage(BaseSettingPage):
             Notify.error(content=widget.last_error, title=fail_title, parent=self)
         else:
             Notify.success(content=success_msg, parent=self)
-
-    def _onEditBirthdayList(self) -> None:
-        birthday_dict = cfg.birthday_dict.value
-        box = DateTableEditBox(self.tr('编辑生日列表'), data=birthday_dict,
-                               dateColumnName=self.tr('生日'), parent=self)
-        # 如果用户点击保存
-        if box.exec():
-            # 如果新列表不与原列表相等
-            if box.result != birthday_dict:
-                # 执行保存逻辑
-                qconfig.set(cfg.birthday_dict, box.result, save=True)
-                Notify.success(self.tr('已保存新的生日列表'), parent=self)
-                log.info(f'设置-已保存新的生日列表：{box.result}')
-
-    def _onEditFriendsList(self) -> None:
-        friends_list = cfg.mc_server_friends_list.value
-        box = ListEditingBox(title=self.tr('编辑朋友列表'), items=friends_list, parent=self)
-        # 如果用户点击保存
-        if box.exec():
-            # 如果新列表不与原列表相等
-            if box.result != friends_list:
-                # 执行保存逻辑
-                qconfig.set(cfg.mc_server_friends_list, box.result, save=True)
-                Notify.success(self.tr('已保存新的朋友列表'), parent=self)
-                log.info(f'设置-已保存新的朋友列表：{box.result}')
 
     @asyncSlot()
     async def _onWordsSourceChanged(self):

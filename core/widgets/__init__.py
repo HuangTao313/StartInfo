@@ -14,7 +14,7 @@
 from .framework import (APIConfig, CacheManager, ExtNetworkWidgetBase,
                         LocalWidgetBase, NetworkWidgetBase, WidgetInfo,
                         register, registered_widgets)
-from .builtin import (BirthdayWidget, CountDownDayWidget, DailyCharacterWidget,
+from .widgets import (BirthdayWidget, CountDownDayWidget, DailyCharacterWidget,
                       DailyWordsWidget, DateTimeWidget, GitHubRepoInfoWidget,
                       GreetingWidget, MCServerError, MCServerInfoWidget,
                       StartupTimesWidget, TodayInHistoryWidget, WeatherWidget,

@@ -44,7 +44,7 @@ uv run settings.py
 | `core/templates.py` | 模板扫描、导入与启用 |
 | `core/startup.py` | 开机启动项管理 |
 | `core/updater.py` | 检查更新与下载安装 |
-| `core/widgets/` | 组件系统：`framework.py` 框架 + `builtin.py` 内置组件 |
+| `core/widgets/` | 组件系统：`framework.py` 框架 + `widgets.py` 内置组件 |
 | `core/ui/` | 界面层：`app.py` 应用与主题、`dialogs.py` 弹窗、`ui_widgets.py` 控件、`settings_pages/` 设置页 |
 
 > `base_lib`、`paths`、`logger`、`templates` 构成底层：`base_lib → logger → config → templates → paths`

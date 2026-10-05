@@ -6,11 +6,12 @@
 
 import sqlite3
 import asyncio
+import shiboken6
 from pathlib import Path
 from typing import Union
 
-from PySide6.QtCore import (Qt, Signal, QDate, QLocale, QSize, QPersistentModelIndex,
-                            QUrl)
+from PySide6.QtCore import (Qt, Signal, QDate, QLocale, QSize, QModelIndex,
+                            QPersistentModelIndex, QUrl)
 from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import (QAbstractItemDelegate, QAbstractItemView, QHeaderView,
                                QListWidgetItem, QTableWidgetItem, QWidget, QHBoxLayout)
@@ -18,9 +19,11 @@ from qasync import asyncSlot
 from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, ListWidget, SettingCard,
                             FluentIconBase, LineEdit, SpinBox, ConfigItem,
                             FastCalendarPicker, ExpandGroupSettingCard, Action, CommandBar,
-                            FluentIcon, TableWidget, TableItemDelegate,
+                            FluentIcon, TableWidget, TableItemDelegate, PrimaryPushSettingCard,
                             ScrollArea, ExpandLayout, MessageBoxBase, SubtitleLabel,
                             BodyLabel, InfoBar, InfoBarPosition, ProgressBar)
+from qfluentwidgets.components.date_time.fast_calendar_view import FastCalendarView
+from qfluentwidgets.components.widgets.flyout import Flyout
 
 from .app import tr
 from .switch_button import IndicatorPosition, SwitchButton
@@ -373,67 +376,67 @@ class NumberSettingCard(SettingCard):
         if self.spinBox.value() != number:
             self.spinBox.setValue(number)
 
-class CalendarSettingCard(SettingCard):
-    """ 日历选择设置卡 """
-
-    dateChanged = Signal(QDate)
-
-    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None,
-                 config_item: ConfigItem = None, parent=None):
-        """
-        configItem 存储的通常是 ISO 格式的日期字符串 (如 '2026-06-20')
-        """
-        super().__init__(icon, title, content, parent)
-        self.configItem = config_item
-
-        # 1. 创建日历选择器
-        self.calendarPicker = FastCalendarPicker(self)
-        self.calendarPicker.locale = QLocale(QLocale.Chinese, QLocale.China)
-        self.calendarPicker.setFixedWidth(200)
-
-        # --- 汉化关键点 ---
-        # 覆盖源码中的 'Pick a date'
-        self.calendarPicker.setText(self.tr('选择一个日期'))
-        # ----------
-
-        # 2. 初始化日期
-        if self.configItem and self.configItem.value:
-            # 将配置中的字符串转为 QDate
-            initial_date = QDate.fromString(str(self.configItem.value), Qt.ISODate)
-            if initial_date.isValid():
-                self.calendarPicker.setDate(initial_date)
-
-        # 3. 布局 (模仿 QFW 标准布局)
-        self.hBoxLayout.addStretch(1)
-        self.hBoxLayout.addWidget(self.calendarPicker, 0, Qt.AlignRight)
-        self.hBoxLayout.addSpacing(16)
-
-        # 4. 信号绑定
-        self.calendarPicker.dateChanged.connect(self.__onDateChanged)
-
-        if self.configItem:
-            self.configItem.valueChanged.connect(self.setDate)
-
-    def __onDateChanged(self, date: QDate):
-        """ 日期改变后的回调 """
-        date_str = date.toString(Qt.ISODate)
-        self.setDate(date_str)
-        self.dateChanged.emit(date)
-
-    def setDate(self, date_str: str):
-        """ 更新配置和 UI """
-        # 转换回 QDate 用于 UI 更新
-        date = QDate.fromString(str(date_str), Qt.ISODate)
-        if not date.isValid():
-            return
-
-        # 更新配置
-        if self.configItem:
-            qconfig.set(self.configItem, date_str)
-
-        # 更新 UI
-        if self.calendarPicker.date != date:
-            self.calendarPicker.setDate(date)
+# class CalendarSettingCard(SettingCard):
+#     """ 日历选择设置卡 """
+#
+#     dateChanged = Signal(QDate)
+#
+#     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None,
+#                  config_item: ConfigItem = None, parent=None):
+#         """
+#         configItem 存储的通常是 ISO 格式的日期字符串 (如 '2026-06-20')
+#         """
+#         super().__init__(icon, title, content, parent)
+#         self.configItem = config_item
+#
+#         # 1. 创建日历选择器
+#         self.calendarPicker = FastCalendarPicker(self)
+#         self.calendarPicker.locale = QLocale(QLocale.Chinese, QLocale.China)
+#         self.calendarPicker.setFixedWidth(200)
+#
+#         # --- 汉化关键点 ---
+#         # 覆盖源码中的 'Pick a date'
+#         self.calendarPicker.setText(self.tr('选择一个日期'))
+#         # ----------
+#
+#         # 2. 初始化日期
+#         if self.configItem and self.configItem.value:
+#             # 将配置中的字符串转为 QDate
+#             initial_date = QDate.fromString(str(self.configItem.value), Qt.ISODate)
+#             if initial_date.isValid():
+#                 self.calendarPicker.setDate(initial_date)
+#
+#         # 3. 布局 (模仿 QFW 标准布局)
+#         self.hBoxLayout.addStretch(1)
+#         self.hBoxLayout.addWidget(self.calendarPicker, 0, Qt.AlignRight)
+#         self.hBoxLayout.addSpacing(16)
+#
+#         # 4. 信号绑定
+#         self.calendarPicker.dateChanged.connect(self.__onDateChanged)
+#
+#         if self.configItem:
+#             self.configItem.valueChanged.connect(self.setDate)
+#
+#     def __onDateChanged(self, date: QDate):
+#         """ 日期改变后的回调 """
+#         date_str = date.toString(Qt.ISODate)
+#         self.setDate(date_str)
+#         self.dateChanged.emit(date)
+#
+#     def setDate(self, date_str: str):
+#         """ 更新配置和 UI """
+#         # 转换回 QDate 用于 UI 更新
+#         date = QDate.fromString(str(date_str), Qt.ISODate)
+#         if not date.isValid():
+#             return
+#
+#         # 更新配置
+#         if self.configItem:
+#             qconfig.set(self.configItem, date_str)
+#
+#         # 更新 UI
+#         if self.calendarPicker.date != date:
+#             self.calendarPicker.setDate(date)
 
 class ExpandGroupCard(ExpandGroupSettingCard):
     """手风琴卡片——展开区域背景自动跟随主题，无需手动设透明。
@@ -688,8 +691,34 @@ class ListEditingBox(MessageBoxBase):
         super().accept()
 
 
+class DateCellCalendarPicker(FastCalendarPicker):
+    """ 表格单元格日历选择器
+
+    日历弹层是独立的原生 Popup 窗口：弹出时父窗口失活，表格视图会把编辑器
+    按"失去焦点"提交并注销，用户点选日期前编辑器就可能已被销毁。
+    因此选中日期的回调连接在日历视图上（弹层存活期间始终有效），
+    而不是编辑器自身的 dateChanged 信号上。
+    """
+
+    def __init__(self, on_picked=None, parent=None):
+        """on_picked: callable(QDate)——日历中选中日期后的回调（由委托提供）"""
+        super().__init__(parent)
+        self._onPicked = on_picked
+
+    def _showCalendarView(self):
+        view = FastCalendarView(self.window())
+        view.setResetEnabled(self.isRestEnabled())
+        view.resetted.connect(self.reset)
+        view.dateChanged.connect(self._onPicked)
+        if self.date.isValid():
+            view.setDate(self.date)
+
+        flyout = Flyout.make(view, self, self.window(), self.flyoutAnimationType)
+        view.dateChanged.connect(flyout.close)
+
+
 class DateTableDelegate(TableItemDelegate):
-    """ 日期表格委托：日期列以 FastCalendarPicker 作为单元格编辑器 """
+    """ 日期表格委托：日期列以 DateCellCalendarPicker 作为单元格编辑器 """
 
     # 日期列下标（第 0 列为名称）
     DATE_COLUMN = 1
@@ -705,10 +734,11 @@ class DateTableDelegate(TableItemDelegate):
         if index.column() != self.DATE_COLUMN:
             return super().createEditor(parent, option, index)
 
-        editor = FastCalendarPicker(parent)
+        editor = DateCellCalendarPicker(parent=parent)
         self._setEditorDate(editor, index)
-        # 用户在日历面板中选中日期后，立即提交并关闭编辑器
-        editor.dateChanged.connect(lambda: self._commitEditor(editor))
+        # 选中日期后用持久索引直接写回模型：此刻编辑器可能已被视图注销甚至销毁
+        pindex = QPersistentModelIndex(index)
+        editor._onPicked = lambda date: self._commitPickedDate(pindex, editor, date)
         return editor
 
     def setEditorData(self, editor, index):
@@ -751,16 +781,32 @@ class DateTableDelegate(TableItemDelegate):
         return (view.state() == QAbstractItemView.EditingState
                 and self._editingIndex == index)
 
+    def _commitPickedDate(self, index: QPersistentModelIndex, editor, date: QDate):
+        """用户在日历中选中日期后，把新日期直接写回模型并结束编辑
+
+        不经过 commitData 机制：此刻编辑器可能已被视图注销甚至销毁。
+        """
+        if not (date.isValid() and index.isValid()):
+            return
+
+        model = self.parent().model()
+        model.setData(QModelIndex(index), date, Qt.UserRole)
+        model.setData(QModelIndex(index), date.toString(Qt.ISODate), Qt.DisplayRole)
+
+        # 编辑器仍存活时才结束编辑（视图可能已因失焦先行关闭并销毁了它）
+        if shiboken6.isValid(editor):
+            self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
+
     def _setEditorDate(self, editor: FastCalendarPicker, index):
         """把单元格 UserRole 中保存的 QDate 直接同步给选择器（不经字符串转换）"""
         date = index.data(Qt.UserRole)
         if isinstance(date, QDate) and date.isValid():
+            # FastCalendarPicker.setDate 内部会发射 dateChanged，须阻塞信号，
+            # 否则编辑器在打开阶段（setEditorData）就会自我提交并被视图关闭，
+            # 导致后续真正选择日期时 commitData 被忽略、数据无法保存
+            editor.blockSignals(True)
             editor.setDate(date)
-
-    def _commitEditor(self, editor):
-        """提交编辑器数据并结束编辑"""
-        self.commitData.emit(editor)
-        self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
+            editor.blockSignals(False)
 
 
 class DateTableEditBox(MessageBoxBase):
@@ -790,7 +836,7 @@ class DateTableEditBox(MessageBoxBase):
         if hint is None:
             hint = self.tr('双击名称或日期可编辑')
 
-        # 用户点击保存后的最终结果 {姓名: 'YYYYMMDD'}，取消时保持为空
+        # 用户点击保存后的最终结果 {姓名: 'YYYY-MM-DD'}，取消时保持为空
         self.result = {}
 
         # 1. 设置弹窗宽高
@@ -864,20 +910,18 @@ class DateTableEditBox(MessageBoxBase):
             lambda current, previous: self._updateButtonState())
 
     def _loadData(self, data: dict) -> None:
-        """把初始数据（{姓名: 'YYYYMMDD'}）填充到表格"""
+        """把初始数据（{姓名: 'YYYY-MM-DD'}）填充到表格"""
         for name, date_str in data.items():
             self._appendRow(str(name), self._parseDate(date_str))
 
     @staticmethod
     def _parseDate(date_str) -> QDate:
-        """把 'YYYYMMDD' 日期字符串转为 QDate，无法解析时返回无效 QDate"""
-        if isinstance(date_str, str) and len(date_str) == 8 and date_str.isdigit():
-            date = QDate(int(date_str[:4]), int(date_str[4:6]), int(date_str[6:8]))
-            if date.isValid():
-                return date
-
-        log.warning(f'日期表格-无法解析的日期格式: {date_str}')
-        return QDate()
+        """把 'YYYY-MM-DD' 日期字符串转为 QDate，无法解析时返回无效 QDate"""
+        date = QDate.fromString(date_str, 'yyyy-MM-dd') if isinstance(date_str, str) \
+            else QDate()
+        if not date.isValid():
+            log.warning(f'日期表格-无法解析的日期格式: {date_str}')
+        return date
 
     def _appendRow(self, name: str, date: QDate) -> None:
         """在表格末尾追加一行名称+日期记录"""
@@ -954,10 +998,119 @@ class DateTableEditBox(MessageBoxBase):
         for row in range(self.tableWidget.rowCount()):
             name = self.tableWidget.item(row, 0).text().strip()
             date = self.tableWidget.item(row, 1).data(Qt.UserRole)
-            # 保持 {姓名: 'YYYYMMDD'} 格式
-            self.result[name] = date.toString('yyyyMMdd')
+            # 保持 {姓名: 'YYYY-MM-DD'} 格式
+            self.result[name] = date.toString('yyyy-MM-dd')
 
         super().accept()
+
+class EditingSettingCardBase(PrimaryPushSettingCard):
+    """ 编辑弹窗设置卡基类：点击按钮弹出编辑弹窗，保存后自动写入配置项
+
+    子类只需实现 _createBox()，返回带 result 属性的编辑弹窗。
+    弹窗本身不写配置（与 ListEditingBox / DateTableEditBox 的约定一致），
+    由本基类统一完成「比较新旧值 → qconfig.set → 提示与日志」。
+    """
+
+    def __init__(self, config_item: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
+                 title, content=None, text=None, success_text=None, parent=None):
+        """
+        参数:
+        ----------
+        config_item: ConfigItem
+            要编辑的配置项
+
+        icon: str | QIcon | FluentIconBase
+            图标
+
+        title: str
+            标题
+
+        content: str
+            描述内容
+
+        text: str
+            按钮文本
+
+        success_text: str
+            保存成功的提示文本，默认「已保存」
+
+        parent: QWidget
+            父组件
+        """
+        super().__init__(text, icon, title, content, parent)
+        self.configItem = config_item
+        # 成功提示延迟翻译：默认参数在类定义时求值，那时还没有 self
+        self.successText = success_text if success_text is not None else self.tr('已保存')
+
+        self.clicked.connect(self._onEditClicked)
+
+    def _onEditClicked(self):
+        """弹出编辑弹窗，保存后与原值比较，有变化才写入配置"""
+        old_value = self.configItem.value
+        box = self._createBox(old_value)
+
+        if not box.exec() or box.result == old_value:
+            return
+
+        qconfig.set(self.configItem, box.result, save=True)
+        # InfoBar 挂在窗口上，卡片太小放不下提示
+        Notify.success(self.successText, parent=self.window())
+        log.info(f'设置-{self.successText}：{box.result}')
+
+    def _createBox(self, value):
+        """创建编辑弹窗，value 为配置项当前值"""
+        raise NotImplementedError
+
+
+class ListEditingSettingCard(EditingSettingCardBase):
+    """ 列表编辑设置卡：点击按钮弹出 ListEditingBox 编辑字符串列表配置项 """
+
+    def __init__(self, config_item: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
+                 title, content=None, text=None, box_title=None,
+                 success_text=None, parent=None):
+        """
+        参数:
+        ----------
+        box_title: str
+            编辑弹窗标题，默认取按钮文本
+
+        其余参数同 EditingSettingCardBase
+        """
+        super().__init__(config_item, icon, title, content, text, success_text, parent)
+        self.boxTitle = box_title if box_title is not None else text
+
+    def _createBox(self, value):
+        return ListEditingBox(title=self.boxTitle, items=value, parent=self.window())
+
+
+class DateTableEditSettingCard(EditingSettingCardBase):
+    """ 日期表格编辑设置卡：点击按钮弹出 DateTableEditBox 编辑 {名称: 'YYYY-MM-DD'} 配置项 """
+
+    def __init__(self, config_item: ConfigItem, icon: Union[str, QIcon, FluentIconBase],
+                 title, content=None, text=None, date_column_name=None,
+                 box_title=None, success_text=None, parent=None):
+        """
+        参数:
+        ----------
+        date_column_name: str
+            编辑弹窗中日期列的表头文本，默认「日期」
+
+        box_title: str
+            编辑弹窗标题，默认取按钮文本
+
+        其余参数同 EditingSettingCardBase
+        """
+        super().__init__(config_item, icon, title, content, text, success_text, parent)
+        # 日期列名延迟翻译：默认参数在类定义时求值，那时还没有 self
+        self.dateColumnName = date_column_name if date_column_name is not None \
+            else self.tr('日期')
+        self.boxTitle = box_title if box_title is not None else text
+
+    def _createBox(self, value):
+        return DateTableEditBox(self.boxTitle, data=value,
+                                dateColumnName=self.dateColumnName,
+                                parent=self.window())
+
 
 class Notify:
     """弹窗提醒工具类"""

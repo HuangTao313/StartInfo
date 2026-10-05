@@ -48,7 +48,7 @@ Files inside the `core` directory are called indirectly by entry points such as 
 | `core/templates.py` | Template scanning, importing and activation |
 | `core/startup.py` | Startup entry management |
 | `core/updater.py` | Update checking, download and installation |
-| `core/widgets/` | Widget system: `framework.py` (framework) + `builtin.py` (built-in widgets) |
+| `core/widgets/` | Widget system: `framework.py` (framework) + `widgets.py` (built-in widgets) |
 | `core/ui/` | UI layer: `app.py` (application and theme), `dialogs.py` (dialogs), `ui_widgets.py` (controls), `settings_pages/` (settings pages) |
 
 > `base_lib`, `paths`, `logger` and `templates` form the bottom layer:

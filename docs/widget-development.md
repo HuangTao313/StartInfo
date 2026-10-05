@@ -1,9 +1,9 @@
 # 组件系统开发文档
 
-> 版本：2.0 · 适用：StartInfo 组件框架（框架 `core/widgets/framework.py`，内置组件 `core/widgets/builtin.py`）
+> 版本：2.0 · 适用：StartInfo 组件框架（框架 `core/widgets/framework.py`，内置组件 `../core/widgets/widgets.py`）
 
 
-> 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets/builtin.py](../core/widgets/builtin.py)。
+> 目前 StartInfo 暂不支持插件系统，现有 Widget 均为内置组件，统一位于 [core/widgets/builtin.py](../core/widgets/widgets.py)。
 
 ---
 
@@ -50,15 +50,15 @@ LocalWidgetBase                     ← 组件根基类（get_data() / get_data_
 
 > 说明：原 `WidgetBase` 与 `LocalWidgetBase` 已合并为同一个 `LocalWidgetBase`，所有组件（本地 / 联网 / 多数据源）统一继承它。
 
-内置组件（`core/widgets/builtin.py`）通过 `@register` 装饰器注册到组件注册表，`main.py` 遍历 `registered_widgets` 构建启用组件列表并注入模板，新增组件无需再修改 `main.py`（见 [register 装饰器](#register-装饰器)）。
+内置组件（`../core/widgets/widgets.py`）通过 `@register` 装饰器注册到组件注册表，`main.py` 遍历 `registered_widgets` 构建启用组件列表并注入模板，新增组件无需再修改 `main.py`（见 [register 装饰器](#register-装饰器)）。
 
-`core.widgets` 是组件系统的门面包：框架在 `core/widgets/framework.py`，内置组件统一写在 `core/widgets/builtin.py`。**包外一律用门面包导入**：
+`core.widgets` 是组件系统的门面包：框架在 `core/widgets/framework.py`，内置组件统一写在 `../core/widgets/widgets.py`。**包外一律用门面包导入**：
 
 ```python
 from core.widgets import LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase, register
 ```
 
-新增内置组件直接追加到 `core/widgets/builtin.py`，并使用包内相对导入（如 `from .framework import ...`）。
+新增内置组件直接追加到 `../core/widgets/widgets.py`，并使用包内相对导入（如 `from .framework import ...`）。
 
 ---
 

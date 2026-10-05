@@ -86,27 +86,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="970"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1123"/>
         <source>提示</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="988"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1141"/>
         <source>成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1006"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1159"/>
         <source>警告</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1022"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1175"/>
         <source>错误</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1057"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1210"/>
         <source>操作失败</source>
         <translation type="unfinished"></translation>
     </message>
@@ -401,822 +401,806 @@
 <context>
     <name>BasicSettingsPage</name>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="35"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="34"/>
         <source>基本设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="38"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="37"/>
         <source>开机自启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="38"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="37"/>
         <source>是否开机启动</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="44"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="43"/>
         <source>主窗口自动关闭</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="45"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="44"/>
         <source>主窗口在一段后自动关闭，程序结束运行</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="51"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="50"/>
         <source>自动关闭时间(单位：秒/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="52"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="51"/>
         <source>主窗口自动关闭时间(范围：30~300秒，默认60秒)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="58"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="57"/>
         <source>重启到主程序</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="58"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="57"/>
         <source>直接退出</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="59"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="58"/>
         <source>关闭设置窗口后的行为</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="59"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="58"/>
         <source>重启到主程序或直接退出</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="455"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="466"/>
         <source>立即删除</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="80"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="79"/>
         <source>日期和时间</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="66"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="65"/>
         <source>语言</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="66"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="65"/>
         <source>切换程序的显示语言</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="82"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="81"/>
         <source>日期和时间组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="83"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="82"/>
         <source>显示当前的日期、时间以及其他信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="89"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="88"/>
         <source>日期和时间组件详细配置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="90"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="89"/>
         <source>是否显示农历日期、24节气、节假日</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="95"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="94"/>
         <source>显示农历信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="96"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="95"/>
         <source>例如：农历二月十九</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="101"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="100"/>
         <source>显示24节气信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="102"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="101"/>
         <source>例如：谷雨、春分</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="107"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="106"/>
         <source>显示节假日信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="108"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="107"/>
         <source>有节日时显示节日，无节日时显示休息日或工作日</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="113"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="112"/>
         <source>显示其他信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="114"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="113"/>
         <source>今年的第几周、第几天以及今年已过进度</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="131"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="130"/>
         <source>天气(需选择城市)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="134"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="133"/>
         <source>天气组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="134"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="133"/>
         <source>显示当前城市的天气信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="140"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="139"/>
         <source>天气组件详细配置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="140"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="139"/>
         <source>数据源、城市、刷新间隔</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="145"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="144"/>
         <source>数据源</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="145"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="144"/>
         <source>设置天气数据源</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="146"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="145"/>
         <source>小米天气</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="146"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="145"/>
         <source>和风天气(需API Host、API Key)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="151"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="150"/>
         <source>选择城市</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="152"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="565"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="633"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="151"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="574"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="642"/>
         <source>选择城市(当前: {city})</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="154"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="153"/>
         <source>获取天气的城市</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="158"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="157"/>
         <source>天气信息刷新间隔(单位：分钟/m)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="159"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="158"/>
         <source>天气信息自动刷新时间(范围：15~60分钟，默认30分钟)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="165"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="299"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="390"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="164"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="310"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="401"/>
         <source>立即刷新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="166"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="165"/>
         <source>刷新天气信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="171"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="170"/>
         <source>和风天气API Host</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="172"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="171"/>
         <source>设置和风天气API Host，从[和风天气开发控制台-设置]获取，例如abc1234xyz.def.qweatherapi.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="177"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="176"/>
         <source>和风天气API Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="178"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="177"/>
         <source>设置和风天气API Key，从[和风天气开发控制台-项目管理]获取</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="183"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="182"/>
         <source>和风天气开发控制台</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="183"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="182"/>
         <source>打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="184"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="183"/>
         <source>打开和风天气开发控制台(https://console.qweather.com/home)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="204"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="203"/>
         <source>倒数日</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="206"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="205"/>
         <source>倒数日组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="207"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="206"/>
         <source>在主窗口显示：&quot;距离【xx】还有xx天&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="213"/>
-        <source>倒数日组件详细配置</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="213"/>
-        <source>倒数日名称、日期信息</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="218"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="219"/>
-        <source>倒数日名称</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="222"/>
-        <source>倒数目标日期</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="223"/>
-        <source>设置你需要倒计时的日期</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="238"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="246"/>
         <source>生日祝福(暂不支持多人同天生日)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="240"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="248"/>
         <source>生日祝福功能</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="241"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="249"/>
         <source>在生日当天显示生日祝福</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="245"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="755"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="255"/>
         <source>编辑生日列表</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="245"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="295"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="231"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="253"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="305"/>
         <source>编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="246"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="232"/>
+        <source>添加或删除倒数日，双击表格可修改名称与日期</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="233"/>
+        <source>编辑倒数日列表</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="233"/>
+        <source>日期</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="234"/>
+        <source>已保存新的倒数日列表</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="254"/>
         <source>添加或删除生日记录，双击表格可修改名称与生日</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="257"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="267"/>
         <source>Minecraft Java版服务器玩家在线情况检测</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="259"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="269"/>
         <source>Minecraft Java版服务器玩家在线情况检测组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="260"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="270"/>
         <source>快速查看MC服务器玩家在线情况，支持检查朋友在线情况</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="266"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="276"/>
         <source>服务器信息详细配置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="267"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="277"/>
         <source>配置服务器名称、IP、端口等信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="272"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="282"/>
         <source>服务器名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="272"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="282"/>
         <source>Minecraft Java版服务器名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="277"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="287"/>
         <source>服务器IP地址</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="277"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="287"/>
         <source>Minecraft Java版服务器IP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="282"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="292"/>
         <source>服务器端口号</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="283"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="293"/>
         <source>Minecraft Java版服务器端口号(一般为25565)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="289"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="299"/>
         <source>服务器信息刷新间隔(单位：秒/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="290"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="300"/>
         <source>Minecraft Java版服务器信息自动刷新时间(范围：5~3600秒，默认60秒)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="295"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="296"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="768"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="306"/>
         <source>编辑朋友列表</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="300"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="311"/>
         <source>立即刷新Minecraft Java服务器信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="319"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="330"/>
         <source>每日一言</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="321"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="332"/>
         <source>每日一言组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="321"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="332"/>
         <source>显示每日一言信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="326"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="337"/>
         <source>每日一言组件详细配置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="327"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="338"/>
         <source>配置数据来源、打开一言官网(友情链接)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="332"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="339"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="343"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="350"/>
         <source>一言网</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="332"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="343"/>
         <source>金山词霸</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="333"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="344"/>
         <source>每日一言数据来源</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="333"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="344"/>
         <source>【金山词霸每日一言】或【一言网】</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="339"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="350"/>
         <source>友情链接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="340"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="351"/>
         <source>一言网(hitokoto.cn)创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务，属于公益性运营，欢迎各位捐助一言网。</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="356"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="367"/>
         <source>GitHub仓库信息组件(仅支持公开仓库)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="358"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="369"/>
         <source>GitHub仓库信息组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="359"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="370"/>
         <source>显示Github仓库的名称、star数、fork数等信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="365"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="376"/>
         <source>GitHub仓库信息组件详细配置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="366"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="377"/>
         <source>仓库作者名、仓库名、数据刷新间隔</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="371"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="382"/>
         <source>仓库作者</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="372"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="383"/>
         <source>仓库作者的名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="377"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="378"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="388"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="389"/>
         <source>仓库名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="383"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="394"/>
         <source>GitHub仓库信息刷新间隔(单位：小时/h)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="384"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="395"/>
         <source>GitHub仓库信息自动刷新时间(范围：1~24小时(1天)，默认1小时)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="391"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="402"/>
         <source>刷新GitHub仓库信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="408"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="419"/>
         <source>其他组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="412"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="423"/>
         <source>其他组件开关</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="413"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="424"/>
         <source>问候语、开机次数、时间和日期等组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="418"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="429"/>
         <source>问候语组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="419"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="430"/>
         <source>显示当前时间对应的问候语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="424"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="435"/>
         <source>开机次数组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="425"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="436"/>
         <source>显示开机次数</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="430"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="441"/>
         <source>历史上的今天组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="431"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="442"/>
         <source>显示历史上的今天信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="436"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="447"/>
         <source>每日人品组件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="437"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="448"/>
         <source>显示每日人品</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="451"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="462"/>
         <source>调试</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="454"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="465"/>
         <source>删除缓存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="455"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="466"/>
         <source>删除程序在运行中产生的缓存数据</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="460"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="471"/>
         <source>日志等级</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="461"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="472"/>
         <source>调整程序的日志等级，重启后生效</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="466"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="467"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="477"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="478"/>
         <source>打开日志文件夹</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="467"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="478"/>
         <source>打开程序日志文件夹</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="507"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="516"/>
         <source>语言切换失败，请查看日志</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="510"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="519"/>
         <source>切换语言</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="510"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="519"/>
         <source>语言将在重启后完全生效，是否立即重启？</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="511"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="520"/>
         <source>立即重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="512"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="521"/>
         <source>稍后重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="540"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="549"/>
         <source>已删除缓存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="544"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="553"/>
         <source>未发现缓存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="519"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="528"/>
         <source>已添加开机启动项</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="521"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="530"/>
         <source>添加开机启动项失败，请查看日志</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="524"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="533"/>
         <source>已删除开机启动项</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="526"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="535"/>
         <source>删除开机启动项失败，请查看日志</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="531"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="540"/>
         <source>已打开日志文件夹</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="534"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="543"/>
         <source>日志文件夹不存在</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="568"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="577"/>
         <source>已设置城市 {city}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="569"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="578"/>
         <source>正在获取天气信息...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="640"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="649"/>
         <source>更换天气数据源后请重新选择城市</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="645"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="674"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="654"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="683"/>
         <source>未填写API Host或API Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="655"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="681"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="664"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="690"/>
         <source>天气信息更新成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="655"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="661"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="681"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="686"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="664"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="670"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="690"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="695"/>
         <source>天气信息更新失败</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="660"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="685"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="717"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="740"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="794"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="669"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="694"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="726"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="749"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="778"/>
         <source>未知错误：{error}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="700"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="709"/>
         <source>MC 服务器信息已更新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="705"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="714"/>
         <source>，当前有 {count} 个朋友在线：{friends}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="708"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="717"/>
         <source>，当前有 {count} 个朋友在线</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="713"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="718"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="722"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="727"/>
         <source>MC 服务器信息更新失败</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="728"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="737"/>
         <source>请先填写仓库作者和仓库名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="736"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="745"/>
         <source>GitHub仓库信息更新成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="736"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="741"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="745"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="750"/>
         <source>GitHub仓库信息更新失败</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="756"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="255"/>
         <source>生日</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="763"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="256"/>
         <source>已保存新的生日列表</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="775"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="307"/>
         <source>已保存新的朋友列表</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="790"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="774"/>
         <source>每日一言信息更新成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="790"/>
-        <location filename="../../../../core/ui/settings_pages/basic.py" line="795"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="774"/>
+        <location filename="../../../../core/ui/settings_pages/basic.py" line="779"/>
         <source>每日一言信息更新失败</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CalendarSettingCard</name>
-    <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="396"/>
-        <source>选择一个日期</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>CitySearchBox</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="125"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="128"/>
         <source>搜索城市</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="126"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="129"/>
         <source>请输入城市名进行搜索</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="129"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="132"/>
         <source>(支持搜索省份)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="136"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="139"/>
         <source>例如：北京 / 上海 / 武汉</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="138"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="141"/>
         <source>选择此城市</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="139"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="142"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1224,76 +1208,92 @@
 <context>
     <name>DateTableEditBox</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="787"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="833"/>
         <source>编辑表格</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="789"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="835"/>
         <source>日期</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="791"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="837"/>
         <source>双击名称或日期可编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="801"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="847"/>
         <source>保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="802"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="848"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="820"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="866"/>
         <source>添加</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="826"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="872"/>
         <source>删除</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="841"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="887"/>
         <source>名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="890"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="934"/>
         <source>未设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="925"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="969"/>
         <source>第 {row} 行的名称不能为空</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="933"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="977"/>
         <source>名称重复：{name}，列表以名称为唯一标识</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="943"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="987"/>
         <source>{name} 的日期无效，请双击日期单元格重新选择</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DateTableEditSettingCard</name>
+    <message>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1106"/>
+        <source>日期</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditingSettingCardBase</name>
+    <message>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1043"/>
+        <source>已保存</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>ExtSwitchSettingCard</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="95"/>
-        <location filename="../../../../core/ui/ui_widgets.py" line="110"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="98"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="113"/>
         <source>Off</source>
         <translation type="unfinished">关闭</translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="110"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="113"/>
         <source>On</source>
         <translation type="unfinished">打开</translation>
     </message>
@@ -1301,42 +1301,42 @@
 <context>
     <name>ListEditingBox</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="472"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="475"/>
         <source>保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="473"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="476"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="477"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="480"/>
         <source>编辑列表</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="479"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="482"/>
         <source>不可添加重复元素</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="494"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="497"/>
         <source>添加或编辑元素</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="502"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="505"/>
         <source>添加</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="508"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="511"/>
         <source>编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="526"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="529"/>
         <source>删除</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1344,7 +1344,7 @@
 <context>
     <name>NumberSettingCard</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="349"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="352"/>
         <source>未关联配置项...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1389,7 +1389,7 @@
 <context>
     <name>TextSettingCard</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="276"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="279"/>
         <source>未关联配置项...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1397,12 +1397,12 @@
 <context>
     <name>UpdateDownloadBox</name>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1107"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1260"/>
         <source>发现新版本</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1109"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1262"/>
         <source>版本号：{version}
 发布日期：{release_date}
 更新日志：
@@ -1410,59 +1410,59 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1113"/>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1114"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1266"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1267"/>
         <source>获取失败</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1115"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1268"/>
         <source>暂无更新日志</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1122"/>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1163"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1275"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1316"/>
         <source>正在下载新版本安装包：0%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1132"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1285"/>
         <source>立即更新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1133"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1286"/>
         <source>取消更新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1161"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1314"/>
         <source>正在更新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1175"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1328"/>
         <source>更新过程发生异常：{error}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1188"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1341"/>
         <source>正在下载新版本安装包：{percent}% ({downloaded} / {total})</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1194"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1347"/>
         <source>正在下载新版本安装包：{downloaded}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1198"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1351"/>
         <source>下载失败</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../core/ui/ui_widgets.py" line="1201"/>
+        <location filename="../../../../core/ui/ui_widgets.py" line="1354"/>
         <source>关闭</source>
         <translation type="unfinished"></translation>
     </message>

@@ -220,43 +220,55 @@ class CountDownDayWidget(LocalWidgetBase):
     WIDGET_NAME = 'CountDownDay'
     NEED_CACHE = False
 
+    def get_the_nearest_date(self, countdowns: dict):
+        """获取距离今天最近的有效倒数日"""
+        today = global_now.date()
+        nearest_date = None
+        nearest_names = []
+
+        # 传入的日倒数日日期字典在config.py中已经过验证器格式化，不用在此处重复校验
+        for name, date_str in countdowns.items():
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            remaining = (target_date - today).days
+
+            # 多个倒数日时，不显示已经过去的日期
+            # 单个倒数日时，保留原来的 3 天过期宽限期
+            if len(countdowns) > 1:
+                if remaining < 0:
+                    continue
+            elif remaining < -3:
+                continue
+
+            if nearest_date is None or target_date < nearest_date:
+                nearest_date = target_date
+                nearest_names = [name]
+            elif target_date == nearest_date:
+                nearest_names.append(name)
+
+        return nearest_date, nearest_names
+
+        return nearest_date, nearest_names
+
     def _fetch_data(self) -> dict:
         """
-        计算从今天到目标日期的剩余天数
+        计算从今天到最近倒数日的剩余天数
 
         Returns:
             dict: 包含倒数日信息的字典
         """
-        # 判断用户是否启用倒数日功能
-        # if not cfg.countdown_switch.value:
-        #     return {'is_countdown_available': False}
+        countdowns = cfg.countdown_days_dict.value
+        nearest_date, names = self.get_the_nearest_date(countdowns)
 
-        # 1. 获取当前日期（只要日期，不要时分秒，方便对齐）
-        today = global_now.date()
-        # 2.获取目标日期
-        target_date_str = cfg.countdown_date.value
-        try:
-            # 2. 将字符串转换为 datetime 对象
-            # %Y-%m-%d 对应 2026-06-21 这种格式
-            target_date_obj = datetime.strptime(target_date_str, '%Y-%m-%d').date()
-
-            # 3. 两个日期对象直接相减，得到一个 timedelta 对象
-            remaining = target_date_obj - today
-
-            # 如果天数小于 -3，则判断为过期，返回 False
-            if remaining.days < -3:
-                return {'is_countdown_available': False}
-
-            # 4. 返回天数 (.days 属性)
-            return {
-                'is_countdown_available': True,
-                'countdown_name': cfg.countdown_name.value,
-                'countdown_number': remaining.days
-            }
-
-        # 用户设置的日期格式错误，返回 False
-        except ValueError:
+        if nearest_date is None:
             return {'is_countdown_available': False}
+
+        remaining = (nearest_date - global_now.date()).days
+
+        return {
+            'is_countdown_available': True,
+            'countdown_name': '、'.join(names),
+            'countdown_number': remaining
+        }
 
 
 # 3.生日
@@ -294,26 +306,24 @@ class BirthdayWidget(LocalWidgetBase):
 
         # 遍历生日列表，检查是否有人今天生日
         for name, birthday_str in birthday_dict.items():
-            # 检查生日格式是否正确（YYYYMMDD）
-            if not isinstance(birthday_str, str) or len(birthday_str) != 8:
-                log.warning(f'生日格式错误：{name} - {birthday_str}')
-                continue
+            # 解析生日（'YYYY-MM-DD'）
+            birth_date = None
+            if isinstance(birthday_str, str):
+                try:
+                    birth_date = datetime.strptime(birthday_str, '%Y-%m-%d')
+                except ValueError:
+                    pass
 
-            # 提取出生年月日
-            try:
-                birth_year = int(birthday_str[:4])
-                birth_month_day = birthday_str[4:8]
-            except ValueError:
+            if birth_date is None:
                 log.warning(f'生日格式错误：{name} - {birthday_str}')
                 continue
 
             # 检查是否是今天生日
-            if birth_month_day == today_month_day:
+            if birth_date.strftime('%m%d') == today_month_day:
                 # 计算年龄
-                age = current_year - birth_year
+                age = current_year - birth_date.year
 
                 # 计算来到这个世界上的总天数
-                birth_date = datetime(birth_year, int(birthday_str[4:6]), int(birthday_str[6:8]))
                 today_date = datetime.now()
                 life_days = (today_date - birth_date).days
 

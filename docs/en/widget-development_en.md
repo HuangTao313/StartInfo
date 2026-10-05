@@ -1,9 +1,9 @@
 # Widget Development Guide
 
-> Version: 2.0 · Applies to: the StartInfo widget framework (framework `core/widgets/framework.py`, built-in widgets `core/widgets/builtin.py`)
+> Version: 2.0 · Applies to: the StartInfo widget framework (framework `core/widgets/framework.py`, built-in widgets `../../core/widgets/widgets.py`)
 
 
-> StartInfo does not currently support a plugin system; all existing Widgets are built-in widgets, located uniformly in [core/widgets/builtin.py](../../core/widgets/builtin.py).
+> StartInfo does not currently support a plugin system; all existing Widgets are built-in widgets, located uniformly in [core/widgets/builtin.py](../../core/widgets/widgets.py).
 
 ---
 
@@ -50,15 +50,15 @@ LocalWidgetBase                     ← Widget root base class (get_data() / get
 
 > Note: the former `WidgetBase` and `LocalWidgetBase` have been merged into the same `LocalWidgetBase`, which all widgets (local / network / multi-data-source) inherit from.
 
-Built-in widgets (`core/widgets/builtin.py`) are registered into the widget registry through the `@register` decorator. `main.py` iterates over `registered_widgets` to build the list of enabled widgets and inject them into templates, so adding a new widget no longer requires modifying `main.py` (see [register Decorator](#register-decorator)).
+Built-in widgets (`../../core/widgets/widgets.py`) are registered into the widget registry through the `@register` decorator. `main.py` iterates over `registered_widgets` to build the list of enabled widgets and inject them into templates, so adding a new widget no longer requires modifying `main.py` (see [register Decorator](#register-decorator)).
 
-`core.widgets` is the facade package of the widget system: the framework lives in `core/widgets/framework.py`, and built-in widgets are all written in `core/widgets/builtin.py`. **Outside the package, always import through the facade package**:
+`core.widgets` is the facade package of the widget system: the framework lives in `core/widgets/framework.py`, and built-in widgets are all written in `../../core/widgets/widgets.py`. **Outside the package, always import through the facade package**:
 
 ```python
 from core.widgets import LocalWidgetBase, NetworkWidgetBase, ExtNetworkWidgetBase, register
 ```
 
-New built-in widgets are simply appended to `core/widgets/builtin.py` and use in-package relative imports (such as `from .framework import ...`).
+New built-in widgets are simply appended to `../../core/widgets/widgets.py` and use in-package relative imports (such as `from .framework import ...`).
 
 ---
 
