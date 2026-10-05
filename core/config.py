@@ -77,8 +77,9 @@ class ListValidator(ConfigValidator):
 class DictValidator(ConfigValidator):
     """字典验证器。"""
 
-    def __init__(self, default: dict = {}):
-        self._default = default
+    def __init__(self, default: dict | None = None):
+        # 拷贝存储，避免多个验证器实例共享同一可变默认值
+        self._default = dict(default) if default else {}
 
     def validate(self, value):
         return isinstance(value, dict)
@@ -86,13 +87,24 @@ class DictValidator(ConfigValidator):
     def correct(self, value):
         if isinstance(value, dict):
             return value
-        return self._default
+        return dict(self._default)
 
 
 class CityDictValidator(DictValidator):
-    """城市信息字典验证器：校验 {数据源: 城市名/城市ID} 格式的字典。"""
+    """城市信息字典验证器：校验 {数据源: 城市名/城市ID} 格式的字典。
+
+    correct 时以默认值铺底，保证每个数据源的键都存在，
+    避免配置缺键时组件按当前数据源取值抛 KeyError。
+    """
+
     def validate(self, value):
         return isinstance(value, dict) and len(value) > 0
+
+    def correct(self, value):
+        result = dict(self._default)
+        if isinstance(value, dict):
+            result.update(value)
+        return result
 
 
 class DateDictValidator(DictValidator):
@@ -158,7 +170,12 @@ class DynamicOptionsValidator(ConfigValidator):
         current_options = self.get_options()
         if not current_options:
             return value
-        return value if value in current_options else current_options[0]
+        if value in current_options:
+            return value
+        # 配置的模板可能已被外部删除：优先回退默认模板，其次第一个可用模板
+        fallback = 'default.j2' if 'default.j2' in current_options else current_options[0]
+        log.warning(f'模板 {value} 不存在，已回退到 {fallback}')
+        return fallback
 
 
 # ===========================================================================
