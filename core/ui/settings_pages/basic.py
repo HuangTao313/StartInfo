@@ -543,7 +543,11 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onDeleteCaCheClicked(self) -> bool | None:
         if CACHE_FOLDER_PATH.exists():
+            from ...widgets import CacheManager
+
             shutil.rmtree(CACHE_FOLDER_PATH)
+            # 复位初始化标记，使后续缓存写入能在下次 init_db 时重建目录与表
+            CacheManager.reset()
             log.info('已删除缓存')
             Notify.success(self.tr('已删除缓存'), parent=self)
             return True

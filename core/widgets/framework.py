@@ -137,6 +137,12 @@ class CacheManager:
             return False
 
     @classmethod
+    def reset(cls) -> None:
+        """清除初始化标记。缓存目录/数据库文件被外部删除后，
+        下次 init_db() 会重建目录与表结构。"""
+        cls._initialized = False
+
+    @classmethod
     def save_cache(
         cls, widget_name: str, data: dict, cache_key: str = 'default',
     ) -> bool:

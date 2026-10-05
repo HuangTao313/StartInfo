@@ -293,6 +293,11 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
 
     log.debug(f'更新器-开始检查更新 (force_refresh={force_refresh})')
     try:
+        # 0. 联网检查提前：断网时直接给出准确提示，
+        #    避免先尝试拉取失败后报出误导性的"获取版本信息失败"
+        if not is_internet():
+            return False, {}, tr('无法连接网络，检查更新失败')
+
         # 1. 版本文件维护逻辑
         need_fetch = force_refresh or not VERSION_CACHE_FILE_PATH.exists()
         if not need_fetch:
@@ -314,10 +319,7 @@ async def check_update_logic(force_refresh: bool = False) -> tuple[bool, dict, s
                     '获取版本信息失败（更新源: {source}），请检查网络或更新源配置'
                 ).format(source=cfg.update_source.value)
 
-        # 2. 联网并比对
-        if not is_internet():
-            return False, {}, tr('无法连接网络，检查更新失败')
-
+        # 2. 比对版本
         need_update, update_info = check_update()  # 调用你原有的比对函数
         return need_update, update_info, None
     except Exception as e:
