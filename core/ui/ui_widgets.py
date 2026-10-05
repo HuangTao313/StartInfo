@@ -7,6 +7,7 @@
 import sqlite3
 import asyncio
 import shiboken6
+import functools
 from pathlib import Path
 from typing import Union
 

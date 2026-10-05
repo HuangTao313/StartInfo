@@ -3,15 +3,14 @@
 import shutil
 
 from qasync import asyncSlot
-from PySide6.QtCore import QTimer, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QTimer
 from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, PrimaryPushSettingCard,
                             PushSettingCard, SettingCardGroup,
                             MessageBox)
 
-from ...base_lib import restart_program
-from ...config import cfg, qconfig
+from ...base_lib import restart_program, open_file_or_folder
+from ...config import cfg
 from ...i18n import get_language_names
 from ...logger import log
 from ...paths import CACHE_FOLDER_PATH, LOG_FOLDER_PATH
@@ -536,7 +535,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onOpenLogFolderClicked(self) -> None:
         if LOG_FOLDER_PATH.exists():
-            QDesktopServices.openUrl(QUrl.fromLocalFile(str(LOG_FOLDER_PATH)))
+            open_file_or_folder(LOG_FOLDER_PATH)
             Notify.success(self.tr('已打开日志文件夹'), parent=self)
 
         else:

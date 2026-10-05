@@ -27,6 +27,8 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Union
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QUrl
 
 from .logger import log
 from .paths import (CURRENT_VERSION_FILE_PATH, EXE_FILE_PATH, MAIN_PATH,
@@ -55,6 +57,12 @@ def read_json(file_path: Union[str, Path]) -> dict:
         log.error(f'读取文件 {path.name} 时发生未知错误: {e}')
         return {}
 
+# =============================================================================
+# 打开文件夹/文件(跨平台)
+# =============================================================================
+def open_file_or_folder(path) -> None:
+    if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))):
+        log.error(f'打开文件或文件夹失败：{path}')
 
 # =============================================================================
 # 应用身份与静态常量

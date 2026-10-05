@@ -13,7 +13,7 @@ from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
                             SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel,
                             TextBrowser)
 
-from ...base_lib import CURRENT_VERSION_JSON, VERSION
+from ...base_lib import CURRENT_VERSION_JSON, VERSION, open_file_or_folder
 from ...config import cfg
 from ...logger import log
 from ...paths import DATA_FOLDER_PATH, LOGO_ICON_FILE_PATH, UNINSTALLER_FILE_PATH
@@ -198,7 +198,7 @@ class AboutSettingsPage(BaseSettingPage):
                 except Exception as e:
                     log.error(f'设置-删除data文件夹失败: {e}')
                 try:
-                    os.startfile(UNINSTALLER_FILE_PATH)
+                    open_file_or_folder(UNINSTALLER_FILE_PATH)
                     sys.exit()
                 except Exception as e:
                     log.error(f'设置-启动卸载程序失败: {e}')

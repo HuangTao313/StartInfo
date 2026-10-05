@@ -252,7 +252,7 @@ class StartInfoConfig(QConfig):
     countdown_switch = ConfigItem('CountdownDayWidget', 'switch', False, BoolValidator())
     countdown_name = ConfigItem('CountdownDayWidget', 'name', '', StringValidator())
     countdown_date = ConfigItem('CountdownDayWidget', 'date', '', StringValidator())
-    countdown_days_dict = ConfigItem('CountdownDayWidget', 'countdown_days_dict', {}, DictValidator())
+    countdown_days_dict = ConfigItem('CountdownDayWidget', 'countdown_days_dict', {}, DateDictValidator())
 
     # =========================== 生日祝福 ===========================
     birthday_wishes_switch = ConfigItem('BirthdayWishesWidget', 'switch', False, BoolValidator())

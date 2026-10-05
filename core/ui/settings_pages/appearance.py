@@ -7,7 +7,7 @@ from qfluentwidgets import (ColorSettingCard, ComboBoxSettingCard,
                             PrimaryPushSettingCard, PushSettingCard,
                             RadioButton, SettingCardGroup, HyperlinkCard, qconfig)
 
-from ...base_lib import system
+from ...base_lib import system, open_file_or_folder
 from ...config import cfg
 from ...paths import TEMPLATE_FOLDER_PATH
 from ...templates import get_template_files, import_template
@@ -226,4 +226,4 @@ class AppearanceSettingsPage(BaseSettingPage):
 
     @staticmethod
     def _onOpenTemplateFolderClicked():
-        os.startfile(TEMPLATE_FOLDER_PATH)
+        open_file_or_folder(TEMPLATE_FOLDER_PATH)

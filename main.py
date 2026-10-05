@@ -5,7 +5,7 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 import core.ui as ui
-from core.base_lib import SingleInstance, TITLE
+from core.base_lib import SingleInstance, TITLE, open_file_or_folder
 from core.config import cfg
 from core.logger import log
 from core.paths import TEMPLATE_FOLDER_PATH
@@ -51,7 +51,7 @@ def load_template(data: dict[str, str]) -> str | None:
                 if yn:
                     activate_template('default.j2')
                 if not yn:
-                    os.startfile(TEMPLATE_FOLDER_PATH)
+                    open_file_or_folder(TEMPLATE_FOLDER_PATH)
                     sys.exit()
 
             # 如果是生日模板加载失败，记录日志并继续尝试下一个模板
