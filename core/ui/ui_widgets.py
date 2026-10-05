@@ -993,7 +993,10 @@ class DateTableEditBox(MessageBoxBase):
         return True
 
     def accept(self):
-        """读取表格最终数据并关闭弹窗（不直接写入配置，由调用方保存）"""
+        """读取表格最终数据并关闭弹窗（校验失败时不关闭，不直接写入配置，由调用方保存）"""
+        if not self.validate():
+            return
+
         self.result = {}
 
         for row in range(self.tableWidget.rowCount()):

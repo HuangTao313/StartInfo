@@ -22,14 +22,18 @@ def load_template(data: dict[str, str]) -> str | None:
 
     # 根据是否有生日信息确定尝试加载的模板顺序
     # 从 data 中检查是否有生日信息（birthday_star 字段）
+    active_template_name = get_template_path().name
     if data.get('birthday_star'):
         # 有生日信息：优先尝试生日模板，然后是当前激活的模板，最后是默认模板
-        templates_to_try = ['birthday_wishes.j2', get_template_path().name, 'default.j2']
+        templates_to_try = ['birthday_wishes.j2', active_template_name, 'default.j2']
         log.info('使用生日模板')
 
     else:
         # 无生日信息：尝试当前激活的模板，然后是默认模板
-        templates_to_try = [get_template_path().name, 'default.j2']
+        templates_to_try = [active_template_name, 'default.j2']
+
+    # 保序去重：激活模板可能就是 default.j2，避免加载失败时重复弹窗
+    templates_to_try = list(dict.fromkeys(templates_to_try))
 
     for template_name in templates_to_try:
         try:
@@ -41,17 +45,25 @@ def load_template(data: dict[str, str]) -> str | None:
 
         except Exception as e:
             # 如果是当前激活的模板加载失败，显示错误对话框
-            if template_name == get_template_path().name:
+            if template_name == active_template_name:
                 yn = ui.dialog(
                     f'程序运行时发生错误╥﹏╥...',
-                    f'未找到模版文件：{get_template_path().name}\n请检查模版文件是否存在！',
-
+                    f'模板 {active_template_name} 加载失败：{e}\n是否尝试加载默认模板？',
                     ['加载默认模板', '打开模板文件夹']
                 )
-                if yn:
-                    activate_template('default.j2')
                 if not yn:
                     open_file_or_folder(TEMPLATE_FOLDER_PATH)
+                    sys.exit()
+
+                activate_template('default.j2')
+                # 去重后尝试列表里可能已没有 default.j2，这里直接重试；
+                # 重试成功即返回，仍失败则弹窗报错并退出
+                try:
+                    return env.get_template('default.j2').render(**data)
+                except Exception as default_e:
+                    error_text = f'默认模板加载失败：{str(default_e)}'
+                    log.error(error_text)
+                    ui.error_dialog(error_text)
                     sys.exit()
 
             # 如果是生日模板加载失败，记录日志并继续尝试下一个模板

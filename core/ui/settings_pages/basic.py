@@ -648,33 +648,32 @@ class BasicSettingsPage(BaseSettingPage):
             city_ids = cfg.city_id.value
             city_names = cfg.city_name.value
             data_source = widget.DATA_SOURCE
-            if not city_ids[data_source] or not city_names[data_source]:
+            if not city_ids.get(data_source) or not city_names.get(data_source):
                 Notify.info(content=self.tr('更换天气数据源后请重新选择城市'), parent=self)
 
-            # 如果数据源是和风天气，检查API Host和API Key是否可用
+            # 和风天气需先配置 API Host 和 API Key
             if data_source == 'qweather':
                 if not (cfg.qweather_api_host.value.strip() and cfg.qweather_api_key.value.strip()):
                     Notify.warning(self.tr('未填写API Host或API Key'), parent=self)
                     return
 
-            else:
-                # 开始刷新天气信息
-                self.weatherSourceCard.setEnabled(False)
-                self.weatherRefreshCard.setEnabled(False)
-                try:
-                    await widget.get_data_async(force_refresh=True)
-                    self._notify_widget_result(
-                        widget, self.tr('天气信息更新成功'), self.tr('天气信息更新失败'))
+            # 两个数据源切换后都立即刷新，行为保持一致
+            self.weatherSourceCard.setEnabled(False)
+            self.weatherRefreshCard.setEnabled(False)
+            try:
+                await widget.get_data_async(force_refresh=True)
+                self._notify_widget_result(
+                    widget, self.tr('天气信息更新成功'), self.tr('天气信息更新失败'))
 
-                except Exception as e:
-                    log.error(f'设置-天气信息更新失败：{e}')
-                    Notify.error(
-                        content=self.tr('未知错误：{error}').format(error=e),
-                        title=self.tr('天气信息更新失败'), parent=self)
+            except Exception as e:
+                log.error(f'设置-天气信息更新失败：{e}')
+                Notify.error(
+                    content=self.tr('未知错误：{error}').format(error=e),
+                    title=self.tr('天气信息更新失败'), parent=self)
 
-                finally:
-                    self.weatherSourceCard.setEnabled(True)
-                    self.weatherRefreshCard.setEnabled(True)
+            finally:
+                self.weatherSourceCard.setEnabled(True)
+                self.weatherRefreshCard.setEnabled(True)
 
     @asyncSlot()
     async def _onRefreshWeather(self):
