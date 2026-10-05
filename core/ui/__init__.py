@@ -16,8 +16,8 @@
 
 from .app import AppManager, app_manager, get_theme_color, tr
 from .dialogs import dialog, error_dialog, file_dialog, main_window
-from .ui_widgets import (BaseSettingPage, BirthdayEditBox, BirthdayTableDelegate,
-                         CalendarSettingCard, CitySearchBox, ExpandGroupCard,
+from .ui_widgets import (BaseSettingPage, CalendarSettingCard, CitySearchBox,
+                         DateTableDelegate, DateTableEditBox, ExpandGroupCard,
                          ExtSwitchSettingCard, ListEditingBox, TextSettingCard,
                          Notify, UpdateDownloadBox, action)
 from .switch_button import IndicatorPosition, SwitchButton
@@ -35,8 +35,8 @@ __all__ = [
     'Notify', 'UpdateDownloadBox', 'action', 'dialog', 'error_dialog',
     'file_dialog', 'main_window',
     # controls
-    'BaseSettingPage', 'BirthdayEditBox', 'BirthdayTableDelegate',
-    'CalendarSettingCard', 'CitySearchBox', 'ExpandGroupCard',
+    'BaseSettingPage', 'CalendarSettingCard', 'CitySearchBox',
+    'DateTableDelegate', 'DateTableEditBox', 'ExpandGroupCard',
     'ExtSwitchSettingCard', 'ListEditingBox', 'TextSettingCard',
     # switch button
     'IndicatorPosition', 'SwitchButton',

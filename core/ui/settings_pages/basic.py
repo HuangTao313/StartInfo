@@ -17,9 +17,10 @@ from ...logger import log
 from ...paths import CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..app import app_manager
-from ..ui_widgets import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
-                          CitySearchBox, ExpandGroupCard, ListEditingBox, Notify,
-                          NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
+from ..ui_widgets import (BaseSettingPage, CalendarSettingCard, CitySearchBox,
+                          DateTableEditBox, ExpandGroupCard, ListEditingBox,
+                          Notify, NumberSettingCard, TextSettingCard,
+                          ExtSwitchSettingCard)
 
 
 class BasicSettingsPage(BaseSettingPage):
@@ -751,7 +752,8 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onEditBirthdayList(self) -> None:
         birthday_dict = cfg.birthday_dict.value
-        box = BirthdayEditBox(parent=self)
+        box = DateTableEditBox(self.tr('编辑生日列表'), data=birthday_dict,
+                               dateColumnName=self.tr('生日'), parent=self)
         # 如果用户点击保存
         if box.exec():
             # 如果新列表不与原列表相等

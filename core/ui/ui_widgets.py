@@ -17,8 +17,8 @@ from PySide6.QtWidgets import (QAbstractItemDelegate, QAbstractItemView, QHeader
 from qasync import asyncSlot
 from qfluentwidgets import (SwitchSettingCard, qconfig, SearchLineEdit, ListWidget, SettingCard,
                             FluentIconBase, LineEdit, SpinBox, ConfigItem,
-                            CalendarPicker, ExpandGroupSettingCard, Action, CommandBar,
-                            FluentIcon, ZhDatePicker, TableWidget, TableItemDelegate,
+                            FastCalendarPicker, ExpandGroupSettingCard, Action, CommandBar,
+                            FluentIcon, TableWidget, TableItemDelegate,
                             ScrollArea, ExpandLayout, MessageBoxBase, SubtitleLabel,
                             BodyLabel, InfoBar, InfoBarPosition, ProgressBar)
 
@@ -387,7 +387,7 @@ class CalendarSettingCard(SettingCard):
         self.configItem = config_item
 
         # 1. 创建日历选择器
-        self.calendarPicker = CalendarPicker(self)
+        self.calendarPicker = FastCalendarPicker(self)
         self.calendarPicker.locale = QLocale(QLocale.Chinese, QLocale.China)
         self.calendarPicker.setFixedWidth(200)
 
@@ -688,10 +688,10 @@ class ListEditingBox(MessageBoxBase):
         super().accept()
 
 
-class BirthdayTableDelegate(TableItemDelegate):
-    """ 生日表格委托：生日列以 ZhDatePicker 作为单元格编辑器 """
+class DateTableDelegate(TableItemDelegate):
+    """ 日期表格委托：日期列以 FastCalendarPicker 作为单元格编辑器 """
 
-    # 生日列下标（第 0 列为名称）
+    # 日期列下标（第 0 列为名称）
     DATE_COLUMN = 1
 
     def __init__(self, parent):
@@ -700,14 +700,14 @@ class BirthdayTableDelegate(TableItemDelegate):
         self._editingIndex = QPersistentModelIndex()
 
     def createEditor(self, parent, option, index):
-        """双击生日单元格时创建日期选择器，名称列沿用默认文本编辑器"""
+        """双击日期单元格时创建日期选择器，名称列沿用默认文本编辑器"""
         self._editingIndex = QPersistentModelIndex(index)
         if index.column() != self.DATE_COLUMN:
             return super().createEditor(parent, option, index)
 
-        editor = ZhDatePicker(parent)
+        editor = FastCalendarPicker(parent)
         self._setEditorDate(editor, index)
-        # 用户在滚轮面板中确认新日期后，立即提交并关闭编辑器
+        # 用户在日历面板中选中日期后，立即提交并关闭编辑器
         editor.dateChanged.connect(lambda: self._commitEditor(editor))
         return editor
 
@@ -751,7 +751,7 @@ class BirthdayTableDelegate(TableItemDelegate):
         return (view.state() == QAbstractItemView.EditingState
                 and self._editingIndex == index)
 
-    def _setEditorDate(self, editor: ZhDatePicker, index):
+    def _setEditorDate(self, editor: FastCalendarPicker, index):
         """把单元格 UserRole 中保存的 QDate 直接同步给选择器（不经字符串转换）"""
         date = index.data(Qt.UserRole)
         if isinstance(date, QDate) and date.isValid():
@@ -763,18 +763,32 @@ class BirthdayTableDelegate(TableItemDelegate):
         self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
 
 
-class BirthdayEditBox(MessageBoxBase):
-    """ 生日列表编辑弹窗
+class DateTableEditBox(MessageBoxBase):
+    """ 通用名称+日期表格编辑弹窗
 
     用法（与 ListEditingBox 一致，弹窗本身不写配置，由调用方保存）：
-        box = BirthdayEditBox(parent=self)
+        box = DateTableEditBox(self.tr('编辑生日列表'), data=birthday_dict,
+                               dateColumnName=self.tr('生日'), parent=self)
         if box.exec():
-            if box.result != cfg.birthday_dict.value:
+            if box.result != birthday_dict:
                 qconfig.set(cfg.birthday_dict, box.result, save=True)
+
+    按钮文本默认为「保存 / 取消」，可像 MessageBox 一样覆盖：
+        box.yesButton.setText(self.tr('确定'))
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, title: str | None = None, data: dict | None = None,
+                 parent=None, dateColumnName: str | None = None,
+                 hint: str | None = None):
         super().__init__(parent)
+
+        # 默认值延迟翻译：默认参数在类定义时求值，那时还没有 self
+        if title is None:
+            title = self.tr('编辑表格')
+        if dateColumnName is None:
+            dateColumnName = self.tr('日期')
+        if hint is None:
+            hint = self.tr('双击名称或日期可编辑')
 
         # 用户点击保存后的最终结果 {姓名: 'YYYYMMDD'}，取消时保持为空
         self.result = {}
@@ -788,8 +802,8 @@ class BirthdayEditBox(MessageBoxBase):
         self.cancelButton.setText(self.tr('取消'))
 
         # 3. 标题与提示
-        self.titleLabel = SubtitleLabel(self.tr('编辑生日列表'))
-        self.hintLabel = BodyLabel(self.tr('双击名称或生日可编辑'))
+        self.titleLabel = SubtitleLabel(title)
+        self.hintLabel = BodyLabel(hint)
 
         # 4. 工具栏（修改通过双击表格完成，无需单独按钮）
         self.commandBar = CommandBar()
@@ -821,22 +835,22 @@ class BirthdayEditBox(MessageBoxBase):
         # 删除
         self.commandBar.addAction(self.deleteButton)
 
-        # 5. 生日表格
+        # 5. 名称+日期表格
         self.tableWidget = TableWidget(self)
         self.tableWidget.setColumnCount(2)
-        self.tableWidget.setHorizontalHeaderLabels([self.tr('名称'), self.tr('生日')])
+        self.tableWidget.setHorizontalHeaderLabels([self.tr('名称'), dateColumnName])
         self.tableWidget.verticalHeader().hide()
         # 仅双击 / F2 触发编辑
         self.tableWidget.setEditTriggers(
             QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed)
-        # 生日列使用日期选择器编辑器
-        self.tableWidget.setItemDelegate(BirthdayTableDelegate(self.tableWidget))
+        # 日期列使用日期选择器编辑器
+        self.tableWidget.setItemDelegate(DateTableDelegate(self.tableWidget))
         self.tableWidget.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        # 日期选择器编辑器较宽，生日列给固定宽度
+        # 日期选择器编辑器较宽，日期列给固定宽度
         self.tableWidget.setColumnWidth(1, 260)
 
-        # 6. 从配置加载生日列表（编辑期间不修改原配置）
-        self._loadBirthdays(cfg.birthday_dict.value)
+        # 6. 加载初始数据（编辑期间不修改原配置）
+        self._loadData(data if data is not None else {})
 
         # 7. 添加布局
         self.viewLayout.addWidget(self.titleLabel)
@@ -849,24 +863,24 @@ class BirthdayEditBox(MessageBoxBase):
         self.tableWidget.currentItemChanged.connect(
             lambda current, previous: self._updateButtonState())
 
-    def _loadBirthdays(self, birthday_dict: dict) -> None:
-        """把 cfg.birthday_dict（{姓名: 'YYYYMMDD'}）填充到表格"""
-        for name, birthday_str in birthday_dict.items():
-            self._appendRow(str(name), self._parseBirthday(birthday_str))
+    def _loadData(self, data: dict) -> None:
+        """把初始数据（{姓名: 'YYYYMMDD'}）填充到表格"""
+        for name, date_str in data.items():
+            self._appendRow(str(name), self._parseDate(date_str))
 
     @staticmethod
-    def _parseBirthday(birthday_str) -> QDate:
-        """把配置中的 'YYYYMMDD' 生日字符串转为 QDate，无法解析时返回无效 QDate"""
-        if isinstance(birthday_str, str) and len(birthday_str) == 8 and birthday_str.isdigit():
-            date = QDate(int(birthday_str[:4]), int(birthday_str[4:6]), int(birthday_str[6:8]))
+    def _parseDate(date_str) -> QDate:
+        """把 'YYYYMMDD' 日期字符串转为 QDate，无法解析时返回无效 QDate"""
+        if isinstance(date_str, str) and len(date_str) == 8 and date_str.isdigit():
+            date = QDate(int(date_str[:4]), int(date_str[4:6]), int(date_str[6:8]))
             if date.isValid():
                 return date
 
-        log.warning(f'生日列表-无法解析的生日格式: {birthday_str}')
+        log.warning(f'日期表格-无法解析的日期格式: {date_str}')
         return QDate()
 
     def _appendRow(self, name: str, date: QDate) -> None:
-        """在表格末尾追加一行生日记录"""
+        """在表格末尾追加一行名称+日期记录"""
         row = self.tableWidget.rowCount()
         self.tableWidget.insertRow(row)
         self.tableWidget.setItem(row, 0, QTableWidgetItem(name))
@@ -882,14 +896,14 @@ class BirthdayEditBox(MessageBoxBase):
         self.deleteButton.setEnabled(self.tableWidget.currentRow() >= 0)
 
     def addItem(self, checked=False) -> None:
-        """添加一条生日记录（默认生日为今天）并直接进入名称编辑"""
+        """添加一条记录（默认日期为今天）并直接进入名称编辑"""
         row = self.tableWidget.rowCount()
         self._appendRow('', QDate.currentDate())
         self.tableWidget.setCurrentCell(row, 0)
         self.tableWidget.editItem(self.tableWidget.item(row, 0))
 
     def deleteItem(self, checked=False) -> None:
-        """删除当前选中的生日记录"""
+        """删除当前选中的记录"""
         row = self.tableWidget.currentRow()
 
         # 未选中任何记录时直接返回
@@ -913,10 +927,10 @@ class BirthdayEditBox(MessageBoxBase):
                 )
                 return False
 
-            # 配置以名称为字典键，重名会互相覆盖
+            # 结果以名称为字典键，重名会互相覆盖
             if name in names:
                 Notify.warning(
-                    content=self.tr('名称重复：{name}，生日列表以名称为唯一标识').format(name=name),
+                    content=self.tr('名称重复：{name}，列表以名称为唯一标识').format(name=name),
                     parent=self
                 )
                 return False
@@ -926,7 +940,7 @@ class BirthdayEditBox(MessageBoxBase):
             date = self.tableWidget.item(row, 1).data(Qt.UserRole)
             if not (isinstance(date, QDate) and date.isValid()):
                 Notify.warning(
-                    content=self.tr('{name} 的生日无效，请双击生日单元格重新选择').format(name=name),
+                    content=self.tr('{name} 的日期无效，请双击日期单元格重新选择').format(name=name),
                     parent=self
                 )
                 return False
@@ -940,7 +954,7 @@ class BirthdayEditBox(MessageBoxBase):
         for row in range(self.tableWidget.rowCount()):
             name = self.tableWidget.item(row, 0).text().strip()
             date = self.tableWidget.item(row, 1).data(Qt.UserRole)
-            # 保持配置原有格式 {姓名: 'YYYYMMDD'}
+            # 保持 {姓名: 'YYYYMMDD'} 格式
             self.result[name] = date.toString('yyyyMMdd')
 
         super().accept()

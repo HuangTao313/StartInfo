@@ -1,7 +1,5 @@
-"""core.ui 弹窗、通知与更新下载框。
-
+"""core.ui 弹窗。
 应用级对话框（dialog / main_window / error_dialog / file_dialog）、
-Toast 通知（Notify）以及更新包下载框。
 """
 
 import os
