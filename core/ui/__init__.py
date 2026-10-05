@@ -15,11 +15,11 @@
 """
 
 from .app import AppManager, app_manager, get_theme_color, tr
-from .dialogs import (Notify, UpdateDownloadBox, action, dialog, error_dialog,
-                      file_dialog, main_window)
-from .controls import (BaseSettingPage, BirthdayEditBox, BirthdayTableDelegate,
-                       CalendarSettingCard, CitySearchBox, ExpandGroupCard,
-                       ExtSwitchSettingCard, ListEditingBox, TextSettingCard)
+from .dialogs import dialog, error_dialog, file_dialog, main_window
+from .ui_widgets import (BaseSettingPage, BirthdayEditBox, BirthdayTableDelegate,
+                         CalendarSettingCard, CitySearchBox, ExpandGroupCard,
+                         ExtSwitchSettingCard, ListEditingBox, TextSettingCard,
+                         Notify, UpdateDownloadBox, action)
 from .switch_button import IndicatorPosition, SwitchButton
 from .settings_pages import (AboutSettingsPage, AppearanceSettingsPage,
                              BasicSettingsPage)

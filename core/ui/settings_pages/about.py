@@ -18,8 +18,8 @@ from ...config import cfg
 from ...logger import log
 from ...paths import DATA_FOLDER_PATH, LOGO_ICON_FILE_PATH, UNINSTALLER_FILE_PATH
 from ...updater import check_update_logic
-from ..controls import BaseSettingPage
-from ..dialogs import Notify, UpdateDownloadBox
+from ..ui_widgets import BaseSettingPage, Notify, UpdateDownloadBox
+
 
 # 常量
 LOGO_ICON_PATH = LOGO_ICON_FILE_PATH

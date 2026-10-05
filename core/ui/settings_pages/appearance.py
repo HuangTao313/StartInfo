@@ -12,8 +12,8 @@ from ...config import cfg
 from ...paths import TEMPLATE_FOLDER_PATH
 from ...templates import get_template_files, import_template
 from ..app import app_manager, get_theme_color
-from ..controls import BaseSettingPage, ExtSwitchSettingCard
-from ..dialogs import Notify, file_dialog
+from ..ui_widgets import BaseSettingPage, ExtSwitchSettingCard, Notify
+from ..dialogs import file_dialog
 
 
 class AppearanceSettingsPage(BaseSettingPage):

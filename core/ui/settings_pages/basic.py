@@ -17,10 +17,9 @@ from ...logger import log
 from ...paths import CACHE_FOLDER_PATH, LOG_FOLDER_PATH
 from ...startup import create_shortcut, is_shortcut_exist, remove_shortcut
 from ..app import app_manager
-from ..controls import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
-                        CitySearchBox, ExpandGroupCard, ListEditingBox,
-                        NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
-from ..dialogs import Notify, dialog
+from ..ui_widgets import (BaseSettingPage, BirthdayEditBox, CalendarSettingCard,
+                          CitySearchBox, ExpandGroupCard, ListEditingBox, Notify,
+                          NumberSettingCard, TextSettingCard, ExtSwitchSettingCard)
 
 
 class BasicSettingsPage(BaseSettingPage):
