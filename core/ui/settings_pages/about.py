@@ -4,12 +4,14 @@ import os
 import shutil
 import sys
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QWidget
 from qasync import asyncSlot
 from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, MessageBox, PrimaryPushSettingCard,
-                            SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel)
+                            SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel,
+                            TextBrowser)
 
 from ...base_lib import CURRENT_VERSION_JSON, VERSION
 from ...config import cfg
@@ -21,6 +23,30 @@ from ..dialogs import Notify, UpdateDownloadBox
 
 # 常量
 LOGO_ICON_PATH = LOGO_ICON_FILE_PATH
+
+class ChangelogBrowser(TextBrowser):
+    """高度随内容与宽度自适应的文本框。"""
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.setPlainText(text)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._updateHeight()  # 先按初始宽度估一次，避免首帧占位过大
+
+    def _updateHeight(self):
+        doc = self.document()
+        doc.setTextWidth(self.viewport().width())
+        h = int(doc.size().height()) + 3  # 少量余量，防止末行被截断
+        if self.height() != h:  # 防止 setFixedHeight 再触发 resizeEvent 死循环
+            self.setFixedHeight(h)
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        self._updateHeight()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._updateHeight()
 
 class AboutSettingsPage(BaseSettingPage):
     def __init__(self, parent=None):
@@ -64,13 +90,20 @@ class AboutSettingsPage(BaseSettingPage):
             changelog=CURRENT_VERSION_JSON.get('changelog', self.tr('获取失败')),
         )
 
-        self.changelog = BodyLabel(changelog_text, self.scrollWidget)
-        self.changelog.setWordWrap(True)
-        self.changelog.adjustSize()
+        # ExpandLayout 按子件当前高度排布，须先 adjustSize 拿到内容高度
+        self.changelogTitle = SubtitleLabel(self.tr('更新日志'))
+        # SubtitleLabel 默认 DemiBold，此处取消加粗（保留 20px 字号）
+        font = self.changelogTitle.font()
+        font.setWeight(QFont.Normal)
+        self.changelogTitle.setFont(font)
+        self.changelogTitle.adjustSize()
+
+        self.changelogCard = ChangelogBrowser(changelog_text, self.scrollWidget)
 
         # 检查更新
         self.checkUpdateCard = PrimaryPushSettingCard(
-            text=self.tr('检查更新'), icon=FIF.UPDATE, title=self.tr('检查更新'),
+            text=self.tr('检查更新'), icon=FIF.UPDATE,
+            title=self.tr('检查更新(当前版本号：{VERSION})').format(VERSION=VERSION),
             content=self.tr('检查新版本并下载'), parent=self.aboutGroup
         )
 
@@ -101,8 +134,12 @@ class AboutSettingsPage(BaseSettingPage):
             self.updateSourceCard,
             self.githubCard,
             self.uninstallCard,
-            self.changelog
         ])
+        # 小标题与上方卡片、下方日志卡片之间留出间距
+        self._add_spacer(14)
+        self.aboutGroup.addSettingCard(self.changelogTitle)
+        self._add_spacer(6)
+        self.aboutGroup.addSettingCard(self.changelogCard)
         self.expandLayout.addWidget(self.aboutGroup)
         self.finalise()
 
