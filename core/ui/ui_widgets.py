@@ -5,6 +5,7 @@
 """
 
 import sqlite3
+import asyncio
 from pathlib import Path
 from typing import Union
 

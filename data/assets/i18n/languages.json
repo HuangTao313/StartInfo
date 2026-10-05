@@ -7,6 +7,14 @@
             "startinfo/startinfo.zh_CN.qm"
         ]
     },
+    "zh_TW": {
+        "name": "繁體中文",
+        "version": "1.0.0",
+        "files": [
+            "qfw/qfluentwidgets.zh_TW.qm",
+            "startinfo/startinfo.zh_TW.qm"
+        ]
+    },
     "en_US": {
         "name": "English",
         "version": "1.0.0",

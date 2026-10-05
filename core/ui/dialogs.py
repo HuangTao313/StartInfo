@@ -4,8 +4,6 @@
 Toast 通知（Notify）以及更新包下载框。
 """
 
-import asyncio
-import functools
 import os
 import re
 import time
@@ -20,8 +18,7 @@ from qfluentwidgets import Dialog
 from ..base_lib import TITLE, restart_program
 from ..logger import log
 from ..paths import LOG_FILE_PATH
-
-
+from .app import app_manager, tr
 
 
 def _setup_auto_close(dialog_instance: Dialog, seconds: int | bool) -> None:
