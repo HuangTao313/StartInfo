@@ -69,14 +69,14 @@ def resolve_python(config):
 def resolve_output_dir(config):
     """产物输出目录: config.output_dir 为可选覆盖;默认 output/<平台目录>(与 build.py 同级)。
 
-    平台目录按系统+架构划分: windows / linux / macOS-intel / macOS-M。
+    平台目录按系统+架构划分: windows / linux / macOS-intel / macOS-m。
     """
     if config.get("output_dir"):
         return PROJECT_ROOT / config["output_dir"]
     if IS_WINDOWS:
         sub = "windows"
     elif sys.platform == "darwin":
-        sub = "macOS-M" if platform.machine().lower() in ("arm64", "aarch64") else "macOS-intel"
+        sub = "macOS-m" if platform.machine().lower() in ("arm64", "aarch64") else "macOS-intel"
     else:
         sub = "linux"
     return SCRIPT_DIR / "output" / sub

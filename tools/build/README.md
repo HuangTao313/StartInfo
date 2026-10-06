@@ -18,7 +18,7 @@ uv run python tools/build/build.py
   | Windows | `output/windows/main.dist/` |
   | Linux | `output/linux/main.dist/` |
   | macOS (Intel) | `output/macOS-intel/main.dist/` |
-  | macOS (Apple Silicon) | `output/macOS-M/main.dist/` |
+  | macOS (Apple Silicon) | `output/macOS-m/main.dist/` |
 
 ## 环境
 

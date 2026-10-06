@@ -17,7 +17,7 @@ jobs:
             outdir: macOS-intel
           - arch: arm64
             runner: macos-15
-            outdir: macOS-M
+            outdir: macOS-m
     steps:
       - name: Checkout
         uses: actions/checkout@v4
