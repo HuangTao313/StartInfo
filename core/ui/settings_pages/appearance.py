@@ -12,7 +12,8 @@ from ...config import cfg
 from ...paths import TEMPLATE_FOLDER_PATH
 from ...templates import get_template_files, import_template
 from ..app import app_manager, get_theme_color
-from ..ui_widgets import BaseSettingPage, ExtSwitchSettingCard, Notify
+from ..ui_widgets import BaseSettingPage, Notify
+from ..setting_cards import ExtSwitchSettingCard
 from ..dialogs import file_dialog
 
 
