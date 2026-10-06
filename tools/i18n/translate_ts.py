@@ -367,6 +367,7 @@ async def main() -> None:
     if not args.source.exists():
         raise SystemExit(f"源文件不存在：{args.source}")
 
+    # .env 与脚本同目录（已被 .gitignore 排除）
     load_env(Path(__file__).with_name(".env"))
 
     app_key = os.getenv("YOUDAO_APP_KEY")
@@ -375,7 +376,7 @@ async def main() -> None:
     if not app_key or not app_secret:
         raise SystemExit(
             "未找到 YOUDAO_APP_KEY 或 YOUDAO_APP_SECRET。\n"
-            "请在 tools/.env 中配置。"
+            "请在 tools/i18n/.env 中配置。"
         )
 
     source_tree = parse_ts(args.source)

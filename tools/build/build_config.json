@@ -1,0 +1,30 @@
+{
+  "project_name": "StartInfo",
+  "main_script": "main.py",
+  "company_name": "HuangTao",
+  "product_name": "StartInfo",
+  "file_version": "2.4.4",
+  "product_version": "2.4.4",
+  "packaging_type": "directory",
+  "console_mode": "disable",
+  "plugin": "pyside6",
+  "jobs": 16,
+  "output_dir": "dist",
+  "compiler": {
+    "windows": "msvc",
+    "linux": "gcc",
+    "macos": "clang"
+  },
+  "msvc_path": "D:\\MSVC\\MSVC\\VC\\Auxiliary\\Build\\vcvars64.bat",
+  "extra_args": [
+    "--plugin-disable=anti-bloat",
+    "--follow-import-to=core",
+    "--include-data-dir=data=data",
+    "--output-filename=StartInfo"
+  ],
+  "windows_extra_args": [
+    "--noinclude-dlls=msvcp140_codecvt_ids.dll",
+    "--windows-icon-from-ico=data/assets/startinfo.ico",
+    "--windows-file-description=开机速览"
+  ]
+}

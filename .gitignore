@@ -27,7 +27,7 @@ data/config.json
 output/
 
 # API配置
-tools/.env
+tools/i18n/.env
 
 # 其他
 其他/

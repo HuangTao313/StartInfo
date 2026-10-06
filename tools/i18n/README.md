@@ -20,16 +20,17 @@ StartInfo 已经使用 `httpx`，无需额外安装依赖。
 
 ```text
 tools/
-├── .env
-├── translate_ts.py
-└── translate_ts.md
+└── i18n/
+    ├── .env
+    ├── translate_ts.py
+    └── translate_ts.md
 ```
 
 ---
 
 ## 2. 配置 API
 
-在 `tools/.env` 中填写：
+在 `.env`（`tools/i18n/.env`，与脚本同目录）中填写：
 
 ```dotenv
 YOUDAO_APP_KEY=你的应用ID
@@ -39,7 +40,7 @@ YOUDAO_APP_SECRET=你的应用密钥
 并确保 `.env` 不提交到 Git：
 
 ```gitignore
-tools/.env
+tools/i18n/.env
 ```
 
 > 注意：大模型翻译需要在有道智云控制台为**同一个应用（appKey）**单独开通「大模型翻译」服务，开通经典文本翻译不会自动带上。
@@ -74,13 +75,13 @@ TRANSLATION_PROMPT = (
 ## 4. 基本用法
 
 ```powershell
-uv run python tools/translate_ts.py 输入文件 输出文件 --to 目标语言
+uv run python tools/i18n/translate_ts.py 输入文件 输出文件 --to 目标语言
 ```
 
 例如：
 
 ```powershell
-uv run python tools/translate_ts.py `
+uv run python tools/i18n/translate_ts.py `
     data/assets/i18n/startinfo/startinfo.zh_CN.ts `
     data/assets/i18n/startinfo/startinfo.en_US.ts `
     --to en
@@ -91,7 +92,7 @@ uv run python tools/translate_ts.py `
 默认源语言为简体中文，也可以使用 `--from` 指定：
 
 ```powershell
-uv run python tools/translate_ts.py input.ts output.ts --from zh_CN --to en
+uv run python tools/i18n/translate_ts.py input.ts output.ts --from zh_CN --to en
 ```
 
 ---
@@ -117,7 +118,7 @@ uv run python tools/translate_ts.py input.ts output.ts --from zh_CN --to en
 例如：
 
 ```powershell
-uv run python tools/translate_ts.py input.ts output.ts --to zh_TW
+uv run python tools/i18n/translate_ts.py input.ts output.ts --to zh_TW
 ```
 
 如果没有快捷映射，也可以直接使用有道 API 支持的语言代码。
@@ -218,10 +219,10 @@ i18n_tool.py release       ← lrelease 编译 .ts → .qm
 
 ### 9.1 扫描源码生成/更新 .ts
 
-使用 `tools/i18n_tool.py`（封装了 pyside6-lupdate，自动递归扫描 `core/` 并包含 `main.py`、`settings.py`，一次更新 languages.json 中登记的所有语言的 .ts）：
+使用 `tools/i18n/i18n_tool.py`（封装了 pyside6-lupdate，自动递归扫描 `core/` 并包含 `main.py`、`settings.py`，一次更新 languages.json 中登记的所有语言的 .ts）：
 
 ```powershell
-uv run python tools/i18n_tool.py update
+uv run python tools/i18n/i18n_tool.py update
 ```
 
 已有的译文不会被覆盖，只新增/更新条目；代码里删除的文案会标记为 `obsolete` 而不是直接删除。
@@ -229,7 +230,7 @@ uv run python tools/i18n_tool.py update
 ### 9.2 生成翻译初稿
 
 ```powershell
-uv run python tools/translate_ts.py `
+uv run python tools/i18n/translate_ts.py `
     data/assets/i18n/startinfo/startinfo.zh_CN.ts `
     data/assets/i18n/startinfo/startinfo.en_US.ts `
     --to en_US
@@ -240,7 +241,7 @@ uv run python tools/translate_ts.py `
 ### 9.3 编译 .ts → .qm
 
 ```powershell
-uv run python tools/i18n_tool.py release
+uv run python tools/i18n/i18n_tool.py release
 ```
 
 每个语言的 .qm 输出路径取自 languages.json 中该语言 `files` 列表里登记的 `startinfo/` 条目，与 `app.py` 运行时加载的路径自动保持一致。
@@ -250,7 +251,7 @@ uv run python tools/i18n_tool.py release
 修改代码后如果不需要人工校对，可以直接：
 
 ```powershell
-uv run python tools/i18n_tool.py all
+uv run python tools/i18n/i18n_tool.py all
 ```
 
 ### 9.5 手动命令参考
@@ -268,9 +269,9 @@ uv run pyside6-lrelease data/assets/i18n/startinfo/startinfo.zh_CN.ts -qm data/a
 ### 9.6 新增语言接入
 
 1. 在 `data/assets/i18n/languages.json` 中添加语言条目（键为语言代码，`files` 里登记 `startinfo/startinfo.<目标语言>.qm`）
-2. `uv run python tools/i18n_tool.py update` —— lupdate 会自动创建对应的 `.ts`
-3. `uv run python tools/translate_ts.py data/assets/i18n/startinfo/startinfo.zh_CN.ts data/assets/i18n/startinfo/startinfo.<目标语言>.ts --to <目标语言>` 生成初稿
-4. Qt Linguist 校对后，`uv run python tools/i18n_tool.py release` 编译
+2. `uv run python tools/i18n/i18n_tool.py update` —— lupdate 会自动创建对应的 `.ts`
+3. `uv run python tools/i18n/translate_ts.py data/assets/i18n/startinfo/startinfo.zh_CN.ts data/assets/i18n/startinfo/startinfo.<目标语言>.ts --to <目标语言>` 生成初稿
+4. Qt Linguist 校对后，`uv run python tools/i18n/i18n_tool.py release` 编译
 5. `.qm` 编译好后重启程序，即可在设置里切换到新语言
 
 ---

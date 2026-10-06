@@ -2,9 +2,9 @@
 
 用法（统一通过 uv run 调用，确保使用项目虚拟环境的 pyside6 工具）::
 
-    uv run python tools/i18n_tool.py update    # 扫描 tr() 标记，更新所有 .ts
-    uv run python tools/i18n_tool.py release   # 编译所有 .ts → .qm
-    uv run python tools/i18n_tool.py all       # 依次执行 update 和 release
+    uv run python tools/i18n/i18n_tool.py update    # 扫描 tr() 标记，更新所有 .ts
+    uv run python tools/i18n/i18n_tool.py release   # 编译所有 .ts → .qm
+    uv run python tools/i18n/i18n_tool.py all       # 依次执行 update 和 release
 
 语言列表读取 data/assets/i18n/languages.json；每个语言的 .ts 路径由
 清单中登记的 startinfo .qm 条目推导（.qm → .ts），命名跟随清单。
@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 LANGUAGES_JSON = PROJECT_ROOT / 'data' / 'assets' / 'i18n' / 'languages.json'
 
 # lupdate 扫描范围：core 递归 + 两个入口脚本
@@ -52,7 +52,7 @@ def pyside6_tool(name: str) -> Path:
         raise SystemExit(
             f'未找到 {name}：{tool}\n'
             '请通过 uv run 在项目虚拟环境中执行本脚本，例如：\n'
-            '    uv run python tools/i18n_tool.py update'
+            '    uv run python tools/i18n/i18n_tool.py update'
         )
 
     return tool
