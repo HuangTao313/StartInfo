@@ -47,6 +47,19 @@ def get_available_languages() -> list[str]:
     return list(_load_languages().keys())
 
 
+def resolve_language(language: str) -> str:
+    """将配置的语言值解析为实际生效的语言代码。
+
+    dynamic 解析为系统语言；解析结果不在语言包清单中（系统语言无对应
+    语言包、配置被手改等）时回退默认语言。
+    """
+    if language == 'dynamic':
+        language = get_system_language()
+    if language not in get_available_languages():
+        return DEFAULT_LANGUAGE
+    return language
+
+
 def get_language_files(code: str) -> list[str]:
     """获取指定语言的 qm 文件列表（相对 i18n 目录，按 languages.json 的 files 顺序）。
 

@@ -12,7 +12,7 @@ from qfluentwidgets import (QConfig, OptionsConfigItem, OptionsValidator,
 from datetime import datetime
 
 from . import paths
-from .i18n import DEFAULT_LANGUAGE, get_available_languages
+from .i18n import get_available_languages
 from .templates import get_template_files
 
 log = logger
@@ -197,9 +197,10 @@ class StartInfoConfig(QConfig):
         OptionsValidator(['restart', 'exit'])
     )
     # 语言（languages.json 为随程序分发的只读资源，导入时读取一次即可）
+    # dynamic 表示跟随系统语言，由 AppManager._apply_language 解析为具体语言
     language = OptionsConfigItem(
-        'General', 'language', DEFAULT_LANGUAGE,
-        OptionsValidator(get_available_languages()),
+        'General', 'language', 'dynamic',
+        OptionsValidator(['dynamic'] + get_available_languages()),
         restart=True
     )
     # 更新源

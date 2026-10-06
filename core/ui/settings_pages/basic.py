@@ -59,7 +59,8 @@ class BasicSettingsPage(BaseSettingPage):
             configItem=cfg.close_settings_action, parent=self.generalGroup
         )
 
-        languages = get_language_names()
+        # 顺序须与 cfg.language 的 options 一致：dynamic 在前，其余按 languages.json 键序
+        languages = [self.tr('跟随系统')] + get_language_names()
         self.languageCard = ComboBoxSettingCard(
             texts=languages, icon=FIF.LANGUAGE,
             title=self.tr('语言'), content=self.tr('切换程序的显示语言'),
@@ -509,11 +510,18 @@ class BasicSettingsPage(BaseSettingPage):
     def _onLanguageChanged(self, language: str):
         """语言卡片选择后（qfw 卡片已自动保存配置）热重载翻译器。
 
-        已打开窗口的文案在构造时已固化，不会随翻译器刷新，
-        询问用户是否立即重启以完全应用新语言。
+        配置值不同但实际生效语言相同（如系统为 zh_CN 时在「跟随系统」
+        与「简体中文」间切换）时不重载、不提示。
+        实际语言变化时，已打开窗口的文案在构造时已固化，不会随翻译器
+        刷新，询问用户是否立即重启以完全应用新语言。
         """
-        if not app_manager.switch_language(language):
+        previous = app_manager.current_language
+        resolved = app_manager.switch_language(language)
+        if resolved is None:
             Notify.error(self.tr('语言切换失败，请查看日志'), parent=self)
+            return
+
+        if resolved == previous:
             return
 
         self.box = MessageBox(self.tr('切换语言'), self.tr('语言将在重启后完全生效，是否立即重启？'), self)

@@ -9,8 +9,7 @@ from qfluentwidgets import Theme, setTheme, setThemeColor
 
 from ..base_lib import system
 from ..config import cfg
-from ..i18n import (DEFAULT_LANGUAGE, get_available_languages,
-                    get_language_files)
+from ..i18n import get_available_languages, get_language_files, resolve_language
 from ..logger import log
 from ..paths import I18N_FOLDER_PATH
 
@@ -43,6 +42,7 @@ class AppManager:
             log.debug('将QT事件循环设置为全局 asyncio 事件循环')
             # 3.设置语言
             self._translators: list[QTranslator] = []
+            self._current_language: str | None = None
             self._apply_language()
             # 4.应用主题
             self._apply_theme()
@@ -91,10 +91,9 @@ class AppManager:
         if language is None:
             language = cfg.language.value
 
-        # 语言不在清单中（配置文件被手改/清单变更）时回退默认语言
-        if language not in get_available_languages():
-            log.warning(f'语言 {language} 不在语言包清单中，回退默认语言 {DEFAULT_LANGUAGE}')
-            language = DEFAULT_LANGUAGE
+        # dynamic 表示跟随系统系统时，自动获取系统语言；
+        # 解析结果不在清单中（系统语言无语言包/配置被手改）时回退默认语言
+        language = resolve_language(language)
 
         for old_translator in self._translators:
             self._app.removeTranslator(old_translator)
@@ -111,16 +110,25 @@ class AppManager:
                 log.warning(f'语言包加载失败，已跳过: {qm_path}')
 
         log.debug(f'当前语言: {language}')
+        self._current_language = language
 
-    def switch_language(self, language: str) -> bool:
-        """切换语言：保存配置并重载翻译器。返回是否成功。
+    @property
+    def current_language(self) -> str | None:
+        """当前实际生效的语言代码（dynamic 已解析为具体语言）。"""
+        return self._current_language
 
+    def switch_language(self, language: str) -> str | None:
+        """切换语言：保存配置并重载翻译器。返回实际生效的语言，失败返回 None。
+
+        配置值不同但解析后的实际语言相同（如系统为 zh_CN 时在
+        「跟随系统」与「简体中文」间切换）时，仅落盘不重载；
         已打开的窗口不会随翻译器重载而刷新（文案在构造时已固化），
-        完全生效需要重启程序。
+        实际语言变化后完全生效需要重启程序。
         """
-        if language not in get_available_languages():
+        # dynamic 表示跟随系统语言，合法；其余值必须在语言包清单中
+        if language != 'dynamic' and language not in get_available_languages():
             log.warning(f'切换语言失败，{language} 不在语言包清单中')
-            return False
+            return None
 
         # 值相同则不写入，避免 valueChanged 信号再次触发语言重载
         if language != cfg.language.value:
@@ -131,8 +139,11 @@ class AppManager:
             # SystemExit 会中断信号链跳过 save()，导致配置未落盘
             cfg.save()
 
-        self._apply_language(language)
-        return True
+        # 实际语言未变化（仅配置表示方式不同）时无需重载语言包
+        resolved = resolve_language(language)
+        if resolved != self._current_language:
+            self._apply_language(language)
+        return resolved
 
     def get_app(self) -> QApplication:
         # init_app 自带惰性守卫并总是返回 _app，直接委托即可
