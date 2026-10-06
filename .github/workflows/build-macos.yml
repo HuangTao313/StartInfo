@@ -1,0 +1,57 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build macOS (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # outdir 对应 tools/build/build.py 按架构划分的输出目录
+          - arch: x86_64
+            runner: macos-15-intel
+            outdir: macOS-intel
+          - arch: arm64
+            runner: macos-15
+            outdir: macOS-M
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies
+        run: uv sync --locked
+
+      - name: Check environment
+        run: |
+          uname -m
+          clang --version
+          xcode-select -p
+          .venv/bin/python --version
+
+      # 使用项目现有的跨平台 Nuitka 构建工具
+      # tools/build/build.py 自动使用 uv 管理的 .venv,macOS 上通过 --clang 使用 Apple Clang
+      - name: Build
+        run: uv run python tools/build/build.py
+
+      - name: Package
+        run: |
+          cd "tools/build/output/${{ matrix.outdir }}"
+          zip -r "$GITHUB_WORKSPACE/StartInfo-macos-${{ matrix.arch }}.zip" main.dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StartInfo-macos-${{ matrix.arch }}
+          path: StartInfo-macos-${{ matrix.arch }}.zip

@@ -10,6 +10,7 @@
 
 import json
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,22 @@ def resolve_python(config):
     return fallback
 
 
+def resolve_output_dir(config):
+    """产物输出目录: config.output_dir 为可选覆盖;默认 output/<平台目录>(与 build.py 同级)。
+
+    平台目录按系统+架构划分: windows / linux / macOS-intel / macOS-M。
+    """
+    if config.get("output_dir"):
+        return PROJECT_ROOT / config["output_dir"]
+    if IS_WINDOWS:
+        sub = "windows"
+    elif sys.platform == "darwin":
+        sub = "macOS-M" if platform.machine().lower() in ("arm64", "aarch64") else "macOS-intel"
+    else:
+        sub = "linux"
+    return SCRIPT_DIR / "output" / sub
+
+
 def build_env(python_path):
     """把解释器所在目录放到 PATH 最前面。"""
     env = os.environ.copy()
@@ -89,7 +106,7 @@ def _platform_extra_args(config):
     return extra
 
 
-def build_nuitka_command(config, python_path):
+def build_nuitka_command(config, python_path, output_dir):
     cmd = [python_path, "-m", "nuitka", "--standalone"]
 
     # console_mode 是 Windows 专属选项
@@ -99,8 +116,7 @@ def build_nuitka_command(config, python_path):
     if config.get("packaging_type") == "file":
         cmd.append("--onefile")
 
-    if config.get("output_dir"):
-        cmd.append(f"--output-dir={config['output_dir']}")
+    cmd.append(f"--output-dir={output_dir}")
 
     cmd.extend([
         f"--main={config['main_script']}",
@@ -186,8 +202,9 @@ def main():
     env = build_env(python_path)
     check_nuitka(python_path, env)
 
-    print(f"[INFO] 平台: {PLATFORM_KEY} | 编译器: {resolve_compiler(config)} | 输出目录: {config.get('output_dir', '当前目录')}")
-    cmd = build_nuitka_command(config, python_path)
+    output_dir = resolve_output_dir(config)
+    print(f"[INFO] 平台: {PLATFORM_KEY} | 编译器: {resolve_compiler(config)} | 输出目录: {output_dir}")
+    cmd = build_nuitka_command(config, python_path, output_dir)
     run_build(cmd, config, env)
     print("[OK] Nuitka 打包成功完成!")
 

@@ -11,7 +11,14 @@ uv run python tools/build/build.py
 ```
 
 - 构建参数直接改 `tools/build/build_config.json`(版本号、图标、数据目录等),与原来填 JSON 的习惯一致。
-- 产物输出到项目根目录的 `dist/`(由 `output_dir` 控制)。
+- 产物输出到 `tools/build/output/` 下按系统+架构划分的目录中,程序在其中的 `main.dist/` 子目录里:
+
+  | 构建机器 | 产物目录 |
+  |---|---|
+  | Windows | `output/windows/main.dist/` |
+  | Linux | `output/linux/main.dist/` |
+  | macOS (Intel) | `output/macOS-intel/main.dist/` |
+  | macOS (Apple Silicon) | `output/macOS-M/main.dist/` |
 
 ## 环境
 
@@ -30,7 +37,7 @@ uv run python tools/build/build.py
 | `console_mode` | Windows 控制台模式,`disable` 为无窗口 GUI |
 | `plugin` | Nuitka 插件,如 `pyside6`,支持字符串或列表 |
 | `jobs` | 编译并行数 |
-| `output_dir` | 产物输出目录,相对项目根目录 |
+| `output_dir` | 可选,不填时默认输出到 `tools/build/output/<平台目录>/`(按构建机器系统+架构自动划分) |
 | `compiler` | 按平台的编译后端,项目标准:`windows: msvc`、`linux: gcc`、`macos: clang`(也可写成一个字符串统一三平台) |
 | `msvc_path` | Windows 下 vcvars64.bat 路径 |
 | `extra_args` | 三平台公共的 Nuitka 附加参数 |

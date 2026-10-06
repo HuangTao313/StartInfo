@@ -9,7 +9,6 @@
   "console_mode": "disable",
   "plugin": "pyside6",
   "jobs": 16,
-  "output_dir": "dist",
   "compiler": {
     "windows": "msvc",
     "linux": "gcc",
