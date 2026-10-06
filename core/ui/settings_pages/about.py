@@ -5,15 +5,15 @@ import shutil
 import sys
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QFont, QPixmap, QColor
 from PySide6.QtWidgets import QHBoxLayout, QWidget
 from qasync import asyncSlot
-from qfluentwidgets import (BodyLabel, ComboBoxSettingCard, FluentIcon as FIF,
+from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             HyperlinkCard, MessageBox, PrimaryPushSettingCard,
                             SettingCardGroup, TitleLabel,SubtitleLabel, StrongBodyLabel,
                             TextBrowser)
 
-from ...base_lib import CURRENT_VERSION_JSON, VERSION, open_file_or_folder
+from ...base_lib import CURRENT_VERSION_JSON, VERSION, open_target
 from ...config import cfg
 from ...logger import log
 from ...paths import DATA_FOLDER_PATH, LOGO_ICON_FILE_PATH, UNINSTALLER_FILE_PATH
@@ -187,24 +187,44 @@ class AboutSettingsPage(BaseSettingPage):
             self.checkUpdateCard.setEnabled(True)
 
     def onUninstallClicked(self):
-        self.box = MessageBox(self.tr('卸载确认'), self.tr('确定要卸载本程序吗？'), self)
+        self.box = MessageBox(self.tr('卸载确认'), self.tr('确定要卸载本程序吗？\n注：此操作无法撤销'), self)
         self.box.yesButton.setText(self.tr('确定'))
+        # 卸载是破坏性操作：确认按钮用红色警告色
+        # qfluentwidgets 1.11.3 的 PrimaryPushButton 无 setCustomBackgroundColor，改用 QSS
+        self.box.yesButton.setStyleSheet('''
+            QPushButton {
+                background-color: #C42B1C;
+                color: white; 
+                border: none; 
+                border-radius: 4px; 
+                padding: 5px 12px 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #D83B2D;
+            }
+            QPushButton:pressed {
+                background-color: #A82216;
+            }
+        ''')
         self.box.cancelButton.setText(self.tr('取消'))
         if self.box.exec():
             if UNINSTALLER_FILE_PATH.exists():
                 try:
                     log.remove()
                     shutil.rmtree(DATA_FOLDER_PATH)
+
                 except Exception as e:
-                    log.error(f'设置-删除data文件夹失败: {e}')
+                    log.error(f'删除data文件夹失败: {e}')
+
                 try:
-                    open_file_or_folder(UNINSTALLER_FILE_PATH)
+                    open_target(UNINSTALLER_FILE_PATH)
                     sys.exit()
+
                 except Exception as e:
-                    log.error(f'设置-启动卸载程序失败: {e}')
+                    log.error(f'启动卸载程序失败: {e}')
                     Notify.error(
                         content=self.tr('启动卸载程序失败: {error}').format(error=e),
                         parent=self)
             else:
-                log.warning('设置-未找到卸载程序')
+                log.warning('未找到卸载程序')
                 Notify.warning(content=self.tr('未找到卸载程序'), parent=self)

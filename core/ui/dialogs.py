@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QFileDialog
 
 from qfluentwidgets import Dialog
 
-from ..base_lib import TITLE, restart_program, open_file_or_folder
+from ..base_lib import TITLE, restart_program, open_target
 from ..logger import log
 from ..paths import LOG_FILE_PATH
 from .app import app_manager, tr
@@ -116,8 +116,8 @@ def error_dialog(text: str) -> None:
     elif not yn:
         try:
             if LOG_FILE_PATH.exists():
-                open_file_or_folder(LOG_FILE_PATH.parent)
-                open_file_or_folder(LOG_FILE_PATH)
+                open_target(LOG_FILE_PATH.parent)
+                open_target(LOG_FILE_PATH)
                 log.info(f'已打开日志文件：{LOG_FILE_PATH}')
 
             else:

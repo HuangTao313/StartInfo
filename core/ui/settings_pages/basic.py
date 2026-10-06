@@ -9,7 +9,7 @@ from qfluentwidgets import (ComboBoxSettingCard, FluentIcon as FIF,
                             PushSettingCard, SettingCardGroup,
                             MessageBox)
 
-from ...base_lib import restart_program, open_file_or_folder
+from ...base_lib import restart_program, open_target
 from ...config import cfg
 from ...i18n import get_language_names
 from ...logger import log
@@ -536,7 +536,7 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onOpenLogFolderClicked(self) -> None:
         if LOG_FOLDER_PATH.exists():
-            open_file_or_folder(LOG_FOLDER_PATH)
+            open_target(LOG_FOLDER_PATH)
             Notify.success(self.tr('已打开日志文件夹'), parent=self)
 
         else:
@@ -544,10 +544,10 @@ class BasicSettingsPage(BaseSettingPage):
 
     def _onDeleteCaCheClicked(self) -> bool | None:
         if CACHE_FOLDER_PATH.exists():
-            from ...widgets import CacheManager
-
             shutil.rmtree(CACHE_FOLDER_PATH)
+
             # 复位初始化标记，使后续缓存写入能在下次 init_db 时重建目录与表
+            from ...widgets import CacheManager
             CacheManager.reset()
             log.info('已删除缓存')
             Notify.success(self.tr('已删除缓存'), parent=self)

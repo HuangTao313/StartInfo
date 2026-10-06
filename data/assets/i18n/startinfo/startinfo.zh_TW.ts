@@ -3,42 +3,42 @@
     <context>
         <name />
         <message>
-            <location filename="../../../../core/updater.py" line="251" />
+            <location filename="../../../../core/updater.py" line="276" />
             <source>版本号获取失败</source>
             <translation>版本號取得失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="252" />
+            <location filename="../../../../core/updater.py" line="277" />
             <source>日期获取失败</source>
             <translation>日期取得失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="253" />
+            <location filename="../../../../core/updater.py" line="278" />
             <source>更新日志获取失败</source>
             <translation>更新日誌取得失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="273" />
+            <location filename="../../../../core/updater.py" line="300" />
             <source>下载更新包时出错，请稍后重试。</source>
             <translation>下載更新包時出錯，請稍後重試。</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="277" />
+            <location filename="../../../../core/updater.py" line="304" />
             <source>更新包校验失败，文件可能已损坏。</source>
             <translation>更新包驗證失敗，檔案可能已損壞。</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="314" />
+            <location filename="../../../../core/updater.py" line="360" />
             <source>获取版本信息失败（更新源: {source}），请检查网络或更新源配置</source>
             <translation>取得版本資訊失敗（更新來源：{source}），請檢查網路或更新來源設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="319" />
+            <location filename="../../../../core/updater.py" line="340" />
             <source>无法连接网络，检查更新失败</source>
             <translation>無法連接網路，檢查更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/updater.py" line="325" />
+            <location filename="../../../../core/updater.py" line="368" />
             <source>检查更新异常: {error}</source>
             <translation>檢查更新異常：{error}</translation>
         </message>
@@ -85,32 +85,32 @@
             <translation>設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1123" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="194" />
             <source>提示</source>
             <translation>提示</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1141" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="212" />
             <source>成功</source>
             <translation>成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1159" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="230" />
             <source>警告</source>
             <translation>警告</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1175" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="246" />
             <source>错误</source>
             <translation>錯誤</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1210" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="281" />
             <source>操作失败</source>
             <translation>操作失敗</translation>
         </message>
         <message>
-            <location filename="../../../../main.py" line="245" />
+            <location filename="../../../../main.py" line="257" />
             <source>程序已运行，请勿重复启动！</source>
             <translation>程式已運行，請勿重複啟動！</translation>
         </message>
@@ -233,8 +233,10 @@
         </message>
         <message>
             <location filename="../../../../core/ui/settings_pages/about.py" line="190" />
-            <source>确定要卸载本程序吗？</source>
-            <translation>確定要卸載本程式嗎？</translation>
+            <source>确定要卸载本程序吗？
+注：此操作无法撤销</source>
+            <translation>確定要卸載本程式嗎？
+註：此操作無法撤銷</translation>
         </message>
         <message>
             <location filename="../../../../core/ui/settings_pages/about.py" line="191" />
@@ -242,17 +244,17 @@
             <translation>確定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/about.py" line="192" />
+            <location filename="../../../../core/ui/settings_pages/about.py" line="209" />
             <source>取消</source>
             <translation>取消</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/about.py" line="206" />
+            <location filename="../../../../core/ui/settings_pages/about.py" line="226" />
             <source>启动卸载程序失败: {error}</source>
             <translation>啟動卸載程式失敗：{error}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/about.py" line="210" />
+            <location filename="../../../../core/ui/settings_pages/about.py" line="230" />
             <source>未找到卸载程序</source>
             <translation>未找到卸載程式</translation>
         </message>
@@ -260,143 +262,143 @@
     <context>
         <name>AppearanceSettingsPage</name>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="30" />
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="33" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="31" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="34" />
             <source>主题</source>
             <translation>主題</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="34" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="35" />
             <source>调整软件的外观颜色</source>
             <translation>調整軟體的外觀顏色</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="35" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="36" />
             <source>浅色主题</source>
             <translation>淺色主題</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="35" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="36" />
             <source>深色主题</source>
             <translation>深色主題</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="35" />
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="42" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="36" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="43" />
             <source>跟随系统</source>
             <translation>隨系統</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="40" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="41" />
             <source>主题色</source>
             <translation>主題色</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="41" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="42" />
             <source>跟随系统或自定义</source>
             <translation>隨系統或自訂</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="42" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="43" />
             <source>自定义</source>
             <translation>自訂</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="56" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="57" />
             <source>自定义主题色</source>
             <translation>自訂主題色</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="56" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="57" />
             <source>自定义程序主题色</source>
             <translation>自訂程式主題色</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="63" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="64" />
             <source>云母效果</source>
             <translation>雲母效果</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="64" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="65" />
             <source>窗口和表面显示半透明(仅支持Windows11)</source>
             <translation>視窗與表面顯示半透明（僅支援 Windows 11）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="80" />
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="84" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="81" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="85" />
             <source>模板</source>
             <translation>模板</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="85" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="86" />
             <source>选择主界面使用的模板</source>
             <translation>選擇主介面使用的模板</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="90" />
             <location filename="../../../../core/ui/settings_pages/appearance.py" line="91" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="92" />
             <source>导入模板</source>
             <translation>導入模板</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="91" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="92" />
             <source>导入Jinja2模板</source>
             <translation>導入 Jinja2 模板</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="96" />
             <location filename="../../../../core/ui/settings_pages/appearance.py" line="97" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="98" />
             <source>刷新模板列表</source>
             <translation>刷新模板列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="102" />
             <location filename="../../../../core/ui/settings_pages/appearance.py" line="103" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="104" />
             <source>打开模板文件夹</source>
             <translation>開啟模板資料夾</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="108" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="109" />
             <source>模板自定义文档</source>
             <translation>模板自定義文件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="109" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="110" />
             <source>打开模板自定义文档</source>
             <translation>開啟模板自訂文件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="111" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="112" />
             <source>打开</source>
             <translation>開啟</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="156" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="157" />
             <source>请先将【主题色】切换为自定义</source>
             <translation>請先將【主題色】切換為自訂</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="164" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="165" />
             <source>选择模版文件</source>
             <translation>選擇模板檔案</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="164" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="165" />
             <source>jinja2模板文件 (*.j2)</source>
             <translation>jinja2 模板文件 (*.j2)</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="168" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="169" />
             <source>模板导入成功</source>
             <translation>模板導入成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="169" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="170" />
             <source>已成功导入模板：{name}</source>
             <translation>已成功導入模板：{name}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/appearance.py" line="224" />
+            <location filename="../../../../core/ui/settings_pages/appearance.py" line="225" />
             <source>已刷新模板列表，发现 {count} 个文件</source>
             <translation>已刷新模板列表，發現 {count} 個檔案</translation>
         </message>
@@ -590,8 +592,8 @@
         </message>
         <message>
             <location filename="../../../../core/ui/settings_pages/basic.py" line="151" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="574" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="642" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="578" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="646" />
             <source>选择城市(当前: {city})</source>
             <translation>選擇城市（目前：{city}）</translation>
         </message>
@@ -1028,12 +1030,12 @@
             <translation>稍後重新啟動</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="549" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="553" />
             <source>已删除缓存</source>
             <translation>已刪除快取</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="553" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="557" />
             <source>未发现缓存</source>
             <translation>未發現緩存</translation>
         </message>
@@ -1068,83 +1070,83 @@
             <translation>日誌資料夾不存在</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="577" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="581" />
             <source>已设置城市 {city}</source>
             <translation>已設定城市 {city}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="578" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="582" />
             <source>正在获取天气信息...</source>
             <translation>正在取得天氣資訊...</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="649" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="653" />
             <source>更换天气数据源后请重新选择城市</source>
             <translation>切換天氣資料來源後請重新選擇城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="654" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="683" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="658" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="686" />
             <source>未填写API Host或API Key</source>
             <translation>未填寫 API Host 或 API Key</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="664" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="690" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="667" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="693" />
             <source>天气信息更新成功</source>
             <translation>天氣資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="664" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="670" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="690" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="695" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="667" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="673" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="693" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="698" />
             <source>天气信息更新失败</source>
             <translation>天氣資訊更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="669" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="694" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="726" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="749" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="778" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="672" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="697" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="729" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="752" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="781" />
             <source>未知错误：{error}</source>
             <translation>未知錯誤：{error}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="709" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="712" />
             <source>MC 服务器信息已更新</source>
             <translation>MC 伺服器資訊已更新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="714" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="717" />
             <source>，当前有 {count} 个朋友在线：{friends}</source>
             <translation>，目前有 {count} 位朋友在線：{friends}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="717" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="720" />
             <source>，当前有 {count} 个朋友在线</source>
             <translation>，目前有 {count} 位朋友在線</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="722" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="727" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="725" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="730" />
             <source>MC 服务器信息更新失败</source>
             <translation>MC 伺服器資訊更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="737" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="740" />
             <source>请先填写仓库作者和仓库名称</source>
             <translation>請先填寫倉庫作者和倉庫名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="745" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="748" />
             <source>GitHub仓库信息更新成功</source>
             <translation>GitHub 倉庫資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="745" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="750" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="748" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="753" />
             <source>GitHub仓库信息更新失败</source>
             <translation>GitHub 倉庫資訊更新失敗</translation>
         </message>
@@ -1164,13 +1166,13 @@
             <translation>已儲存新的朋友列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="774" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="777" />
             <source>每日一言信息更新成功</source>
             <translation>每日一言資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="774" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="779" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="777" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="782" />
             <source>每日一言信息更新失败</source>
             <translation>每日一言資訊更新失敗</translation>
         </message>
@@ -1178,32 +1180,32 @@
     <context>
         <name>CitySearchBox</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="128" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="74" />
             <source>搜索城市</source>
             <translation>搜尋城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="129" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="75" />
             <source>请输入城市名进行搜索</source>
             <translation>請輸入城市名稱進行搜尋</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="132" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="78" />
             <source>(支持搜索省份)</source>
             <translation>（支援搜尋省份）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="139" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="85" />
             <source>例如：北京 / 上海 / 武汉</source>
             <translation>例如：北京 / 上海 / 武漢</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="141" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="87" />
             <source>选择此城市</source>
             <translation>選擇此城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="142" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="88" />
             <source>取消</source>
             <translation>取消</translation>
         </message>
@@ -1211,62 +1213,62 @@
     <context>
         <name>DateTableEditBox</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="833" />
+            <location filename="../../../../core/ui/setting_cards.py" line="666" />
             <source>编辑表格</source>
             <translation>編輯表格</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="835" />
+            <location filename="../../../../core/ui/setting_cards.py" line="668" />
             <source>日期</source>
             <translation>日期</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="837" />
+            <location filename="../../../../core/ui/setting_cards.py" line="670" />
             <source>双击名称或日期可编辑</source>
             <translation>雙擊名稱或日期可編輯</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="847" />
+            <location filename="../../../../core/ui/setting_cards.py" line="680" />
             <source>保存</source>
             <translation>儲存</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="848" />
+            <location filename="../../../../core/ui/setting_cards.py" line="681" />
             <source>取消</source>
             <translation>取消</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="866" />
+            <location filename="../../../../core/ui/setting_cards.py" line="699" />
             <source>添加</source>
             <translation>新增</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="872" />
+            <location filename="../../../../core/ui/setting_cards.py" line="705" />
             <source>删除</source>
             <translation>刪除</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="887" />
+            <location filename="../../../../core/ui/setting_cards.py" line="720" />
             <source>名称</source>
             <translation>名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="934" />
+            <location filename="../../../../core/ui/setting_cards.py" line="767" />
             <source>未设置</source>
             <translation>未設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="969" />
+            <location filename="../../../../core/ui/setting_cards.py" line="802" />
             <source>第 {row} 行的名称不能为空</source>
             <translation>第 {row} 行的名稱不得為空</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="977" />
+            <location filename="../../../../core/ui/setting_cards.py" line="810" />
             <source>名称重复：{name}，列表以名称为唯一标识</source>
             <translation>名稱重複：{name}，列表以名稱為唯一識別</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="987" />
+            <location filename="../../../../core/ui/setting_cards.py" line="820" />
             <source>{name} 的日期无效，请双击日期单元格重新选择</source>
             <translation>{name} 的日期無效，請雙擊日期單元格重新選擇</translation>
         </message>
@@ -1274,7 +1276,7 @@
     <context>
         <name>DateTableEditSettingCard</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1106" />
+            <location filename="../../../../core/ui/setting_cards.py" line="942" />
             <source>日期</source>
             <translation>日期</translation>
         </message>
@@ -1282,7 +1284,7 @@
     <context>
         <name>EditingSettingCardBase</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1043" />
+            <location filename="../../../../core/ui/setting_cards.py" line="879" />
             <source>已保存</source>
             <translation>已保存</translation>
         </message>
@@ -1290,13 +1292,13 @@
     <context>
         <name>ExtSwitchSettingCard</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="98" />
-            <location filename="../../../../core/ui/ui_widgets.py" line="113" />
+            <location filename="../../../../core/ui/setting_cards.py" line="50" />
+            <location filename="../../../../core/ui/setting_cards.py" line="65" />
             <source>Off</source>
             <translation>關閉</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="113" />
+            <location filename="../../../../core/ui/setting_cards.py" line="65" />
             <source>On</source>
             <translation>打開</translation>
         </message>
@@ -1304,42 +1306,42 @@
     <context>
         <name>ListEditingBox</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="475" />
+            <location filename="../../../../core/ui/setting_cards.py" line="308" />
             <source>保存</source>
             <translation>儲存</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="476" />
+            <location filename="../../../../core/ui/setting_cards.py" line="309" />
             <source>取消</source>
             <translation>取消</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="480" />
+            <location filename="../../../../core/ui/setting_cards.py" line="313" />
             <source>编辑列表</source>
             <translation>編輯列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="482" />
+            <location filename="../../../../core/ui/setting_cards.py" line="315" />
             <source>不可添加重复元素</source>
             <translation>不可添加重複元素</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="497" />
+            <location filename="../../../../core/ui/setting_cards.py" line="330" />
             <source>添加或编辑元素</source>
             <translation>新增或編輯元素</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="505" />
+            <location filename="../../../../core/ui/setting_cards.py" line="338" />
             <source>添加</source>
             <translation>新增</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="511" />
+            <location filename="../../../../core/ui/setting_cards.py" line="344" />
             <source>编辑</source>
             <translation>編輯</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="529" />
+            <location filename="../../../../core/ui/setting_cards.py" line="362" />
             <source>删除</source>
             <translation>刪除</translation>
         </message>
@@ -1347,7 +1349,7 @@
     <context>
         <name>NumberSettingCard</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="352" />
+            <location filename="../../../../core/ui/setting_cards.py" line="185" />
             <source>未关联配置项...</source>
             <translation>未關聯設定項目...</translation>
         </message>
@@ -1392,7 +1394,7 @@
     <context>
         <name>TextSettingCard</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="279" />
+            <location filename="../../../../core/ui/setting_cards.py" line="112" />
             <source>未关联配置项...</source>
             <translation>未關聯設定項目...</translation>
         </message>
@@ -1400,12 +1402,12 @@
     <context>
         <name>UpdateDownloadBox</name>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1260" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="336" />
             <source>发现新版本</source>
             <translation>發現新版本</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1262" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="338" />
             <source>版本号：{version}
 发布日期：{release_date}
 更新日志：
@@ -1416,59 +1418,74 @@
 {changelog}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1266" />
-            <location filename="../../../../core/ui/ui_widgets.py" line="1267" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="342" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="343" />
             <source>获取失败</source>
             <translation>取得失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1268" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="344" />
             <source>暂无更新日志</source>
             <translation>暫無更新日誌</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1275" />
-            <location filename="../../../../core/ui/ui_widgets.py" line="1316" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="351" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="403" />
             <source>正在下载新版本安装包：0%</source>
             <translation>正在下載新版本安裝包：0%</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1285" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="361" />
             <source>立即更新</source>
             <translation>立即更新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1286" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="362" />
             <source>取消更新</source>
             <translation>取消更新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1314" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="401" />
             <source>正在更新</source>
             <translation>正在更新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1328" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="407" />
+            <source>取消</source>
+            <translation>取消</translation>
+        </message>
+        <message>
+            <location filename="../../../../core/ui/ui_widgets.py" line="418" />
             <source>更新过程发生异常：{error}</source>
             <translation>更新過程發生異常：{error}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1341" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="440" />
+            <source>下载完成，正在准备安装...</source>
+            <translation>下載完成，正在準備安裝...</translation>
+        </message>
+        <message>
+            <location filename="../../../../core/ui/ui_widgets.py" line="452" />
+            <source>启动安装程序失败，请到缓存目录手动运行安装包。</source>
+            <translation>啟動安裝程式失敗，請至緩存目錄手動執行安裝包。</translation>
+        </message>
+        <message>
+            <location filename="../../../../core/ui/ui_widgets.py" line="467" />
             <source>正在下载新版本安装包：{percent}% ({downloaded} / {total})</source>
             <translation>正在下載新版本安裝包：{percent}% ({downloaded} / {total})</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1347" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="473" />
             <source>正在下载新版本安装包：{downloaded}</source>
             <translation>正在下載新版本安裝包：{downloaded}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1351" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="478" />
             <source>下载失败</source>
             <translation>下載失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/ui_widgets.py" line="1354" />
+            <location filename="../../../../core/ui/ui_widgets.py" line="482" />
             <source>关闭</source>
             <translation>關閉</translation>
         </message>

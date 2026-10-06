@@ -33,7 +33,7 @@ from PySide6.QtCore import QUrl
 
 from .logger import log
 from .paths import (CURRENT_VERSION_FILE_PATH, EXE_FILE_PATH, MAIN_PATH,
-                    WIN_STARTUP_FOLDER_PATH)
+                    WIN_STARTUP_FOLDER_PATH, UNINSTALLER_FILE_PATH)
 
 
 # =============================================================================
@@ -59,11 +59,17 @@ def read_json(file_path: Union[str, Path]) -> dict:
         return {}
 
 # =============================================================================
-# 打开文件夹/文件(跨平台)
+# 打开文件夹/文件/网页(跨平台)
 # =============================================================================
-def open_file_or_folder(path) -> None:
-    if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))):
-        log.error(f'打开文件或文件夹失败：{path}')
+def open_target(path) -> None:
+    # 网络地址按 URL 打开：QUrl.fromLocalFile 会把 https://... 当成本地路径
+    if isinstance(path, str) and path.startswith(('http://', 'https://')):
+        url = QUrl(path)
+    else:
+        url = QUrl.fromLocalFile(str(path))
+
+    if not QDesktopServices.openUrl(url):
+        log.error(f'打开文件/文件夹/网页失败：{path}')
 
 # =============================================================================
 # 应用身份与静态常量
@@ -87,6 +93,27 @@ SHORTCUT_FILE_PATH = WIN_STARTUP_FOLDER_PATH / f'{TITLE}.lnk'
 # =============================================================================
 # 获取系统环境信息
 system = platform.system()
+
+# 检测当前版本是否为安装版
+# 模块级缓存
+_is_installation = None
+
+def is_installation() -> bool:
+    # 目前只有 Windows 环境下区分安装版和便携版
+    # 其他系统目前仅有便携版
+    if system != 'Windows':
+        return False
+
+    global _is_installation
+
+    # 已有缓存则直接返回
+    if _is_installation is not None:
+        return _is_installation
+
+    # 通过主目录下是否存在卸载程序判断安装版
+    _is_installation = UNINSTALLER_FILE_PATH.is_file()
+
+    return _is_installation
 
 # 网络检测结果缓存（模块级变量，所有导入方共享）
 # 记录 (是否可用, 检测时刻)；带 TTL 避免长期缓存断网结果，

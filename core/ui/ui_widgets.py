@@ -11,8 +11,7 @@ import asyncio
 import functools
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QListWidgetItem, QWidget, QHBoxLayout
 from qasync import asyncSlot
 from qfluentwidgets import (SearchLineEdit, ListWidget, ScrollArea, ExpandLayout,
@@ -20,7 +19,7 @@ from qfluentwidgets import (SearchLineEdit, ListWidget, ScrollArea, ExpandLayout
                             InfoBarPosition, ProgressBar)
 
 from .app import tr
-from ..base_lib import system
+from ..base_lib import open_target, is_installation
 from ..config import cfg
 from ..logger import log
 from ..paths import WEATHER_DB_FILE_PATHS
@@ -319,10 +318,10 @@ class UpdateDownloadBox(MessageBoxBase):
     """检查更新确认 + 下载进度弹窗。
 
     - 初始显示新版本信息与「立即更新/取消更新」按钮。
-    - Windows：点击「立即更新」后清除文案，切换为下载进度条，异步下载安装包；
+    - Windows 安装版：点击「立即更新」后清除文案，切换为下载进度条，异步下载安装包；
       下载期间主按钮变为「取消」，点击后中止下载、删除残缺文件并关闭弹窗。
       下载完成后先渲染进度、关闭弹窗，再启动安装程序并优雅退出应用。
-    - 非 Windows：点击「立即更新」跳转 GitHub Releases 页面并关闭弹窗。
+    - 非 Windows 或 Windows 便携版：点击「立即更新」跳转 GitHub Releases 页面并关闭弹窗。
     """
 
     def __init__(self, update_info: dict, parent=None):
@@ -373,13 +372,13 @@ class UpdateDownloadBox(MessageBoxBase):
         self.cancelButton.clicked.connect(self._onCancelClicked)
 
     def _onYesClicked(self, checked: bool = False):
-        if system != 'Windows':
-            # 非 Windows：跳转到 GitHub 最新构建的 Releases 页面
-            QDesktopServices.openUrl(QUrl(GITHUB_RELEASES_URL))
+        if not is_installation():
+            # 非 Windows 或 Windows 便携版：跳转到 GitHub 最新构建的 Releases 页面
+            open_target(GITHUB_RELEASES_URL)
             self.accept()
             return
 
-        # Windows：清除文案，切换为下载进度视图
+        # Windows 安装版：清除文案，切换为下载进度视图
         self._switch_to_download_view()
         asyncio.ensure_future(self._download_and_install())
 
