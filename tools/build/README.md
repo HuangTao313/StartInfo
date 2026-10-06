@@ -17,8 +17,10 @@ uv run python tools/build/build.py
   |---|---|
   | Windows | `output/windows/main.dist/` |
   | Linux | `output/linux/main.dist/` |
-  | macOS (Intel) | `output/macOS-intel/main.dist/` |
-  | macOS (Apple Silicon) | `output/macOS-m/main.dist/` |
+  | macOS (Intel) | `output/macOS-intel/StartInfo.app` |
+  | macOS (Apple Silicon) | `output/macOS-m/StartInfo.app` |
+
+- **macOS 产物为 .app bundle**,直接位于平台目录下(无 `main.dist` 包装层),可执行文件和数据目录在 `StartInfo.app/Contents/MacOS/` 里:因 qasync 在 macOS 依赖 pyobjc/Foundation,Nuitka 强制要求 `--mode=app`,脚本会自动改用该模式并以产品名命名 bundle;Windows/Linux 仍为 `--standalone` 目录形态。
 
 ## 环境
 

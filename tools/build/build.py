@@ -107,13 +107,22 @@ def _platform_extra_args(config):
 
 
 def build_nuitka_command(config, python_path, output_dir):
-    cmd = [python_path, "-m", "nuitka", "--standalone"]
+    if PLATFORM_KEY == "macos":
+        # qasync 在 macOS 上依赖 pyobjc(Foundation),Nuitka 强制要求 .app bundle 模式
+        # bundle 目录名默认按主脚本命名(main.app),这里指定为产品名,产物即 StartInfo.app
+        cmd = [
+            python_path, "-m", "nuitka", "--mode=app",
+            f"--output-folder-name={config['product_name']}",
+        ]
+    else:
+        cmd = [python_path, "-m", "nuitka", "--standalone"]
 
     # console_mode 是 Windows 专属选项
     if IS_WINDOWS and config.get("console_mode"):
         cmd.append(f"--windows-console-mode={config['console_mode']}")
 
-    if config.get("packaging_type") == "file":
+    # macOS 的 app 模式与 --onefile 互斥,.app bundle 本身即为分发形态
+    if config.get("packaging_type") == "file" and PLATFORM_KEY != "macos":
         cmd.append("--onefile")
 
     cmd.append(f"--output-dir={output_dir}")
@@ -133,7 +142,11 @@ def build_nuitka_command(config, python_path, output_dir):
         # Linux/macOS 上 gcc/clang 是系统默认,gcc 无需传参;clang 显式指定
         cmd.append("--clang")
 
-    cmd.extend(["--lto=yes", f"--jobs={config.get('jobs', 16)}", "--show-progress"])
+    jobs = config.get("jobs", 16)
+    if PLATFORM_KEY == "macos":
+        # GitHub 的 macOS runner 只有 3-4 vCPU,过大的 jobs 会因内存压力反而变慢
+        jobs = min(jobs, 4)
+    cmd.extend(["--lto=yes", f"--jobs={jobs}", "--show-progress"])
 
     plugin = config.get("plugin")
     if plugin:

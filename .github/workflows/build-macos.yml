@@ -33,6 +33,24 @@ jobs:
       - name: Sync dependencies
         run: uv sync --locked
 
+      # 缓存 Nuitka 的 C 编译缓存(ccache)与下载工具,依赖不变时跨运行复用
+      - name: Cache Nuitka compilation
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Nuitka
+          key: nuitka-macos-${{ matrix.arch }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            nuitka-macos-${{ matrix.arch }}-
+
+      # 缓存 uv 下载的 wheel(PySide6 等体积大),加快 uv sync
+      - name: Cache uv downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/uv
+          key: uv-macos-${{ matrix.arch }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-macos-${{ matrix.arch }}-
+
       - name: Check environment
         run: |
           uname -m
@@ -45,10 +63,11 @@ jobs:
       - name: Build
         run: uv run python tools/build/build.py
 
+      # macOS 产物为平台目录下的 StartInfo.app(--mode=app),直接打 zip
       - name: Package
         run: |
           cd "tools/build/output/${{ matrix.outdir }}"
-          zip -r "$GITHUB_WORKSPACE/StartInfo-macos-${{ matrix.arch }}.zip" main.dist
+          zip -r "$GITHUB_WORKSPACE/StartInfo-macos-${{ matrix.arch }}.zip" *.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
