@@ -16,6 +16,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asyncio-dgram"
+version = "3.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/92/531067e931af346b13cab79ab9be2619b043e54d611f413809e71119e093/asyncio_dgram-3.0.0.tar.gz", hash = "sha256:bd0937807a44451d799573b32400702187fd0bba6136f7cf306e9327c0c20f3e", size = 26500, upload-time = "2026-01-21T19:40:18.547Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/a1/ad5d53a50d07b4da934c5ff7db8fc3cfd091660b0f78174499644c72523f/asyncio_dgram-3.0.0-py3-none-any.whl", hash = "sha256:a4113061e6a7fbeee928d49c56cb61b68ca4a2fbee37f7e97280bbc72323ba8e", size = 7092, upload-time = "2026-01-21T19:40:17.309Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -40,6 +49,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/45/77/7575be73bf12dee231d0c6e60ce7fb7a7be4fcd58823374fc59a6e48262e/darkdetect-0.8.0.tar.gz", hash = "sha256:b5428e1170263eb5dea44c25dc3895edd75e6f52300986353cd63533fe7df8b1", size = 7681, upload-time = "2022-12-16T14:14:42.113Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f2/f2/728f041460f1b9739b85ee23b45fa5a505962ea11fd85bdbe2a02b021373/darkdetect-0.8.0-py3-none-any.whl", hash = "sha256:a7509ccf517eaad92b31c214f593dbcf138ea8a43b2935406bbd565e15527a85", size = 8955, upload-time = "2022-12-16T14:14:40.92Z" },
+]
+
+[[package]]
+name = "dnspython"
+version = "2.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/8b/57666417c0f90f08bcafa776861060426765fdb422eb10212086fb811d26/dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f", size = 368251, upload-time = "2025-09-07T18:58:00.022Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/5a/18ad964b0086c6e62e2e7500f7edc89e3faa45033c71c1893d34eed2b2de/dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af", size = 331094, upload-time = "2025-09-07T18:57:58.071Z" },
 ]
 
 [[package]]
@@ -145,6 +163,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4a/85/c43776625428f3bb4a61e8633940400e3efe6409e3c6f5bff26de5e45618/markupsafe-3.0.4-cp313-cp313-win32.whl", hash = "sha256:672d207103e6b16ca098611b0f9efad6bc00afd47c03d6ef62186495ca677dc0", size = 14118, upload-time = "2026-10-02T23:05:27.716Z" },
     { url = "https://files.pythonhosted.org/packages/6f/36/163da64de88a13db79214ef75fa041be7fa13bdb42261cf5b7484de14bfb/markupsafe-3.0.4-cp313-cp313-win_amd64.whl", hash = "sha256:1f1f9477e174582b0a1b583d60b66e1f2cf5d3fe12cee985e4aedf44766600e5", size = 14313, upload-time = "2026-10-02T23:05:28.749Z" },
     { url = "https://files.pythonhosted.org/packages/9f/a8/9b662783ffaa1149221432a923cee562f78b9cbbb8baa3df9b3753e63e1e/markupsafe-3.0.4-cp313-cp313-win_arm64.whl", hash = "sha256:06de8ef6331f6e822c28d577dc8bf43fe398800477c49498f38fc38b67ff33fc", size = 14189, upload-time = "2026-10-02T23:05:29.917Z" },
+]
+
+[[package]]
+name = "mcstatus"
+version = "14.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asyncio-dgram" },
+    { name = "dnspython" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/9b/c68055043bb276cff7926b13930a10927c7c988e15f2170f909bbfafa8b1/mcstatus-14.2.0.tar.gz", hash = "sha256:ab1a3145dc6b22b8051ea087a87e5b26cf91abfb8e1808539a2526bbfaaa0167", size = 171164, upload-time = "2026-09-02T19:45:29.095Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/1e/0a6c2c1ed0329f37def02f9fca58fe3b862381d887b730d8c350edd05024/mcstatus-14.2.0-py3-none-any.whl", hash = "sha256:6099f9d6ae5c68eb5230cd3063b0888ea1ba4e9ae17189bf4c0f919c1ff673d1", size = 62094, upload-time = "2026-09-02T19:45:27.385Z" },
 ]
 
 [[package]]
@@ -2699,6 +2730,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "loguru" },
     { name = "lunar-python" },
+    { name = "mcstatus" },
     { name = "nuitka" },
     { name = "pyside6" },
     { name = "pyside6-fluent-widgets" },
@@ -2711,6 +2743,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "lunar-python", specifier = ">=1.4.8" },
+    { name = "mcstatus", specifier = ">=14.2.0" },
     { name = "nuitka", specifier = ">=4.2.2" },
     { name = "pyside6", specifier = ">=6.11.2" },
     { name = "pyside6-fluent-widgets", specifier = ">=1.11.3" },

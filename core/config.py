@@ -304,7 +304,7 @@ class StartInfoConfig(QConfig):
     # =========================== 每日一言 ===========================
     words_switch = ConfigItem('EveryDayWordsWidget', 'switch', True, BoolValidator())
     words_source = OptionsConfigItem(
-        'EveryDayWordsWidget', 'source', 'hitokoto',
+        'EveryDayWordsWidget', 'source', 'iciba',
         OptionsValidator(['hitokoto', 'iciba'])
     )
 
