@@ -1,5 +1,7 @@
 # Running from Source
 
+[简体中文](../development.md) | English
+
 First, clone the repository:
 
 ```bash

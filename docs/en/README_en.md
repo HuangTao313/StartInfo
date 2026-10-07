@@ -29,10 +29,10 @@
 > [!NOTE]
 > **Project Scope**
 >
-> StartInfo is currently designed primarily for users in China.
-> The application is not fully internationalized yet, and some features rely on China-based APIs and services.
+> StartInfo is currently designed primarily for users in China, and some features rely on China-based APIs and services.
+> The user interface supports multiple languages (Simplified Chinese / Traditional Chinese / English, selectable in Settings or set to follow the system), but the data injected into widgets and templates (greetings, lunar calendar, holidays, weather descriptions, etc.) is still Simplified Chinese only.
 >
-> English documentation is provided for accessibility, but the user interface and some services may still be Chinese-oriented.
+> English documentation is provided for accessibility; the data layer and some services may still be Chinese-oriented.
 
 # Features
 
@@ -58,7 +58,7 @@
 
 # Download
 
-Currently, Windows installer and portable versions are provided.
+Currently, Windows installer and portable versions are provided. Starting from version **v2.4.5**, experimental builds (potentially unstable) for macOS and Linux (mainly targeting Ubuntu) are also provided.
 
 ## Windows
 
@@ -77,9 +77,17 @@ Download the latest version:
 - Installer: [StartInfo-win-x86_64-Setup.exe](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Setup.exe)
 - Portable: [StartInfo-win-x86_64-Portable.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Portable.zip)
 
+## macOS / Linux (Experimental)
+
+Experimental builds for macOS and Linux have been provided since version v2.4.5 and may be unstable. If you run into any issues, feel free to submit an Issue.
+
+Download the latest version:
+
+- macOS (Intel): [StartInfo-macos-x86_64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-macos-x86_64.zip)
+- macOS (Apple Silicon): [StartInfo-macos-arm64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-macos-arm64.zip)
+- Linux (x86_64): [StartInfo-linux-x86_64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-linux-x86_64.zip)
+
 > Download links always point to the corresponding files in the latest GitHub Release.
->
-> macOS-related features have been adapted, but macOS builds are currently not provided.
 
 # Update Mechanism
 
@@ -151,6 +159,8 @@ The overall project design, feature planning, code review, and final maintenance
 - [Development Guide](development_en.md)
 - [Template Customization Guide](template-customization_en.md)
 - [Widget Development Guide](widget-development_en.md)
+- [Build Tool Guide](../../tools/build/README_en.md)
+- [Translation Tool Guide](../../tools/i18n/README_en.md)
 
 # Dependencies
 

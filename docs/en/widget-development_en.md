@@ -1,5 +1,7 @@
 # Widget Development Guide
 
+[简体中文](../widget-development.md) | English
+
 > Version: 2.0 · Applies to: the StartInfo widget framework (framework `core/widgets/framework.py`, built-in widgets `../../core/widgets/widgets.py`)
 
 

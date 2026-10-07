@@ -1,6 +1,8 @@
 # StartInfo Template Customization Guide
 
-> **Note:** The template system currently supports **Simplified Chinese only.** StartInfo has not been internationalized yet, so the values the application injects into templates (`greeting`, `weekday`, `holiday`, `weather`, `lunar_date` and so on) are always Simplified Chinese. You may write the static text of a template in any language, but these injected values will remain Chinese for now.
+[简体中文](../template-customization.md) | English
+
+> **Note:** The application interface itself is internationalized (Simplified Chinese / Traditional Chinese / English), but the template system is not: the values the application injects into templates (`greeting`, `weekday`, `holiday`, `weather`, `lunar_date` and so on) are always Simplified Chinese. You may write the static text of a template in any language, but these injected values will remain Chinese until the data layer is internationalized.
 
 ## 1. What Templates Do
 

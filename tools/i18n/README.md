@@ -1,5 +1,7 @@
 # Qt TS 自动翻译工具
 
+简体中文 | [English](README_en.md)
+
 `translate_ts.py` 是 StartInfo 的开发辅助工具，用于调用有道**大模型翻译 API**（子曰翻译，默认 pro 模型），批量翻译 Qt Linguist 的 `.ts` 文件。
 
 它主要用于生成**机器翻译初稿**，最终译文建议使用 Qt Linguist 人工检查。

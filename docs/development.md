@@ -1,5 +1,7 @@
 # 从源码运行
 
+简体中文 | [English](en/development_en.md)
+
 首先克隆项目：
 
 ```bash

@@ -1,5 +1,7 @@
 # StartInfo 构建工具
 
+简体中文 | [English](README_en.md)
+
 StartInfo 专用的 Nuitka 打包脚本,一份配置 + 一个脚本,支持 Windows / Linux / macOS。
 
 ## 使用

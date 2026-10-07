@@ -50,7 +50,7 @@
 
 # 下载
 
-目前提供 Windows 安装版和便携版。
+目前提供 Windows 安装版和便携版。自 **v2.4.5** 版本开始，额外提供 macOS 和 Linux（主要面向 Ubuntu）的**实验性构建**（可能不稳定）。
 
 
 ## Windows
@@ -70,9 +70,17 @@
 - 安装版：[StartInfo-win-x86_64-Setup.exe](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Setup.exe)
 - 便携版：[StartInfo-win-x86_64-Portable.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-win-x86_64-Portable.zip)
 
+## macOS / Linux（实验性）
+
+自 v2.4.5 版本开始提供 macOS 和 Linux 的实验性构建，功能可能不稳定。如遇到问题，欢迎提交 Issue 反馈。
+
+下载最新版本：
+
+- macOS (Intel)：[StartInfo-macos-x86_64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-macos-x86_64.zip)
+- macOS (Apple Silicon)：[StartInfo-macos-arm64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-macos-arm64.zip)
+- Linux (x86_64)：[StartInfo-linux-x86_64.zip](https://github.com/HuangTao313/StartInfo/releases/latest/download/StartInfo-linux-x86_64.zip)
+
 > 下载链接始终指向 GitHub 最新 Release 中对应的文件。
-> 
-> macOS 已完成相关功能适配，但目前暂未提供 macOS 构建版本。
 
 
 # 更新机制
@@ -142,6 +150,8 @@ API Key 请直接填写控制台提供的 Key，无需添加引号或其他内�
 - [开发指南](docs/development.md)
 - [模板自定义文档](docs/template-customization.md)
 - [组件开发文档](docs/widget-development.md)
+- [构建工具使用指南](tools/build/README.md)
+- [翻译工具使用指南](tools/i18n/README.md)
 
 # 依赖
 
