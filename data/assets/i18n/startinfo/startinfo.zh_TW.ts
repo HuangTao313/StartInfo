@@ -461,718 +461,714 @@
             <translation>重新啟動至主程式或直接退出</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="466" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="467" />
             <source>立即删除</source>
             <translation>立即刪除</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="79" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="80" />
             <source>日期和时间</source>
             <translation>日期和時間</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="65" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="66" />
             <source>语言</source>
             <translation>語言</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="65" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="66" />
             <source>切换程序的显示语言</source>
             <translation>切換程式的顯示語言</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="81" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="82" />
             <source>日期和时间组件</source>
             <translation>日期和時間組件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="82" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="83" />
             <source>显示当前的日期、时间以及其他信息</source>
             <translation>顯示當前的日期、時間以及其他資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="88" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="89" />
             <source>日期和时间组件详细配置</source>
             <translation>日期和時間組件詳細設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="89" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="90" />
             <source>是否显示农历日期、24节气、节假日</source>
             <translation>是否顯示農曆日期、二十四節氣、節假日</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="94" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="95" />
             <source>显示农历信息</source>
             <translation>顯示農曆資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="95" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="96" />
             <source>例如：农历二月十九</source>
             <translation>例如：農曆二月十九</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="100" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="101" />
             <source>显示24节气信息</source>
             <translation>顯示二十四節氣資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="101" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="102" />
             <source>例如：谷雨、春分</source>
             <translation>例如：穀雨、春分</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="106" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="107" />
             <source>显示节假日信息</source>
             <translation>顯示節假日資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="107" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="108" />
             <source>有节日时显示节日，无节日时显示休息日或工作日</source>
             <translation>有節日時顯示節日，無節日時顯示休息日或工作日</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="112" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="113" />
             <source>显示其他信息</source>
             <translation>顯示其他資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="113" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="114" />
             <source>今年的第几周、第几天以及今年已过进度</source>
             <translation>今年的第幾週、第幾天以及今年已過進度</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="130" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="131" />
             <source>天气(需选择城市)</source>
             <translation>天氣（需選擇城市）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="133" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="134" />
             <source>天气组件</source>
             <translation>天氣元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="133" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="134" />
             <source>显示当前城市的天气信息</source>
             <translation>顯示當前城市的天氣資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="139" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="140" />
             <source>天气组件详细配置</source>
             <translation>天氣元件詳細設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="139" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="140" />
             <source>数据源、城市、刷新间隔</source>
             <translation>資料來源、城市、刷新間隔</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="144" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="145" />
             <source>数据源</source>
             <translation>資料來源</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="144" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="145" />
             <source>设置天气数据源</source>
             <translation>設定天氣資料來源</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="145" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="146" />
             <source>小米天气</source>
             <translation>小米天氣</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="145" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="146" />
             <source>和风天气(需API Host、API Key)</source>
             <translation>和風天氣（需 API 主機、API 金鑰）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="150" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="151" />
             <source>选择城市</source>
             <translation>選擇城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="151" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="578" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="646" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="152" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="586" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="654" />
             <source>选择城市(当前: {city})</source>
             <translation>選擇城市（目前：{city}）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="153" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="154" />
             <source>获取天气的城市</source>
             <translation>取得天氣的城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="157" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="158" />
             <source>天气信息刷新间隔(单位：分钟/m)</source>
             <translation>天氣資訊更新間隔（單位：分鐘/m）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="158" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="159" />
             <source>天气信息自动刷新时间(范围：15~60分钟，默认30分钟)</source>
             <translation>天氣資訊自動刷新時間（範圍：15~60分鐘，預設30分鐘）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="164" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="310" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="401" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="165" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="311" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="402" />
             <source>立即刷新</source>
             <translation>立即刷新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="165" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="166" />
             <source>刷新天气信息</source>
             <translation>刷新天氣資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="170" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="171" />
             <source>和风天气API Host</source>
             <translation>和風天氣API 主機</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="171" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="172" />
             <source>设置和风天气API Host，从[和风天气开发控制台-设置]获取，例如abc1234xyz.def.qweatherapi.com</source>
             <translation>設定和風天氣API Host，從[和風天氣開發控制台-設定]取得，例如abc1234xyz.def.qweatherapi.com</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="176" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="177" />
             <source>和风天气API Key</source>
             <translation>和風天氣API Key</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="177" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="178" />
             <source>设置和风天气API Key，从[和风天气开发控制台-项目管理]获取</source>
             <translation>設定和風天氣 API Key，從 [和風天氣開發控制台 - 專案管理] 取得</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="182" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="183" />
             <source>和风天气开发控制台</source>
             <translation>和風天氣開發控制台</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="182" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="183" />
             <source>打开</source>
             <translation>開啟</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="183" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="184" />
             <source>打开和风天气开发控制台(https://console.qweather.com/home)</source>
             <translation>開啟和風天氣開發控制台(https://console.qweather.com/home)</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="203" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="204" />
             <source>倒数日</source>
             <translation>倒數日</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="205" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="206" />
             <source>倒数日组件</source>
             <translation>倒數日元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="206" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="207" />
             <source>在主窗口显示："距离【xx】还有xx天"</source>
             <translation>在主窗口顯示：「距離【xx】還有xx天」</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="246" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="247" />
             <source>生日祝福(暂不支持多人同天生日)</source>
             <translation>生日祝福（暫不支援多人同天生日）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="248" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="249" />
             <source>生日祝福功能</source>
             <translation>生日祝福功能</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="249" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="250" />
             <source>在生日当天显示生日祝福</source>
             <translation>在生日當天顯示生日祝福</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="255" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="256" />
             <source>编辑生日列表</source>
             <translation>編輯生日列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="231" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="253" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="305" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="232" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="254" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="306" />
             <source>编辑</source>
             <translation>編輯</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="232" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="63" />
+            <source>跟随系统</source>
+            <translation>隨系統</translation>
+        </message>
+        <message>
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="233" />
             <source>添加或删除倒数日，双击表格可修改名称与日期</source>
             <translation>新增或刪除倒數日，雙擊表格可修改名稱與日期</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="233" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="234" />
             <source>编辑倒数日列表</source>
             <translation>編輯倒數日列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="233" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="234" />
             <source>日期</source>
             <translation>日期</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="234" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="235" />
             <source>已保存新的倒数日列表</source>
             <translation>已儲存新的倒數日列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="254" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="255" />
             <source>添加或删除生日记录，双击表格可修改名称与生日</source>
             <translation>新增或刪除生日記錄，雙擊表格可修改姓名與生日</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="267" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="268" />
             <source>Minecraft Java版服务器玩家在线情况检测</source>
             <translation>Minecraft Java版伺服器玩家在線情況檢測</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="269" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="270" />
             <source>Minecraft Java版服务器玩家在线情况检测组件</source>
             <translation>Minecraft Java版伺服器玩家在線情況檢測元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="270" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="271" />
             <source>快速查看MC服务器玩家在线情况，支持检查朋友在线情况</source>
             <translation>快速查看 MC 伺服器玩家在線情況，支援檢查朋友在線狀態</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="276" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="277" />
             <source>服务器信息详细配置</source>
             <translation>伺服器資訊詳細設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="277" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="278" />
             <source>配置服务器名称、IP、端口等信息</source>
             <translation>設定伺服器名稱、IP、端口等資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="282" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="283" />
             <source>服务器名称</source>
             <translation>伺服器名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="282" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="283" />
             <source>Minecraft Java版服务器名称</source>
             <translation>Minecraft Java版伺服器名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="287" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="288" />
             <source>服务器IP地址</source>
             <translation>伺服器IP位址</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="287" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="288" />
             <source>Minecraft Java版服务器IP</source>
             <translation>Minecraft Java版伺服器IP</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="292" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="293" />
             <source>服务器端口号</source>
             <translation>伺服器端口號</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="293" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="294" />
             <source>Minecraft Java版服务器端口号(一般为25565)</source>
             <translation>Minecraft Java 版伺服器端口號（一般為 25565）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="299" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="300" />
             <source>服务器信息刷新间隔(单位：秒/s)</source>
             <translation>伺服器資訊刷新間隔（單位：秒/s）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="300" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="301" />
             <source>Minecraft Java版服务器信息自动刷新时间(范围：5~3600秒，默认60秒)</source>
             <translation>Minecraft Java 版伺服器資訊自動刷新時間（範圍：5~3600 秒，預設 60 秒）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="306" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="307" />
             <source>编辑朋友列表</source>
             <translation>編輯朋友列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="311" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="312" />
             <source>立即刷新Minecraft Java服务器信息</source>
             <translation>立即刷新 Minecraft Java 伺服器資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="330" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="331" />
             <source>每日一言</source>
             <translation>每日一言</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="332" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="333" />
             <source>每日一言组件</source>
             <translation>每日一言元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="332" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="333" />
             <source>显示每日一言信息</source>
             <translation>顯示每日一言資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="337" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="338" />
             <source>每日一言组件详细配置</source>
             <translation>每日一言組件詳細設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="338" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="339" />
             <source>配置数据来源、打开一言官网(友情链接)</source>
             <translation>設定資料來源、開啟一言官網（友情連結）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="343" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="350" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="344" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="351" />
             <source>一言网</source>
             <translation>一言網</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="343" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="344" />
             <source>金山词霸</source>
             <translation>金山詞霸</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="344" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="345" />
             <source>每日一言数据来源</source>
             <translation>每日一言資料來源</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="344" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="345" />
             <source>【金山词霸每日一言】或【一言网】</source>
             <translation>【金山詞霸每日一言】或【一言網】</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="350" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="351" />
             <source>友情链接</source>
             <translation>友情連結</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="351" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="352" />
             <source>一言网(hitokoto.cn)创立于 2016 年，隶属于萌创团队，目前网站主要提供一句话服务，属于公益性运营，欢迎各位捐助一言网。</source>
             <translation>一言網(hitokoto.cn)創立於 2016 年，隸屬於萌創團隊，目前網站主要提供一句話服務，屬於公益性運營，歡迎各位捐助一言網。</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="367" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="368" />
             <source>GitHub仓库信息组件(仅支持公开仓库)</source>
             <translation>GitHub 倉庫資訊元件（僅支援公開倉庫）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="369" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="370" />
             <source>GitHub仓库信息组件</source>
             <translation>GitHub 倉庫資訊元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="370" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="371" />
             <source>显示Github仓库的名称、star数、fork数等信息</source>
             <translation>顯示 GitHub 倉庫的名稱、star 數、fork 數等資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="376" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="377" />
             <source>GitHub仓库信息组件详细配置</source>
             <translation>GitHub 倉庫資訊元件詳細設定</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="377" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="378" />
             <source>仓库作者名、仓库名、数据刷新间隔</source>
             <translation>倉庫作者名、倉庫名、資料刷新間隔</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="382" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="383" />
             <source>仓库作者</source>
             <translation>倉庫作者</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="383" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="384" />
             <source>仓库作者的名称</source>
             <translation>倉庫作者的名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="388" />
             <location filename="../../../../core/ui/settings_pages/basic.py" line="389" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="390" />
             <source>仓库名称</source>
             <translation>倉庫名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="394" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="395" />
             <source>GitHub仓库信息刷新间隔(单位：小时/h)</source>
             <translation>GitHub 倉庫資訊刷新間隔（單位：小時/h）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="395" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="396" />
             <source>GitHub仓库信息自动刷新时间(范围：1~24小时(1天)，默认1小时)</source>
             <translation>GitHub 倉庫資訊自動刷新時間（範圍：1~24 小時（1 天），預設 1 小時）</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="402" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="403" />
             <source>刷新GitHub仓库信息</source>
             <translation>刷新 GitHub 倉庫資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="419" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="420" />
             <source>其他组件</source>
             <translation>其他組件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="423" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="424" />
             <source>其他组件开关</source>
             <translation>其他組件開關</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="424" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="425" />
             <source>问候语、开机次数、时间和日期等组件</source>
             <translation>問候語、開機次數、時間與日期等元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="429" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="430" />
             <source>问候语组件</source>
             <translation>問候語元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="430" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="431" />
             <source>显示当前时间对应的问候语</source>
             <translation>顯示當前時間對應的問候語</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="435" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="436" />
             <source>开机次数组件</source>
             <translation>開機次數元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="436" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="437" />
             <source>显示开机次数</source>
             <translation>顯示開機次數</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="441" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="442" />
             <source>历史上的今天组件</source>
             <translation>歷史上的今天元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="442" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="443" />
             <source>显示历史上的今天信息</source>
             <translation>顯示歷史上的今天資訊</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="447" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="448" />
             <source>每日人品组件</source>
             <translation>每日人品元件</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="448" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="449" />
             <source>显示每日人品</source>
             <translation>顯示每日人品</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="462" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="463" />
             <source>调试</source>
             <translation>調試</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="465" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="466" />
             <source>删除缓存</source>
             <translation>刪除快取</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="466" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="467" />
             <source>删除程序在运行中产生的缓存数据</source>
             <translation>刪除程式運行時產生的快取資料</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="471" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="472" />
             <source>日志等级</source>
             <translation>日誌等級</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="472" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="473" />
             <source>调整程序的日志等级，重启后生效</source>
             <translation>調整程式的日誌等級，重啟後生效</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="477" />
             <location filename="../../../../core/ui/settings_pages/basic.py" line="478" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="479" />
             <source>打开日志文件夹</source>
             <translation>開啟日誌資料夾</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="478" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="479" />
             <source>打开程序日志文件夹</source>
             <translation>開啟程式日誌資料夾</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="516" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="521" />
             <source>语言切换失败，请查看日志</source>
             <translation>語言切換失敗，請查看日誌</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="519" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="527" />
             <source>切换语言</source>
             <translation>切換語言</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="519" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="527" />
             <source>语言将在重启后完全生效，是否立即重启？</source>
             <translation>語言將在重啟後完全生效，是否立即重啟？</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="520" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="528" />
             <source>立即重启</source>
             <translation>立即重新啟動</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="521" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="529" />
             <source>稍后重启</source>
             <translation>稍後重新啟動</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="553" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="561" />
             <source>已删除缓存</source>
             <translation>已刪除快取</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="557" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="565" />
             <source>未发现缓存</source>
             <translation>未發現緩存</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="528" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="536" />
             <source>已添加开机启动项</source>
             <translation>已添加開機啟動項</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="530" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="538" />
             <source>添加开机启动项失败，请查看日志</source>
             <translation>新增開機啟動項目失敗，請查看日誌</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="533" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="541" />
             <source>已删除开机启动项</source>
             <translation>已刪除開機啟動項目</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="535" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="543" />
             <source>删除开机启动项失败，请查看日志</source>
             <translation>刪除開機啟動項目失敗，請查看日誌</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="540" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="548" />
             <source>已打开日志文件夹</source>
             <translation>已打開日誌資料夾</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="543" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="551" />
             <source>日志文件夹不存在</source>
             <translation>日誌資料夾不存在</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="581" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="589" />
             <source>已设置城市 {city}</source>
             <translation>已設定城市 {city}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="582" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="590" />
             <source>正在获取天气信息...</source>
             <translation>正在取得天氣資訊...</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="653" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="661" />
             <source>更换天气数据源后请重新选择城市</source>
             <translation>切換天氣資料來源後請重新選擇城市</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="658" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="686" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="666" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="685" />
             <source>未填写API Host或API Key</source>
             <translation>未填寫 API Host 或 API Key</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="667" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="693" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="674" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="690" />
             <source>天气信息更新成功</source>
             <translation>天氣資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="667" />
             <location filename="../../../../core/ui/settings_pages/basic.py" line="673" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="693" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="698" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="689" />
             <source>天气信息更新失败</source>
             <translation>天氣資訊更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="672" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="697" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="729" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="752" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="781" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="750" />
             <source>未知错误：{error}</source>
             <translation>未知錯誤：{error}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="712" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="702" />
             <source>MC 服务器信息已更新</source>
             <translation>MC 伺服器資訊已更新</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="717" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="707" />
             <source>，当前有 {count} 个朋友在线：{friends}</source>
             <translation>，目前有 {count} 位朋友在線：{friends}</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="720" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="710" />
             <source>，当前有 {count} 个朋友在线</source>
             <translation>，目前有 {count} 位朋友在線</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="725" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="730" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="697" />
             <source>MC 服务器信息更新失败</source>
             <translation>MC 伺服器資訊更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="740" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="718" />
             <source>请先填写仓库作者和仓库名称</source>
             <translation>請先填寫倉庫作者和倉庫名稱</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="748" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="724" />
             <source>GitHub仓库信息更新成功</source>
             <translation>GitHub 倉庫資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="748" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="753" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="723" />
             <source>GitHub仓库信息更新失败</source>
             <translation>GitHub 倉庫資訊更新失敗</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="255" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="256" />
             <source>生日</source>
             <translation>生日</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="256" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="257" />
             <source>已保存新的生日列表</source>
             <translation>已儲存新的生日清單</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="307" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="308" />
             <source>已保存新的朋友列表</source>
             <translation>已儲存新的朋友列表</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="777" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="773" />
             <source>每日一言信息更新成功</source>
             <translation>每日一言資訊更新成功</translation>
         </message>
         <message>
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="777" />
-            <location filename="../../../../core/ui/settings_pages/basic.py" line="782" />
+            <location filename="../../../../core/ui/settings_pages/basic.py" line="772" />
             <source>每日一言信息更新失败</source>
             <translation>每日一言資訊更新失敗</translation>
         </message>
