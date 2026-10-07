@@ -668,21 +668,12 @@ class BasicSettingsPage(BaseSettingPage):
 
             # 两个数据源切换后都立即刷新，行为保持一致
             self.weatherSourceCard.setEnabled(False)
-            self.weatherRefreshCard.setEnabled(False)
             try:
-                await widget.get_data_async(force_refresh=True)
-                self._notify_widget_result(
-                    widget, self.tr('天气信息更新成功'), self.tr('天气信息更新失败'))
-
-            except Exception as e:
-                log.error(f'设置-天气信息更新失败：{e}')
-                Notify.error(
-                    content=self.tr('未知错误：{error}').format(error=e),
-                    title=self.tr('天气信息更新失败'), parent=self)
-
+                await self._refresh_widget_card(
+                    self.weatherRefreshCard, widget, self.tr('天气信息更新失败'),
+                    success_msg=self.tr('天气信息更新成功'))
             finally:
                 self.weatherSourceCard.setEnabled(True)
-                self.weatherRefreshCard.setEnabled(True)
 
     @asyncSlot()
     async def _onRefreshWeather(self):
@@ -694,51 +685,30 @@ class BasicSettingsPage(BaseSettingPage):
                 Notify.warning(self.tr('未填写API Host或API Key'), parent=self)
                 return
 
-        self.weatherRefreshCard.setEnabled(False)
-        try:
-            await widget.get_data_async(force_refresh=True)
-            self._notify_widget_result(
-                widget, self.tr('天气信息更新成功'), self.tr('天气信息更新失败'))
-
-        except Exception as e:
-            log.error(f'设置-天气信息更新失败：{e}')
-            Notify.error(content=self.tr('未知错误：{error}').format(error=e),
-                         title=self.tr('天气信息更新失败'), parent=self)
-
-        finally:
-            self.weatherRefreshCard.setEnabled(True)
+        await self._refresh_widget_card(
+            self.weatherRefreshCard, widget, self.tr('天气信息更新失败'),
+            success_msg=self.tr('天气信息更新成功'))
 
     @asyncSlot()
     async def _onRefreshMCServer(self):
-        self.mcServerDataRefreshCard.setEnabled(False)
         from ...widgets import MCServerError, MCServerInfoWidget
-        try:
-            mc = MCServerInfoWidget()
-            data = await mc.get_data_async(force_refresh=True)
+        await self._refresh_widget_card(
+            self.mcServerDataRefreshCard, MCServerInfoWidget(),
+            self.tr('MC 服务器信息更新失败'),
+            on_success=self._mc_success_content, error_types=(MCServerError,))
 
-            # 成功提示中附带在线朋友信息（≤3 个时列出名单）
-            content = self.tr('MC 服务器信息已更新')
-            online_friends = (data or {}).get('mc_online_friends') or []
-            if online_friends:
-                friend_count = len(online_friends)
-                if friend_count <= 3:
-                    content += self.tr('，当前有 {count} 个朋友在线：{friends}').format(
-                        count=friend_count, friends='、'.join(online_friends))
-                else:
-                    content += self.tr('，当前有 {count} 个朋友在线').format(count=friend_count)
-            Notify.success(content=content, parent=self)
-
-        except MCServerError as e:
-            log.error(f'设置-MC 服务器信息更新失败：{e}')
-            Notify.error(content=str(e), title=self.tr('MC 服务器信息更新失败'), parent=self)
-
-        except Exception as e:
-            log.error(f'设置-MC 服务器信息更新失败：{e}')
-            Notify.error(content=self.tr('未知错误：{error}').format(error=e),
-                         title=self.tr('MC 服务器信息更新失败'), parent=self)
-
-        finally:
-            self.mcServerDataRefreshCard.setEnabled(True)
+    def _mc_success_content(self, data) -> str:
+        """成功提示中附带在线朋友信息（≤3 个时列出名单）"""
+        content = self.tr('MC 服务器信息已更新')
+        online_friends = (data or {}).get('mc_online_friends') or []
+        if online_friends:
+            friend_count = len(online_friends)
+            if friend_count <= 3:
+                content += self.tr('，当前有 {count} 个朋友在线：{friends}').format(
+                    count=friend_count, friends='、'.join(online_friends))
+            else:
+                content += self.tr('，当前有 {count} 个朋友在线').format(count=friend_count)
+        return content
 
     @asyncSlot()
     async def _onRefreshGitHubRepo(self):
@@ -748,20 +718,40 @@ class BasicSettingsPage(BaseSettingPage):
             Notify.warning(self.tr('请先填写仓库作者和仓库名称'), parent=self)
             return
 
-        self.repoRefreshCard.setEnabled(False)
+        await self._refresh_widget_card(
+            self.repoRefreshCard, GitHubRepoInfoWidget(),
+            self.tr('GitHub仓库信息更新失败'),
+            success_msg=self.tr('GitHub仓库信息更新成功'))
+
+    async def _refresh_widget_card(self, card, widget, fail_title: str,
+                                   success_msg: str = '', on_success=None,
+                                   error_types: tuple = ()) -> None:
+        """通用组件强刷样板：禁用刷新按钮 → get_data_async 强刷 → 按结果弹提示 → 恢复按钮。
+
+        on_success(data) 返回非空字符串时优先作为成功文案（用于在线朋友名单等
+        定制内容），否则用 success_msg 走 _notify_widget_result；error_types 中
+        的异常以 str(e) 作为提示内容，其余异常弹"未知错误"。
+        """
+        card.setEnabled(False)
         try:
-            widget = GitHubRepoInfoWidget()
-            await widget.get_data_async(force_refresh=True)
-            self._notify_widget_result(
-                widget, self.tr('GitHub仓库信息更新成功'), self.tr('GitHub仓库信息更新失败'))
+            data = await widget.get_data_async(force_refresh=True)
+            content = on_success(data) if on_success else ''
+            if content:
+                Notify.success(content=content, parent=self)
+            else:
+                self._notify_widget_result(widget, success_msg, fail_title)
+
+        except error_types as e:
+            log.error(f'设置-{fail_title}：{e}')
+            Notify.error(content=str(e), title=fail_title, parent=self)
 
         except Exception as e:
-            log.error(f'设置-GitHub仓库信息更新失败：{e}')
+            log.error(f'设置-{fail_title}：{e}')
             Notify.error(content=self.tr('未知错误：{error}').format(error=e),
-                         title=self.tr('GitHub仓库信息更新失败'), parent=self)
+                         title=fail_title, parent=self)
 
         finally:
-            self.repoRefreshCard.setEnabled(True)
+            card.setEnabled(True)
 
     def _notify_widget_result(self, widget, success_msg: str, fail_title: str) -> None:
         """根据组件获取结果弹提示：组件记录有错误信息则弹错误，否则弹成功。"""
@@ -777,17 +767,7 @@ class BasicSettingsPage(BaseSettingPage):
         cache_source = widget.get_cached_source()
         # 如果选择的数据源和缓存的数据源不一致
         if widget.DATA_SOURCE != cache_source:
-            self.wordsSourceCard.setEnabled(False)
             # 开始刷新每日一言信息
-            try:
-                await widget.get_data_async(force_refresh=True)
-                self._notify_widget_result(
-                    widget, self.tr('每日一言信息更新成功'), self.tr('每日一言信息更新失败'))
-
-            except Exception as e:
-                log.error(f'设置-每日一言信息更新失败：{e}')
-                Notify.error(content=self.tr('未知错误：{error}').format(error=e),
-                             title=self.tr('每日一言信息更新失败'), parent=self)
-
-            finally:
-                self.wordsSourceCard.setEnabled(True)
+            await self._refresh_widget_card(
+                self.wordsSourceCard, widget, self.tr('每日一言信息更新失败'),
+                success_msg=self.tr('每日一言信息更新成功'))

@@ -271,7 +271,7 @@ class CountDownDayWidget(LocalWidgetBase):
         }
 
 
-# 3.生日
+# 3.生日祝福
 @register(cfg.birthday_wishes_switch)  # 生日无模板开关，不注入
 class BirthdayWidget(LocalWidgetBase):
     WIDGET_NAME = 'Birthday'
