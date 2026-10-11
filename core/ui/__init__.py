@@ -5,7 +5,7 @@
 - :mod:`core.ui.ui_widgets`     —— 设置页基底、城市搜索与更新弹窗、通知/异步操作工具
 - :mod:`core.ui.setting_cards`  —— 设置卡片与编辑框
 - :mod:`core.ui.switch_button`  —— 自定义开关按钮
-- :mod:`core.ui.settings_pages` —— 设置窗口的三个页面
+- :mod:`core.ui.settings_pages` —— 设置窗口的4个页面
 
 包外请使用本门面包，例如::
 
@@ -19,7 +19,7 @@
 from .app import AppManager, app_manager, get_theme_color, tr
 from .dialogs import dialog, error_dialog, file_dialog, main_window
 from .settings_pages import (AboutSettingsPage, AppearanceSettingsPage,
-                             BasicSettingsPage)
+                             WidgetsSettingsPage, BasicSettingsPage)
 from .switch_button import IndicatorPosition, SwitchButton
 from .ui_widgets import (BaseSettingPage, CitySearchBox, Notify,
                          UpdateDownloadBox, action)
@@ -46,5 +46,5 @@ __all__ = [
     # switch button
     'IndicatorPosition', 'SwitchButton',
     # 设置页
-    'BasicSettingsPage', 'AppearanceSettingsPage', 'AboutSettingsPage',
+    'BasicSettingsPage', 'WidgetsSettingsPage', 'AppearanceSettingsPage', 'AboutSettingsPage',
 ]

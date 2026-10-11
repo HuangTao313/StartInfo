@@ -1,6 +1,7 @@
 """设置窗口的页面集合。
 
 - :mod:`core.ui.settings_pages.basic`      —— 基本设置
+- :mod:`core.ui.settings_pages.widgets`      —— 组件设置
 - :mod:`core.ui.settings_pages.appearance` —— 个性化
 - :mod:`core.ui.settings_pages.about`      —— 关于
 
@@ -12,7 +13,8 @@
 """
 
 from .basic import BasicSettingsPage
+from .widgets import WidgetsSettingsPage
 from .appearance import AppearanceSettingsPage
 from .about import AboutSettingsPage
 
-__all__ = ['AboutSettingsPage', 'AppearanceSettingsPage', 'BasicSettingsPage']
+__all__ = ['AboutSettingsPage', 'AppearanceSettingsPage', 'WidgetsSettingsPage', 'BasicSettingsPage']

@@ -9,7 +9,7 @@ import core.ui as ui
 from core.base_lib import restart_program, system
 from core.config import cfg
 from core.paths import SETTINGS_ICON_FILE_PATH
-from core.ui import AboutSettingsPage, AppearanceSettingsPage, BasicSettingsPage
+from core.ui import AboutSettingsPage, AppearanceSettingsPage, WidgetsSettingsPage, BasicSettingsPage
 
 # 图标
 SETTINGS_ICON = SETTINGS_ICON_FILE_PATH
@@ -42,6 +42,7 @@ class SettingsWindow(FluentWindow):
 
         # 3.创建子界面
         self.addSubInterface(BasicSettingsPage(self), FluentIcon.SETTING, self.tr('基本设置'))
+        self.addSubInterface(WidgetsSettingsPage(self), FluentIcon.APPLICATION, self.tr('组件设置'))
         self.addSubInterface(AppearanceSettingsPage(self), FluentIcon.BRUSH, self.tr('个性化'))
         self.addSubInterface(AboutSettingsPage(self), FluentIcon.INFO, self.tr('关于'),NavigationItemPosition.BOTTOM)
 
